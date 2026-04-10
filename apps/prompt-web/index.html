@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Vibe Studio Thin App</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "@vive-studio/engine-contracts": "/packages/engine-contracts/dist/index.js",
+          "@vive-studio/engine-core": "/packages/engine-core/dist/index.js",
+          "@vive-studio/renderer-prompt": "/packages/renderer-prompt/dist/index.js",
+          "@vive-studio/renderer-spec": "/packages/renderer-spec/dist/index.js",
+          "@vive-studio/renderer-architecture": "/packages/renderer-architecture/dist/index.js",
+          "@vive-studio/renderer-review-report": "/packages/renderer-review-report/dist/index.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Vibe Studio Thin App</p>
+        <h1>입력에서 질문, 확인, renderer 출력까지 한 화면에서 검증한다</h1>
+        <p class="hero-copy">
+          이 화면은 최종 제품이 아니라 수동 검증 surface다. 지금은 4개 renderer의
+          최소 출력과 gate 흐름을 같은 자리에서 직접 확인할 수 있다.
+        </p>
+      </section>
+
+      <section class="panel composer">
+        <div class="panel-head">
+          <h2>1. 입력</h2>
+          <p>카드는 선택 사항이다. 선택하지 않아도 analyze는 동작한다.</p>
+        </div>
+
+        <div class="card-row" id="card-row"></div>
+
+        <label class="field-label" for="source-text">요청</label>
+        <textarea
+          id="source-text"
+          class="source-text"
+          placeholder="예: 회의 전에 내가 뭘 물어봐야 할지 정리해주는 프롬프트 만들어줘"
+        ></textarea>
+
+        <div class="actions">
+          <button id="analyze-button" class="primary-button">Analyze</button>
+          <button id="reset-button" class="ghost-button">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel status" id="analysis-panel" hidden>
+        <div class="panel-head">
+          <h2>2. 분석 결과</h2>
+          <p>엔진이 계산한 mode, renderer, next step을 그대로 보여준다.</p>
+        </div>
+
+        <div class="signal-grid" id="signal-grid"></div>
+        <div class="reason-block">
+          <h3>왜 이렇게 판단했는지</h3>
+          <ul id="reason-list"></ul>
+        </div>
+      </section>
+
+      <section class="panel status" id="clarify-panel" hidden>
+        <div class="panel-head">
+          <h2>3. 먼저 질문</h2>
+          <p><code>clarify_first</code> 상태에서는 renderer를 실행하지 않는다.</p>
+        </div>
+
+        <ul id="clarify-list" class="question-list"></ul>
+      </section>
+
+      <section class="panel status" id="approval-panel" hidden>
+        <div class="panel-head">
+          <h2>3. 확인</h2>
+          <p id="approval-copy"></p>
+        </div>
+
+        <div class="actions" id="approval-actions"></div>
+      </section>
+
+      <section class="panel output" id="output-panel" hidden>
+        <div class="panel-head">
+          <h2>4. Renderer Output</h2>
+          <p id="output-kind-copy">
+            renderer가 handoff를 받아 만든 최소 출력이다.
+          </p>
+        </div>
+
+        <h3 id="output-title"></h3>
+        <p id="output-status" class="output-status"></p>
+        <div id="output-body" class="output-body"></div>
+        <ul id="output-notes" class="note-list"></ul>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/engine-contracts"
+    },
+    {
+      "path": "./packages/engine-core"
+    },
+    {
+      "path": "./packages/renderer-prompt"
+    },
+    {
+      "path": "./packages/renderer-spec"
+    },
+    {
+      "path": "./packages/renderer-architecture"
+    },
+    {
+      "path": "./packages/renderer-review-report"
+    }
+  ]
+}
