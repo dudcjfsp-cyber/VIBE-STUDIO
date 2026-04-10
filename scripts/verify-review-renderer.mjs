@@ -49,6 +49,12 @@ assert.ok(
   reviewOutput.notes.some((note) => note.startsWith("Finding profile: ")),
 );
 assert.ok(
+  reviewOutput.notes.some((note) => note.startsWith("Strength snapshot: ")),
+);
+assert.ok(
+  reviewOutput.notes.some((note) => note.startsWith("Next best move: ")),
+);
+assert.ok(
   reviewOutput.notes.some((note) => note.startsWith("Artifact size: ")),
 );
 assert.ok(
@@ -84,8 +90,14 @@ assert.ok(
 );
 assert.ok(
   fullerOutput.notes.some((note) =>
-    note.startsWith("Review focus: clarity, audience fit, completeness"),
+    note.startsWith("Review focus: "),
   ),
+);
+assert.ok(
+  fullerOutput.notes.some((note) => note.startsWith("Strength snapshot: ")),
+);
+assert.ok(
+  fullerOutput.notes.some((note) => note.startsWith("Next best move: ")),
 );
 assert.ok(
   fullerOutput.notes.some(
@@ -129,6 +141,12 @@ assert.ok(
   polishedOutput.notes.some((note) =>
     note.startsWith("Coverage snapshot: "),
   ),
+);
+assert.ok(
+  polishedOutput.notes.some((note) => note.startsWith("Strength snapshot: ")),
+);
+assert.ok(
+  polishedOutput.notes.some((note) => note.startsWith("Next best move: ")),
 );
 
 console.log(

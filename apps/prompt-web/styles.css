@@ -64,6 +64,30 @@ body {
   line-height: 1.6;
 }
 
+.boundary-callout {
+  margin-top: 18px;
+  max-width: 760px;
+  padding: 16px 18px;
+  border: 1px solid rgba(29, 107, 87, 0.22);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.boundary-callout strong {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.boundary-callout p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .panel {
   margin-top: 18px;
   padding: 24px;

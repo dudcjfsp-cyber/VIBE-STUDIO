@@ -240,7 +240,7 @@ const TAXONOMY_RULES: ReviewTaxonomyRule[] = [
     title: "Audience is not identified",
     when: (signals) => !signals.hasAudience,
     buildDetail: (signals) =>
-      `The draft ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} ${quoteExcerpt(
         signals.excerpt,
       )} does not clearly say who should read or use the result, so audience fit and emphasis are hard to judge.`,
     buildRecommendation: (signals) =>
@@ -254,7 +254,7 @@ const TAXONOMY_RULES: ReviewTaxonomyRule[] = [
     title: "Subject is still underspecified",
     when: (signals) => !signals.hasSubject,
     buildDetail: (signals) =>
-      `The current draft ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} The current draft ${quoteExcerpt(
         signals.excerpt,
       )} does not anchor itself to a concrete product, topic, or object strongly enough to judge relevance and completeness.`,
     buildRecommendation: () =>
@@ -266,7 +266,7 @@ const TAXONOMY_RULES: ReviewTaxonomyRule[] = [
     title: "Usage context is missing",
     when: (signals) => !signals.hasContext,
     buildDetail: (signals) =>
-      `The draft ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} ${quoteExcerpt(
         signals.excerpt,
       )} does not explain where this text will be used, which makes it difficult to judge the right level of detail, framing, and call-to-action.`,
     buildRecommendation: (signals) =>
@@ -281,7 +281,7 @@ const TAXONOMY_RULES: ReviewTaxonomyRule[] = [
     when: (signals) =>
       signals.tokenCount > 6 && signals.hasSubject && !signals.hasValueSignal,
     buildDetail: (signals) =>
-      `The draft identifies the subject, but ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} The draft identifies the subject, but ${quoteExcerpt(
         signals.excerpt,
       )} still does not make the user benefit or outcome explicit enough to judge whether the message is meaningful.`,
     buildRecommendation: (signals) =>
@@ -295,7 +295,7 @@ const TAXONOMY_RULES: ReviewTaxonomyRule[] = [
     title: "Quality bar is mostly implicit",
     when: (signals) => !signals.hasConstraints,
     buildDetail: (signals) =>
-      `Tone, structure, or non-negotiable constraints are still mostly implicit in ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} Tone, structure, or non-negotiable constraints are still mostly implicit in ${quoteExcerpt(
         signals.excerpt,
       )}, so the draft can drift toward a generic result even if the direction is roughly right.`,
     buildRecommendation: (signals) =>
@@ -309,7 +309,7 @@ const TAXONOMY_RULES: ReviewTaxonomyRule[] = [
     title: "Draft is usable but still worth tightening",
     when: () => true,
     buildDetail: (signals) =>
-      `The artifact already covers the main direction (${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} The artifact already covers the main direction (${quoteExcerpt(
         signals.excerpt,
       )}), but a final pass can still improve precision, reader fit, and consistency.`,
     buildRecommendation: (signals) =>
@@ -443,6 +443,32 @@ function buildConstraintExample(kind: ReviewArtifactKind): string {
     default:
       return "tone, length, structure, or must-include points";
   }
+}
+
+function formatLabelList(items: string[]): string {
+  if (items.length === 0) {
+    return "";
+  }
+
+  if (items.length === 1) {
+    return items[0] ?? "";
+  }
+
+  if (items.length === 2) {
+    return `${items[0]} and ${items[1]}`;
+  }
+
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function buildPresentAnchorSummary(signals: ReviewSignalSnapshot): string {
+  const strengths = buildStrengths(signals);
+
+  if (strengths.length === 0) {
+    return "The draft does not yet establish strong review anchors.";
+  }
+
+  return `The draft already establishes ${formatLabelList(strengths)}.`;
 }
 
 function buildStrengths(signals: ReviewSignalSnapshot): string[] {

@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>Vibe Studio Thin App</title>
+    <title>Vibe Studio Validation Surface</title>
     <link rel="stylesheet" href="./styles.css" />
     <script type="importmap">
       {
@@ -24,27 +24,35 @@
   <body>
     <main class="shell">
       <section class="hero">
-        <p class="eyebrow">Vibe Studio Thin App</p>
-        <h1>입력에서 질문, 확인, renderer 출력까지 한 화면에서 검증한다</h1>
+        <p class="eyebrow">Thin App / Validation Surface</p>
+        <h1>Inspect engine signals, approval states, and renderer outputs in one place.</h1>
         <p class="hero-copy">
-          이 화면은 최종 제품이 아니라 수동 검증 surface다. 지금은 4개 renderer의
-          최소 출력과 gate 흐름을 같은 자리에서 직접 확인할 수 있다.
+          This page exists for manual verification of MVP behavior. It helps check
+          create, review, clarify, and approval flows across all four renderers
+          without treating this UI as the product frontend spec.
         </p>
+        <div class="boundary-callout">
+          <strong>Validation surface only.</strong>
+          <p>
+            Use this page to verify engine and renderer behavior quickly in the
+            browser. Do not treat it as the final product UX source-of-truth.
+          </p>
+        </div>
       </section>
 
       <section class="panel composer">
         <div class="panel-head">
-          <h2>1. 입력</h2>
-          <p>카드는 선택 사항이다. 선택하지 않아도 analyze는 동작한다.</p>
+          <h2>1. Input</h2>
+          <p>Cards are optional guidance. You can analyze the request without picking one.</p>
         </div>
 
         <div class="card-row" id="card-row"></div>
 
-        <label class="field-label" for="source-text">요청</label>
+        <label class="field-label" for="source-text">Request</label>
         <textarea
           id="source-text"
           class="source-text"
-          placeholder="예: 회의 전에 내가 뭘 물어봐야 할지 정리해주는 프롬프트 만들어줘"
+          placeholder="Describe what you want to create or review."
         ></textarea>
 
         <div class="actions">
@@ -55,21 +63,21 @@
 
       <section class="panel status" id="analysis-panel" hidden>
         <div class="panel-head">
-          <h2>2. 분석 결과</h2>
-          <p>엔진이 계산한 mode, renderer, next step을 그대로 보여준다.</p>
+          <h2>2. Analysis</h2>
+          <p>The engine exposes mode, renderer, next step, and reasons directly.</p>
         </div>
 
         <div class="signal-grid" id="signal-grid"></div>
         <div class="reason-block">
-          <h3>왜 이렇게 판단했는지</h3>
+          <h3>Why the engine decided this</h3>
           <ul id="reason-list"></ul>
         </div>
       </section>
 
       <section class="panel status" id="clarify-panel" hidden>
         <div class="panel-head">
-          <h2>3. 먼저 질문</h2>
-          <p><code>clarify_first</code> 상태에서는 renderer를 실행하지 않는다.</p>
+          <h2>3. Clarify First</h2>
+          <p><code>clarify_first</code> stops rendering until critical facts are filled.</p>
         </div>
 
         <ul id="clarify-list" class="question-list"></ul>
@@ -77,7 +85,7 @@
 
       <section class="panel status" id="approval-panel" hidden>
         <div class="panel-head">
-          <h2>3. 확인</h2>
+          <h2>3. Approval</h2>
           <p id="approval-copy"></p>
         </div>
 
@@ -88,7 +96,7 @@
         <div class="panel-head">
           <h2>4. Renderer Output</h2>
           <p id="output-kind-copy">
-            renderer가 handoff를 받아 만든 최소 출력이다.
+            This shows the minimum output produced by the selected renderer.
           </p>
         </div>
 

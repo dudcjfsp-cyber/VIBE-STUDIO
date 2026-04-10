@@ -54,6 +54,39 @@ function formatArtifactKind(kind: string): string {
   return `Artifact kind: ${kind}.`;
 }
 
+function formatStrengthSnapshot(strengths: string[]): string {
+  if (strengths.length === 0) {
+    return "Strength snapshot: no strong anchors yet.";
+  }
+
+  return `Strength snapshot: ${strengths.join(", ")}.`;
+}
+
+function formatNextBestMove(findings: ReviewFinding[]): string {
+  const topFinding = findings[0];
+
+  if (!topFinding) {
+    return "Next best move: keep the current direction and do a final tightening pass.";
+  }
+
+  return `Next best move: address "${topFinding.title}" first.`;
+}
+
+function formatReviewFocus(kind: string): string {
+  switch (kind) {
+    case "prompt":
+      return "Review focus: instruction clarity, task framing, input context, and explicit output constraints.";
+    case "product-copy":
+      return "Review focus: audience fit, value clarity, usage context, and overclaim control.";
+    case "plan":
+      return "Review focus: scope clarity, target user, success criteria, and non-goal discipline.";
+    case "architecture":
+      return "Review focus: boundary clarity, component responsibility, interaction flow, and design tradeoffs.";
+    default:
+      return "Review focus: clarity, audience fit, completeness, and explicit constraints.";
+  }
+}
+
 export function renderReviewReport(
   handoff: RendererHandoff,
 ): ReviewReportOutput {
@@ -69,8 +102,10 @@ export function renderReviewReport(
       `Confidence: ${handoff.intent_ir.signals.confidence}`,
       formatArtifactKind(insight.artifactKind),
       formatFindingProfile(findings),
+      formatStrengthSnapshot(insight.strengths),
       formatCoverageNote(insight.missingAreas, insight.strengths),
-      "Review focus: clarity, audience fit, completeness, and explicit constraints.",
+      formatNextBestMove(findings),
+      formatReviewFocus(insight.artifactKind),
       `Artifact excerpt: ${insight.excerpt}`,
       `Artifact size: ${insight.tokenCount} tokens.`,
     ],
