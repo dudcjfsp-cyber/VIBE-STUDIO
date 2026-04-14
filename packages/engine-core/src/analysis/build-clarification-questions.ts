@@ -30,10 +30,10 @@ const QUESTION_MAP: Record<
     intent_key: "focus",
     priority: "medium",
   },
-  "spec.problem_or_scope": {
+  "plan.problem_or_scope": {
     question:
       "이 아이디어가 해결하려는 문제나 이번에 정리할 범위를 한 문장으로 알려줄 수 있나요?",
-    reason: "spec 결과는 문제와 범위가 드러나야 의미 있는 구조화가 가능합니다.",
+    reason: "plan 결과는 문제와 범위가 드러나야 의미 있는 구조화가 가능합니다.",
     improves: "problem framing and scope",
     intent_key: "scope",
     priority: "high",

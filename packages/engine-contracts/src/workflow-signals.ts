@@ -2,7 +2,7 @@ export type ModeId = "create" | "review";
 
 export type RendererId =
   | "prompt"
-  | "spec"
+  | "plan"
   | "architecture"
   | "review-report";
 

@@ -74,7 +74,7 @@ export function scoreRequest(
 
   if (renderer === "architecture") {
     structureScore = 2;
-  } else if (renderer === "spec") {
+  } else if (renderer === "plan") {
     structureScore = 1;
   } else if (
     mode === "review" &&
@@ -88,7 +88,7 @@ export function scoreRequest(
   if (renderer === "architecture" || includesAny(text, HIGH_RISK_PATTERNS)) {
     riskScore = 2;
   } else if (
-    renderer === "spec" ||
+    renderer === "plan" ||
     (mode === "review" &&
       includesAny(text, REVIEW_MEDIUM_IMPACT_PATTERNS))
   ) {

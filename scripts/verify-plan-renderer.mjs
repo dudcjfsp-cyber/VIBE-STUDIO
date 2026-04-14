@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 
 import { createEngine } from "../packages/engine-core/dist/index.js";
-import { specRenderer } from "../packages/renderer-spec/dist/index.js";
+import { planRenderer } from "../packages/renderer-plan/dist/index.js";
 
 const engine = createEngine({
   renderers: {
-    spec: specRenderer,
+    plan: planRenderer,
   },
 });
 
@@ -17,7 +17,7 @@ const request = {
 
 const gatedResult = await engine.run(request);
 
-assert.equal(gatedResult.provisional_renderer, "spec");
+assert.equal(gatedResult.provisional_renderer, "plan");
 assert.equal(gatedResult.next_step, "approval_pending");
 assert.equal(gatedResult.approval_level, "recommended");
 assert.equal(gatedResult.outputs.length, 0);
@@ -29,14 +29,14 @@ const approvedResult = await engine.run(request, {
 });
 
 assert.equal(approvedResult.outputs.length, 1);
-assert.equal(approvedResult.outputs[0]?.renderer, "spec");
+assert.equal(approvedResult.outputs[0]?.renderer, "plan");
 assert.equal(approvedResult.outputs[0]?.validation.status, "ready");
 
-const specOutput = approvedResult.outputs[0]?.output;
+const planOutput = approvedResult.outputs[0]?.output;
 
-assert.ok(specOutput);
-assert.equal(specOutput.title, "Structured Plan Draft");
-assert.ok(specOutput.sections.length >= 3);
+assert.ok(planOutput);
+assert.equal(planOutput.title, "Structured Plan Draft");
+assert.ok(planOutput.sections.length >= 3);
 
 console.log(
   JSON.stringify({
@@ -50,7 +50,7 @@ console.log(
       approval_level: approvedResult.approval_level,
       output_count: approvedResult.outputs.length,
       output_validation: approvedResult.outputs[0]?.validation.status,
-      section_count: specOutput.sections.length,
+      section_count: planOutput.sections.length,
     },
   }),
 );

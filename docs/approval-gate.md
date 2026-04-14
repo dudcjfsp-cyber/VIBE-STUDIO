@@ -87,7 +87,7 @@ It is information whose absence would make the current output shallow, misleadin
 
 Typical critical facts by renderer:
 - `prompt`: core goal, target task, decision-changing context
-- `spec`: problem being solved, target user, scope or goal
+- `plan`: problem being solved, target user, scope or goal
 - `architecture`: system boundary, major components, design focus
 - `review-report`: artifact under review, review lens, evaluation criteria when needed
 
@@ -153,7 +153,7 @@ A strong renderer mismatch exists when the renderer implied by the selected card
 Typical strong mismatches:
 - selected card hint implies `prompt`, inferred renderer is `architecture`
 - selected card hint implies `create`, inferred mode is `review`
-- selected card hint implies `prompt`, inferred renderer is `spec`
+- selected card hint implies `prompt`, inferred renderer is `plan`
 
 Do not treat these as strong mismatch by default:
 - same renderer family with different tone or density

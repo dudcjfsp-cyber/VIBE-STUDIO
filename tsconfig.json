@@ -11,7 +11,7 @@
       "path": "./packages/renderer-prompt"
     },
     {
-      "path": "./packages/renderer-spec"
+      "path": "./packages/renderer-plan"
     },
     {
       "path": "./packages/renderer-architecture"

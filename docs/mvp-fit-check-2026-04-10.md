@@ -25,7 +25,7 @@ Rule:
 
 ### Renderer Coverage
 - `npm.cmd run verify:prompt-cycle`에서 direct render와 approval gating 흐름을 확인했다
-- `npm.cmd run verify:spec-renderer`에서 `recommended` 승인 후 `spec` output 1개와 `ready` validation을 확인했다
+- `npm.cmd run verify:plan-renderer`에서 `recommended` 승인 후 `plan` output 1개와 `ready` validation을 확인했다
 - `npm.cmd run verify:architecture-renderer`에서 `required` 승인 후 `architecture` output 1개와 `ready` validation을 확인했다
 - `npm.cmd run verify:review-renderer`에서 direct review render, `needs-revision` verdict, actionable finding 2개를 확인했다
 - review output은 findings / recommendation 구조를 사용해 create output과 다른 성격을 가진다
@@ -34,7 +34,7 @@ Rule:
 ### Beginner Experience
 - [`apps/prompt-web`](C:\Users\dudcj\OneDrive\바탕 화면\vive studio\apps\prompt-web)는 카드 optional, 이유 설명, 질문/승인 흐름을 보여준다
 - `prompt` 입력은 `direct_render`로 바로 output이 생성되는 것을 확인했다
-- `spec` 입력은 `approval_pending + recommended`로 두 버튼이 노출되고, 승인 후 `Structured Plan Draft` output이 생성되는 것을 확인했다
+- `plan` 입력은 `approval_pending + recommended`로 두 버튼이 노출되고, 승인 후 `Structured Plan Draft` output이 생성되는 것을 확인했다
 - `architecture` 입력은 범위가 비어 있을 때 `clarify_first` 질문으로 멈추는 것을 확인했다
 - `architecture` follow-up 입력은 `approval_pending + required` 후 output이 생성되는 흐름을 확인했다
 - `review-report` 입력은 `Verdict`, `findings`, `recommendation` 구조를 가진 review 결과가 생성되는 것을 확인했다

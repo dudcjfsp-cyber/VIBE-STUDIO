@@ -2,14 +2,14 @@ import { createEngine } from "@vive-studio/engine-core";
 import { architectureRenderer } from "@vive-studio/renderer-architecture";
 import { promptRenderer } from "@vive-studio/renderer-prompt";
 import { reviewReportRenderer } from "@vive-studio/renderer-review-report";
-import { specRenderer } from "@vive-studio/renderer-spec";
+import { planRenderer } from "@vive-studio/renderer-plan";
 
 const engine = createEngine({
   renderers: {
     architecture: architectureRenderer,
     prompt: promptRenderer,
     "review-report": reviewReportRenderer,
-    spec: specRenderer,
+    plan: planRenderer,
   },
 });
 
@@ -75,14 +75,14 @@ const outputNotes = document.querySelector("#output-notes");
 
 const rendererLabels = {
   prompt: "Prompt",
-  spec: "Spec",
+  plan: "Plan",
   architecture: "Architecture",
   "review-report": "Review Report",
 };
 
 const rendererDescriptions = {
   prompt: "prompt renderer가 handoff를 받아 만든 최소 출력이다.",
-  spec: "spec renderer가 handoff를 받아 만든 최소 구조화 결과다.",
+  plan: "plan renderer가 handoff를 받아 만든 최소 구조화 결과다.",
   architecture:
     "architecture renderer가 handoff를 받아 만든 최소 구조 설계 결과다.",
   "review-report":
@@ -303,7 +303,7 @@ function renderOutput(engineResult) {
 
   if (rendered.renderer === "prompt") {
     renderPromptOutput(outputBody, rendered.output);
-  } else if (rendered.renderer === "spec") {
+  } else if (rendered.renderer === "plan") {
     renderSpecOutput(outputBody, rendered.output);
   } else if (rendered.renderer === "architecture") {
     renderArchitectureOutput(outputBody, rendered.output);

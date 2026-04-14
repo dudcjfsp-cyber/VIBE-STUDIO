@@ -11,7 +11,7 @@
     "typecheck": "tsc -b --pretty false",
     "verify:prompt-cycle": "npm run build --silent && node ./scripts/verify-prompt-cycle.mjs",
     "verify:golden-cases": "npm run build --silent && node ./scripts/verify-golden-cases.mjs",
-    "verify:spec-renderer": "npm run build --silent && node ./scripts/verify-spec-renderer.mjs",
+    "verify:plan-renderer": "npm run build --silent && node ./scripts/verify-plan-renderer.mjs",
     "verify:architecture-renderer": "npm run build --silent && node ./scripts/verify-architecture-renderer.mjs",
     "verify:review-renderer": "npm run build --silent && node ./scripts/verify-review-renderer.mjs",
     "serve:prompt-web": "npm run build --silent && node ./scripts/serve-prompt-web.mjs"

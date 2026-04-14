@@ -15,7 +15,7 @@ function describeDesiredOutput(renderer: RendererId): string {
       return "service or system structure";
     case "review-report":
       return "evaluation and improvement report";
-    case "spec":
+    case "plan":
       return "structured planning summary";
     case "prompt":
     default:
@@ -32,7 +32,7 @@ function summarizeIntent(
       return "Define the system structure before implementation.";
     case "review-report":
       return "Review an existing artifact and surface issues or missing points.";
-    case "spec":
+    case "plan":
       return "Structure the idea into a clearer product plan.";
     case "prompt":
     default:

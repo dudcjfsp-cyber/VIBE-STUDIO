@@ -104,15 +104,15 @@ export function detectCriticalFacts(
     }
   }
 
-  if (renderer === "spec") {
-    const specSignals = [
+  if (renderer === "plan") {
+    const planSignals = [
       includesAny(text, SPEC_PROBLEM_PATTERNS),
       includesAny(text, SPEC_AUDIENCE_PATTERNS),
       includesAny(text, SPEC_SCOPE_PATTERNS),
     ].filter(Boolean).length;
 
-    if (specSignals < 2) {
-      missingItems.push("spec.problem_or_scope");
+    if (planSignals < 2) {
+      missingItems.push("plan.problem_or_scope");
     }
   }
 

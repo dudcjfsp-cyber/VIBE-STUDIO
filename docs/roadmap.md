@@ -86,12 +86,12 @@ Goal:
 - 아이디어 구조화 흐름을 추가한다
 
 Includes:
-- `spec` renderer
+- `plan` renderer
 - 관련 validation
 - 관련 golden case 확인
 
 Done when:
-- idea structuring 계열 입력이 `spec`으로 안정적으로 연결된다
+- idea structuring 계열 입력이 `plan`으로 안정적으로 연결된다
 
 ## Phase 5. Architecture Renderer
 Goal:
@@ -150,6 +150,7 @@ Done when:
 These are not part of the initial roadmap baseline:
 - adaptive approval behavior
 - more golden cases
+- separate `technical-spec` renderer candidate documented in `docs/future-technical-spec-renderer.md`
 - richer renderer formatting rules
 - saved history and project management
 - collaboration features

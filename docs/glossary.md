@@ -72,7 +72,7 @@ Rule:
 사용자-facing 결과 방향을 가리키는 제품 용어.
 MVP에서 결과 방향과 renderer family는 아래처럼 1:1로 대응한다.
 - 프롬프트 = `prompt`
-- 기획형 구조 정리 = `spec`
+- 기획 정리 = `plan`
 - 구조 설계 = `architecture`
 - 검토 리포트 = `review-report`
 
@@ -82,7 +82,7 @@ Rule:
 
 ### Renderer
 공통 handoff를 특정 결과 형식으로 바꾸는 출력 계층.
-예: `prompt`, `spec`, `architecture`, `review-report`
+예: `prompt`, `plan`, `architecture`, `review-report`
 
 Rule:
 - renderer는 출력 형식의 책임을 가진다

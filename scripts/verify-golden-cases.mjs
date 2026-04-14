@@ -7,7 +7,7 @@ import { createEngine } from "../packages/engine-core/dist/index.js";
 import { architectureRenderer } from "../packages/renderer-architecture/dist/index.js";
 import { promptRenderer } from "../packages/renderer-prompt/dist/index.js";
 import { reviewReportRenderer } from "../packages/renderer-review-report/dist/index.js";
-import { specRenderer } from "../packages/renderer-spec/dist/index.js";
+import { planRenderer } from "../packages/renderer-plan/dist/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -168,7 +168,7 @@ validateParsedCases(cases);
 const engine = createEngine({
   renderers: {
     prompt: promptRenderer,
-    spec: specRenderer,
+    plan: planRenderer,
     architecture: architectureRenderer,
     "review-report": reviewReportRenderer,
   },

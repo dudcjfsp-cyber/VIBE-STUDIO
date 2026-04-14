@@ -50,7 +50,7 @@ These cases represent the default target user: an AI beginner who is unsure what
 - Input: `이 아이디어를 서비스 기획처럼 정리해줘. 혼자 사는 사람들이 남는 반찬을 이웃끼리 나누는 앱이야.`
 - Selected card: none
 - Expected `mode_guess`: `create`
-- Expected `provisional_renderer`: `spec`
+- Expected `provisional_renderer`: `plan`
 - Expected `missing_critical_facts`: `false`
 - Expected `ambiguity_score`: `1`
 - Expected `structure_score`: `1`

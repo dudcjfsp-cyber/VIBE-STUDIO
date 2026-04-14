@@ -62,7 +62,7 @@ MVP는 아래 기준이 모두 충족되면 성공으로 본다.
 
 ### 5.3 Renderer Coverage
 - 프롬프트 (`prompt`) 결과 방향은 기대 renderer가 `prompt`인 golden case에서 최소 1회 성공해야 한다
-- 기획형 구조 정리 (`spec`) 결과 방향은 기대 renderer가 `spec`인 golden case에서 최소 1회 성공해야 한다
+- 기획 정리 (`plan`) 결과 방향은 기대 renderer가 `plan`인 golden case에서 최소 1회 성공해야 한다
 - 구조 설계 (`architecture`) 결과 방향은 기대 renderer가 `architecture`인 golden case에서 최소 1회 성공해야 한다
 - 검토 리포트 (`review-report`) 결과 방향은 기대 renderer가 `review-report`인 golden case에서 최소 1회 성공해야 한다
 - review 결과는 생성 결과와 성격이 분명히 달라야 한다

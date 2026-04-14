@@ -25,7 +25,7 @@ Rule:
 MVP의 기술 목표는 아래와 같다.
 - 엔진 코어를 renderer-neutral하게 유지한다
 - 앱의 사용자 경험과 엔진의 의미 해석을 분리한다
-- `prompt`, `spec`, `architecture`, `review-report`를 같은 공통 handoff 위에서 지원한다
+- `prompt`, `plan`, `architecture`, `review-report`를 같은 공통 handoff 위에서 지원한다
 - approval gate를 규칙 우선, 점수 보조 방식으로 통합한다
 - 초보자 입력에서도 explainable routing이 가능하게 한다
 - golden cases 기준으로 동작 검증이 가능하게 한다
@@ -69,7 +69,7 @@ Rule:
 - `packages/engine-contracts`
 - `packages/engine-core`
 - `packages/renderer-prompt`
-- `packages/renderer-spec`
+- `packages/renderer-plan`
 - `packages/renderer-architecture`
 - `packages/renderer-review-report`
 
@@ -93,7 +93,7 @@ MVP에서 중요한 계약은 아래와 같다.
 
 Rule:
 - `IntentIr`는 renderer-neutral해야 한다
-- prompt/spec/architecture/review 전용 문장 재작성은 IR 안에 두지 않는다
+- prompt/plan/architecture/review 전용 문장 재작성은 IR 안에 두지 않는다
 - renderer-specific formatting은 각 renderer package 안에서만 처리한다
 - 현재 renderer output baseline은 내부 계약과 validation 바닥선이지 최종 사용자-facing 제품 사양이 아니다
 
@@ -151,7 +151,7 @@ renderer별 현재 최소 output shape와 validation 바닥선은 `docs/renderer
 
 MVP renderer:
 - `prompt`
-- `spec`
+- `plan`
 - `architecture`
 - `review-report`
 
@@ -239,7 +239,7 @@ Rule:
 2. `engine-core` analyze flow
 3. approval gate integration
 4. `renderer-prompt`
-5. `renderer-spec`
+5. `renderer-plan`
 6. `renderer-architecture`
 7. `renderer-review-report`
 8. golden case verification loop

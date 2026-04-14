@@ -12,7 +12,7 @@ The current repo is a reference source for extracted boundaries, not the new cor
 vibe-studio/
   apps/
     prompt-web/
-    spec-web/
+    plan-web/
     architecture-web/
 
   packages/
@@ -58,10 +58,10 @@ vibe-studio/
         validate-prompt-output.ts
         index.ts
 
-    renderer-spec/
+    renderer-plan/
       src/
-        render-spec.ts
-        validate-spec-output.ts
+        render-plan.ts
+        validate-plan-output.ts
         index.ts
 
     renderer-architecture/
@@ -81,11 +81,11 @@ vibe-studio/
 
 ## Why This Shape
 - It keeps the core renderer-neutral.
-- It allows prompt, spec, architecture, and future review outputs to share one engine.
-- It avoids carrying spec-shaped compatibility into the new project.
+- It allows prompt, plan, architecture, and future review outputs to share one engine.
+- It avoids carrying plan-shaped compatibility into the new project.
 
 ## Core Principles
-- No `spec` or `prompt` naming inside shared engine contracts.
+- No `plan` or `prompt` naming inside shared engine contracts.
 - Intent IR must stay renderer-neutral.
 - Renderer wording and output scaffolding belong only inside renderer packages.
 - UI state must not leak into engine contracts.
@@ -108,8 +108,8 @@ vibe-studio/
 ### Do not carry over
 - `standard_output` as the engine center
 - `SPEC_INTENT_FIELD_MAP`
-- spec-shaped pipeline naming such as `runSpecTransmutePipeline`
-- bridges that rebuild prompt output from spec results
+- plan-shaped pipeline naming such as `runPlanTransmutePipeline`
+- bridges that rebuild prompt output from plan results
 - prompt-native rewrite logic inside intent derivation
 - domain-specific lexical exception bundles in the core
 - UI shadow state or compatibility-only app state
@@ -118,7 +118,7 @@ vibe-studio/
 1. `engine-contracts`
 2. `engine-core`
 3. `renderer-prompt`
-4. `renderer-spec`
+4. `renderer-plan`
 5. `renderer-architecture`
 6. `review-report` renderer
 7. optional lightweight app composition only if manual verification needs it

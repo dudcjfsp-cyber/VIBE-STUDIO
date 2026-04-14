@@ -53,7 +53,7 @@ Rule:
 
 ## 4. Spec Baseline
 패키지:
-- `packages/renderer-spec`
+- `packages/renderer-plan`
 
 현재 최소 출력 형식:
 - `title: string`

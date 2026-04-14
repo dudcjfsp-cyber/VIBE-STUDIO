@@ -5,7 +5,7 @@ Purpose: separate product workflow from engine design
 
 ## Goal
 Vibe Studio is a structured-thinking platform.
-It turns vague natural-language input into outputs such as prompt, spec, architecture, and review reports.
+It turns vague natural-language input into outputs such as prompt, plan, architecture, and review reports.
 
 Rule:
 - the product may guide, interrupt, and coach
@@ -14,7 +14,7 @@ Rule:
 ## Fixed Terms
 - Track: user-facing entry choice in the app
 - Mode: session posture such as `create` or `review`
-- Renderer: output family such as `prompt`, `spec`, `architecture`, `review-report`
+- Renderer: output family such as `prompt`, `plan`, `architecture`, `review-report`
 - Workflow Policy: rules for approval, pivot suggestion, warning escalation, and force-run
 - Engine Core: renderer-neutral analysis, validation, and handoff system
 
@@ -55,7 +55,7 @@ Responsibilities:
 - validate renderer-specific output
 
 ## Track Mapping
-- Track A: Idea Structuring -> `mode=create`, primary renderer=`spec`
+- Track A: Idea Structuring -> `mode=create`, primary renderer=`plan`
 - Track B: Command Optimization -> `mode=create`, primary renderer=`prompt`
 - Track C: System Architecture -> `mode=create`, primary renderer=`architecture`
 - Track D: Critical Review -> `mode=review`, primary renderer=`review-report`
@@ -107,8 +107,8 @@ Rule:
 ### Do not carry
 - `standard_output` as the engine center
 - `SPEC_INTENT_FIELD_MAP`
-- spec-shaped pipeline naming
-- spec-to-prompt bridge logic
+- plan-shaped pipeline naming
+- plan-to-prompt bridge logic
 - prompt-native rewrite rules inside intent derivation
 - UI shadow state and compatibility-only app state
 - domain-specific lexical exception bundles in the core
@@ -117,7 +117,7 @@ Rule:
 1. `engine-contracts`
 2. `engine-core`
 3. `renderer-prompt`
-4. `renderer-spec`
+4. `renderer-plan`
 5. `renderer-architecture`
 6. `review-report` renderer
 7. optional lightweight app integration if a manual verification surface is needed

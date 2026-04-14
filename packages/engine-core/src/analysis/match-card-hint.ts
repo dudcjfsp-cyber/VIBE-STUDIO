@@ -12,7 +12,7 @@ export type CardIntent = {
 const CARD_HINT_MAP: Record<CardHint, CardIntent> = {
   "idea-structuring": {
     mode: "create",
-    renderer: "spec",
+    renderer: "plan",
   },
   "command-optimization": {
     mode: "create",

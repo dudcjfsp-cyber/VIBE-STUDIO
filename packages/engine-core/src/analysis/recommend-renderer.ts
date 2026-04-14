@@ -30,7 +30,7 @@ const SPEC_PATTERNS = [
   /문제/u,
   /대상/u,
   /목표/u,
-  /spec/i,
+  /plan/i,
   /scope/i,
 ];
 
@@ -63,7 +63,7 @@ export function recommendRenderer(
 
   const scores: Record<Exclude<RendererId, "review-report">, number> = {
     prompt: countMatches(text, PROMPT_PATTERNS),
-    spec: countMatches(text, SPEC_PATTERNS),
+    plan: countMatches(text, SPEC_PATTERNS),
     architecture: countMatches(text, ARCHITECTURE_PATTERNS),
   };
 
@@ -75,12 +75,12 @@ export function recommendRenderer(
     return right[1] - left[1];
   });
 
-  const [bestRenderer, bestScore] = ordered[0] ?? ["spec", 0];
-  const [, secondScore] = ordered[1] ?? ["spec", 0];
+  const [bestRenderer, bestScore] = ordered[0] ?? ["plan", 0];
+  const [, secondScore] = ordered[1] ?? ["plan", 0];
   const fallbackRenderer =
     cardIntent?.renderer && cardIntent.renderer !== "review-report"
       ? cardIntent.renderer
-      : "spec";
+      : "plan";
 
   if (bestScore === 0) {
     return fallbackRenderer;

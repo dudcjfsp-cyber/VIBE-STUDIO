@@ -1,10 +1,10 @@
 import type { RendererHandoff } from "@vive-studio/engine-contracts";
 
-import type { SpecOutput, SpecSection } from "./spec-output.js";
+import type { PlanOutput, PlanSection } from "./plan-output.js";
 
-function buildCoreSections(handoff: RendererHandoff): SpecSection[] {
+function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
   const { intent_ir: intentIr } = handoff;
-  const sections: SpecSection[] = [];
+  const sections: PlanSection[] = [];
 
   sections.push({
     title: "Idea Summary",
@@ -88,7 +88,7 @@ function buildCoreSections(handoff: RendererHandoff): SpecSection[] {
   return sections;
 }
 
-export function renderSpec(handoff: RendererHandoff): SpecOutput {
+export function renderPlan(handoff: RendererHandoff): PlanOutput {
   return {
     title: "Structured Plan Draft",
     sections: buildCoreSections(handoff),
