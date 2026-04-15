@@ -1,0 +1,27 @@
+{
+  "name": "@vive-studio/product-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vive-studio/engine-contracts": "file:../../packages/engine-contracts",
+    "@vive-studio/engine-core": "file:../../packages/engine-core",
+    "@vive-studio/renderer-architecture": "file:../../packages/renderer-architecture",
+    "@vive-studio/renderer-plan": "file:../../packages/renderer-plan",
+    "@vive-studio/renderer-prompt": "file:../../packages/renderer-prompt",
+    "@vive-studio/renderer-review-report": "file:../../packages/renderer-review-report",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "vite": "^7.1.10"
+  }
+}

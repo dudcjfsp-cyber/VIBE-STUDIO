@@ -14,7 +14,9 @@
     "verify:plan-renderer": "npm run build --silent && node ./scripts/verify-plan-renderer.mjs",
     "verify:architecture-renderer": "npm run build --silent && node ./scripts/verify-architecture-renderer.mjs",
     "verify:review-renderer": "npm run build --silent && node ./scripts/verify-review-renderer.mjs",
-    "serve:prompt-web": "npm run build --silent && node ./scripts/serve-prompt-web.mjs"
+    "serve:prompt-web": "npm run build --silent && node ./scripts/serve-prompt-web.mjs",
+    "dev:product-web": "npm run dev -w @vive-studio/product-web -- --host 127.0.0.1 --port 4174",
+    "build:product-web": "npm run build -w @vive-studio/product-web"
   },
   "devDependencies": {
     "typescript": "^5.6.3"
