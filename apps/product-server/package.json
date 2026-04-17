@@ -1,0 +1,21 @@
+{
+  "name": "@vive-studio/product-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@vive-studio/engine-contracts": "file:../../packages/engine-contracts",
+    "@vive-studio/engine-core": "file:../../packages/engine-core",
+    "@vive-studio/llm-provider-openai": "file:../../packages/llm-provider-openai",
+    "@vive-studio/renderer-architecture": "file:../../packages/renderer-architecture",
+    "@vive-studio/renderer-plan": "file:../../packages/renderer-plan",
+    "@vive-studio/renderer-prompt": "file:../../packages/renderer-prompt",
+    "@vive-studio/renderer-review-report": "file:../../packages/renderer-review-report"
+  }
+}

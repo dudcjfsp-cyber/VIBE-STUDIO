@@ -1,8 +1,10 @@
 import type { HintOption } from "../types";
 
 export const startExamples = [
-  "회의 전에 무엇을 물어봐야 할지 정리해줘.",
-  "이 앱 기획안이 말이 되는지 먼저 봐줘.",
+  "신입 PM이 기능 요청을 받았을 때 바로 쓸 질문 프롬프트를 만들어줘.",
+  "동네 커피 모임 앱 아이디어를 MVP 기획 정리로 잡아줘.",
+  "사장님과 손님이 함께 쓰는 예약 서비스의 MVP 구조를 잡아줘.",
+  "이 소개 문구 초안을 검토해줘: 우리 앱은 누구나 생산성을 10배 높여줍니다.",
 ];
 
 export const hintOptions: HintOption[] = [

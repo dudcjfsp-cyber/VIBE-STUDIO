@@ -36,12 +36,21 @@ Purpose: thin app을 동결한 상태에서 별도 React 제품 프론트의 목
 - 질문, 확인, 결과를 사용자 친화적인 UX로 번역
 - engine signal을 사용자-facing 흐름으로 표현
 - `prompt`, `plan`, `architecture`, `review-report` 결과를 서로 다른 성격으로 보여주기
+- provider 선택, API key 입력, 모델 선택 UI 제공
+- product runtime API를 호출하고, credential을 브라우저 세션 범위 안에서만 유지하기
 
 새 React 제품 프론트가 아직 담당하지 않는 것:
 - 저장/히스토리
 - 협업
 - adaptive policy
 - 고급 사용자용 세밀한 제어
+
+제품 프론트의 런타임 경계:
+- `apps/product-web`은 브라우저 UX를 담당한다
+- 브라우저는 provider key를 session storage에만 30분 동안 유지한다
+- 실제 model/provider 호출은 `apps/product-server` 같은 server runtime이 요청 단위로 중계한다
+- server runtime은 전달받은 key를 저장하지 않는다
+- 브라우저는 server runtime API를 통해 결과와 모델 목록을 요청한다
 
 ## 4. thin app 동결 원칙
 현재 `apps/prompt-web`은 검증 surface로 유지한다.

@@ -90,12 +90,13 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
 
 export function renderPlan(handoff: RendererHandoff): PlanOutput {
   return {
-    title: "Structured Plan Draft",
+    title: "기획 정리 초안",
     sections: buildCoreSections(handoff),
     notes: [
       `Mode: ${handoff.intent_ir.mode}`,
       `Recommended renderer: ${handoff.intent_ir.intent.output_kind}`,
       `Confidence: ${handoff.intent_ir.signals.confidence}`,
+      "Fallback: deterministic planning template",
     ],
   };
 }

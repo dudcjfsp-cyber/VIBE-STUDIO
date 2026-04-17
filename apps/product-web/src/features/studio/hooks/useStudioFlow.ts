@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { CardHint, EngineRequest, EngineResult } from "@vive-studio/engine-contracts";
 
-import { productEngine } from "../../../lib/engine/createProductEngine";
+import { runProductEngine } from "../../../lib/engine/productEngineClient";
+import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
 import type { StageSnapshot } from "../types";
 
 type SubmitOptions = {
@@ -9,8 +10,14 @@ type SubmitOptions = {
   text: string;
 };
 
-export function useStudioFlow() {
+type UseStudioFlowOptions = {
+  blockReason: string | undefined;
+  runtime: ProviderRuntimeConfig | undefined;
+};
+
+export function useStudioFlow(options: UseStudioFlowOptions) {
   const [input, setInput] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [selectedHint, setSelectedHint] = useState<CardHint | undefined>();
   const [snapshot, setSnapshot] = useState<StageSnapshot>({
     stage: "start",
@@ -38,11 +45,27 @@ export function useStudioFlow() {
     nextRequest: EngineRequest,
     approval?: { recommended?: boolean; required?: boolean },
   ) {
+    if (options.blockReason) {
+      setErrorMessage(options.blockReason);
+      return;
+    }
+
+    setErrorMessage(undefined);
     setIsBusy(true);
 
     try {
-      const result = await productEngine.run(nextRequest, approval ? { approval } : undefined);
+      const result = await runProductEngine(
+        nextRequest,
+        approval ? { approval } : undefined,
+        options.runtime,
+      );
       setSnapshot(mapResultToStage(result));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "요청을 처리하는 중에 문제가 생겼어요.",
+      );
     } finally {
       setIsBusy(false);
     }
@@ -77,6 +100,7 @@ export function useStudioFlow() {
 
   function reset() {
     setInput("");
+    setErrorMessage(undefined);
     setSelectedHint(undefined);
     setSnapshot({
       stage: "start",
@@ -88,12 +112,16 @@ export function useStudioFlow() {
   return {
     canSubmit,
     continueAfterApproval,
+    errorMessage,
     input,
     isBusy,
     request,
     reset,
     selectedHint,
-    setInput,
+    setInput(value: string) {
+      setErrorMessage(undefined);
+      setInput(value);
+    },
     setSelectedHint,
     snapshot,
     submit,

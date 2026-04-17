@@ -49,6 +49,8 @@ Rule:
 
 - `App Layer`
   입력, 질문, 승인, 결과 표시를 담당한다
+- `Product Runtime Layer`
+  provider credential, model runtime, app-facing API를 담당한다
 - `Workflow Policy Layer`
   approval, pivot, friction의 표현 강도를 결정한다
 - `Engine Core`
@@ -58,6 +60,7 @@ Rule:
 
 Rule:
 - app는 사용자 상호작용을 소유한다
+- product runtime은 provider 접근과 runtime 보안을 소유한다
 - engine core는 의미 해석과 판정을 소유한다
 - renderer는 출력 형식만 소유한다
 - MVP에서는 `workflow policy`를 독립 패키지로 분리하지 않고 app/orchestrator 내부의 논리 계층으로 둔다
@@ -66,8 +69,11 @@ Rule:
 모노레포 기준 권장 구조는 아래와 같다.
 
 - `apps/`
+- `apps/product-web`
+- `apps/product-server`
 - `packages/engine-contracts`
 - `packages/engine-core`
+- `packages/llm-provider-openai`
 - `packages/renderer-prompt`
 - `packages/renderer-plan`
 - `packages/renderer-architecture`
@@ -76,7 +82,9 @@ Rule:
 Dependency rule:
 - `engine-core`는 `engine-contracts`만 참조한다
 - `renderer-*`도 `engine-contracts`만 참조한다
-- app은 core와 renderers를 조합한다
+- `llm-provider-*`는 model/provider integration만 소유한다
+- `product-server`는 core, renderers, provider adapter를 조합한다
+- `product-web`은 app UX와 server API 호출을 소유한다
 - core는 특정 renderer 구현을 직접 소유하지 않는다
 
 ## 6. 핵심 계약
@@ -175,6 +183,12 @@ Renderer non-responsibilities:
 - 결과 렌더링
 - pivot 제안 UI
 
+### Product runtime responsibilities
+- provider API 호출 경계와 per-request runtime 조합 소유
+- LLM-backed renderer 조합
+- app-facing analyze/run endpoint 제공
+- 브라우저 세션에서 전달받은 credential을 저장하지 않고 중계
+
 ### Workflow policy responsibilities
 - `recommended`와 `required`의 UI 강도 결정
 - pivot 제안 표현 결정
@@ -191,7 +205,22 @@ Renderer non-responsibilities:
 
 Rule:
 - app와 policy는 표현을 소유하고
+- runtime은 provider 경계와 키 비저장 중계를 소유하고
 - engine은 의미 판단을 소유한다
+
+### Browser session credential rule
+제품 프론트는 provider credential을 영구 저장하지 않는다.
+
+현재 제품 프론트는:
+- provider 선택, API key 입력, 모델 선택을 브라우저에서 받는다
+- API key와 선택 모델을 session storage에만 저장한다
+- session storage 기록은 30분 뒤 만료되어 자동 삭제된다
+- product runtime은 credential을 메모리/디스크에 저장하지 않고 요청 단위로만 사용한다
+
+Rule:
+- 제품 프론트는 local storage 같은 장기 저장소에 API key를 남기지 않는다
+- product runtime은 사용자 API key를 서버 설정으로 승격하지 않는다
+- 모델 목록 조회와 renderer 실행은 같은 provider/key 범위 안에서 이뤄져야 한다
 
 ### Thin App boundary
 `apps/prompt-web` 같은 thin app은 MVP에서 내부 수동 검증 surface로 취급한다.

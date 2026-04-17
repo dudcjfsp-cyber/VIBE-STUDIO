@@ -2,10 +2,16 @@
   "files": [],
   "references": [
     {
+      "path": "./apps/product-server"
+    },
+    {
       "path": "./packages/engine-contracts"
     },
     {
       "path": "./packages/engine-core"
+    },
+    {
+      "path": "./packages/llm-provider-openai"
     },
     {
       "path": "./packages/renderer-prompt"
