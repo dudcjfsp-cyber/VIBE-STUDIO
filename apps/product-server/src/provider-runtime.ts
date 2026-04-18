@@ -284,7 +284,7 @@ function createGeminiStructuredClient(
             ],
             generationConfig: {
               responseMimeType: "application/json",
-              responseSchema: request.schema,
+              responseJsonSchema: request.schema,
               ...(typeof request.temperature === "number"
                 ? { temperature: request.temperature }
                 : {}),

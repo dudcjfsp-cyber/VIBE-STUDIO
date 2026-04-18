@@ -25,21 +25,21 @@ function buildComponents(handoff: RendererHandoff): ArchitectureComponent[] {
   const components: ArchitectureComponent[] = [];
   const seen = new Set<string>();
 
-  if (/사용자/u.test(text) || /고객/u.test(text)) {
+  if (/사용자/u.test(text) || /고객/u.test(text) || /customer/i.test(text)) {
     pushComponent(
       components,
       seen,
-      "User App",
-      "Collect user actions and show service state to end users.",
+      "사용자 앱",
+      "사용자 요청을 받고 예약 상태나 핵심 서비스 상태를 보여줍니다.",
     );
   }
 
-  if (/점주/u.test(text) || /가게/u.test(text) || /merchant/i.test(text)) {
+  if (/사장/u.test(text) || /점주/u.test(text) || /merchant/i.test(text)) {
     pushComponent(
       components,
       seen,
-      "Merchant Console",
-      "Manage store-side actions, incoming work, and operational updates.",
+      "매장 관리자 화면",
+      "매장 측 요청을 처리하고 운영 상태를 관리합니다.",
     );
   }
 
@@ -47,24 +47,24 @@ function buildComponents(handoff: RendererHandoff): ArchitectureComponent[] {
     pushComponent(
       components,
       seen,
-      "Admin Console",
-      "Handle oversight, exceptions, and service-wide coordination.",
+      "운영 관리자 화면",
+      "예외 상황과 서비스 전반 운영을 점검합니다.",
     );
   }
 
   pushComponent(
     components,
     seen,
-    "Core Backend",
-    "Coordinate shared business rules, state changes, and service integration.",
+    "핵심 백엔드",
+    "공통 비즈니스 규칙, 상태 변경, 서비스 간 연동을 조정합니다.",
   );
 
   if (/결제/u.test(text) || /payment/i.test(text)) {
     pushComponent(
       components,
       seen,
-      "Payment Service",
-      "Authorize, confirm, and reconcile payment state.",
+      "결제 처리 모듈",
+      "결제 승인, 결제 상태 갱신, 정산 연동 지점을 담당합니다.",
     );
   }
 
@@ -72,8 +72,8 @@ function buildComponents(handoff: RendererHandoff): ArchitectureComponent[] {
     pushComponent(
       components,
       seen,
-      "Notification Service",
-      "Send status changes and event-driven messages to the right audience.",
+      "알림 모듈",
+      "상태 변경 이벤트를 적절한 사용자에게 전달합니다.",
     );
   }
 
@@ -81,8 +81,8 @@ function buildComponents(handoff: RendererHandoff): ArchitectureComponent[] {
     pushComponent(
       components,
       seen,
-      "Shared Data Layer",
-      "Persist core entities and make cross-surface state consistent.",
+      "공유 데이터 저장소",
+      "핵심 엔티티와 상태를 일관되게 저장합니다.",
     );
   }
 
@@ -96,40 +96,40 @@ function buildFlows(
   const componentNames = new Set(components.map((component) => component.name));
   const primarySteps: string[] = [];
 
-  if (componentNames.has("User App")) {
-    primarySteps.push("User App collects the primary request or action.");
+  if (componentNames.has("사용자 앱")) {
+    primarySteps.push("사용자 앱이 핵심 요청이나 예약 행동을 수집합니다.");
   }
 
-  primarySteps.push("Core Backend applies the main business rules and orchestration.");
+  primarySteps.push("핵심 백엔드가 비즈니스 규칙을 적용하고 상태를 조정합니다.");
 
-  if (componentNames.has("Payment Service")) {
-    primarySteps.push("Payment Service confirms or updates transaction state.");
+  if (componentNames.has("결제 처리 모듈")) {
+    primarySteps.push("결제 처리 모듈이 결제 승인 여부와 거래 상태를 갱신합니다.");
   }
 
-  if (componentNames.has("Merchant Console")) {
-    primarySteps.push("Merchant Console reflects the operational state for store-side action.");
+  if (componentNames.has("매장 관리자 화면")) {
+    primarySteps.push("매장 관리자 화면이 운영자 행동과 승인 처리를 반영합니다.");
   }
 
-  if (componentNames.has("Admin Console")) {
-    primarySteps.push("Admin Console monitors exceptions or escalations.");
+  if (componentNames.has("운영 관리자 화면")) {
+    primarySteps.push("운영 관리자 화면이 예외 상황을 모니터링하고 개입합니다.");
   }
 
-  if (componentNames.has("Notification Service")) {
-    primarySteps.push("Notification Service delivers the relevant status change.");
+  if (componentNames.has("알림 모듈")) {
+    primarySteps.push("알림 모듈이 상태 변경 결과를 관련 사용자에게 전달합니다.");
   }
 
   const flows: ArchitectureFlow[] = [
     {
-      name: "Primary Coordination Flow",
+      name: "주요 처리 흐름",
       steps: primarySteps,
     },
   ];
 
   if (handoff.intent_ir.analysis.missing_information.length > 0) {
     flows.push({
-      name: "Clarify Before Locking",
+      name: "추가 확인 필요 항목",
       steps: handoff.intent_ir.analysis.missing_information.map(
-        (item) => `Clarify: ${item}`,
+        (item) => `확인 필요: ${item}`,
       ),
     });
   }
@@ -151,7 +151,7 @@ export function renderArchitecture(
   const components = buildComponents(handoff);
 
   return {
-    title: "Architecture Outline",
+    title: "구조 설계 초안",
     system_boundary: buildBoundary(handoff),
     components,
     interaction_flows: buildFlows(components, handoff),

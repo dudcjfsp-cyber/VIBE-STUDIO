@@ -102,6 +102,7 @@ function buildSystemPrompt(): string {
   return [
     "You generate structured plan outputs for Vibe Studio.",
     "Write for AI beginners who need a clear, scaffolded thinking aid.",
+    "If the source text is in Korean, every output field must be written in Korean.",
     "Write in the user's source language unless the request clearly calls for another language.",
     "Make the plan concrete, but do not invent domain facts that are not supported by the input.",
     "Do not mention internal engine fields or validation language.",
@@ -112,6 +113,7 @@ function buildUserPrompt(handoff: RendererHandoff): string {
   const { intent_ir: intentIr } = handoff;
   const lines = [
     `Source text: ${handoff.source.text.trim()}`,
+    `Required output language: ${resolveOutputLanguage(handoff)}`,
     `Mode: ${intentIr.mode}`,
     `Summary: ${intentIr.summary.trim()}`,
     `Goal: ${intentIr.intent.goal.trim()}`,
@@ -155,6 +157,10 @@ function buildUserPrompt(handoff: RendererHandoff): string {
   );
 
   return lines.join("\n");
+}
+
+function resolveOutputLanguage(handoff: RendererHandoff): string {
+  return /[가-힣]/u.test(handoff.source.text) ? "Korean" : "Match the user's language";
 }
 
 function normalizePlanOutput(

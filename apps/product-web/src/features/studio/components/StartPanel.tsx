@@ -1,6 +1,7 @@
 import type { CardHint } from "@vive-studio/engine-contracts";
 
 import type { ProviderId, ProviderModel } from "../../../lib/provider/types";
+import type { StartExample } from "../types";
 import { ProviderSessionPanel } from "./ProviderSessionPanel";
 import { hintOptions, startExamples } from "../data/startExamples";
 
@@ -15,7 +16,7 @@ type StartPanelProps = {
   flowErrorMessage: string | undefined;
   input: string;
   isBusy: boolean;
-  onExampleClick: (value: string) => void;
+  onExampleClick: (example: StartExample) => void;
   onProviderApiKeyChange: (value: string) => void;
   onProviderClear: () => void;
   onProviderConnect: () => void;
@@ -140,11 +141,11 @@ export function StartPanel(props: StartPanelProps) {
             {startExamples.map((example) => (
               <button
                 className="example-chip"
-                key={example}
+                key={example.id}
                 onClick={() => onExampleClick(example)}
                 type="button"
               >
-                {example}
+                {example.text}
               </button>
             ))}
           </div>

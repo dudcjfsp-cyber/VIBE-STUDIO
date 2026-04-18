@@ -4,9 +4,9 @@ import type {
   RendererId,
 } from "@vive-studio/engine-contracts";
 
-import { productEngine } from "./createProductEngine";
 import { runRemoteProductEngine } from "../provider/providerRuntimeClient";
 import type { ProviderRuntimeConfig } from "../provider/types";
+import { productEngine } from "./createProductEngine";
 
 export type ProductEngineRunOptions = {
   targets?: RendererId[];
@@ -31,11 +31,13 @@ export async function runProductEngine(
 
   try {
     return await runRemoteProductEngine(request, options, runtime);
-  } catch {
+  } catch (error) {
     if (!runtime || runtime.provider === "local") {
       return productEngine.run(request, options);
     }
 
-    throw new Error("선택한 모델로 요청을 처리하지 못했어요. 키와 모델 연결 상태를 확인해 주세요.");
+    throw error instanceof Error
+      ? error
+      : new Error("선택한 모델로 요청을 처리하지 못했어요.");
   }
 }

@@ -35,7 +35,7 @@ assert.equal(approvedResult.outputs[0]?.validation.status, "ready");
 const planOutput = approvedResult.outputs[0]?.output;
 
 assert.ok(planOutput);
-assert.equal(planOutput.title, "Structured Plan Draft");
+assert.ok(planOutput.title.trim().length > 0);
 assert.ok(planOutput.sections.length >= 3);
 
 console.log(

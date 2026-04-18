@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { EngineResult } from "@vive-studio/engine-contracts";
 import type { ArchitectureOutput } from "@vive-studio/renderer-architecture";
 import type { PlanOutput } from "@vive-studio/renderer-plan";
@@ -11,22 +13,50 @@ type ResultPanelProps = {
 
 export function ResultPanel({ onReset, result }: ResultPanelProps) {
   const output = result.outputs[0];
+  const [copyLabel, setCopyLabel] = useState("복사");
 
   if (!output) {
     return null;
+  }
+
+  async function handleCopyPrompt() {
+    if (output.renderer !== "prompt") {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText((output.output as PromptOutput).prompt);
+      setCopyLabel("복사됨");
+      window.setTimeout(() => setCopyLabel("복사"), 1600);
+    } catch {
+      setCopyLabel("복사 실패");
+      window.setTimeout(() => setCopyLabel("복사"), 1600);
+    }
   }
 
   return (
     <section className="result-panel">
       <p className="panel-kicker">결과</p>
       <h2>{readOutputTitle(output)}</h2>
-      <p className="panel-copy">
-        {renderSummary(output.renderer)}
-      </p>
+      <p className="panel-copy">{renderSummary(output.renderer)}</p>
 
       <div className="result-body">
         {output.renderer === "prompt" ? (
-          <pre className="prompt-block">{(output.output as PromptOutput).prompt}</pre>
+          <section className="result-section result-section-prompt">
+            <div className="result-toolbar">
+              <h3>프롬프트</h3>
+              <button
+                className="ghost-action copy-action"
+                onClick={() => {
+                  void handleCopyPrompt();
+                }}
+                type="button"
+              >
+                {copyLabel}
+              </button>
+            </div>
+            <pre className="prompt-block">{(output.output as PromptOutput).prompt}</pre>
+          </section>
         ) : null}
 
         {output.renderer === "plan"
@@ -45,11 +75,11 @@ export function ResultPanel({ onReset, result }: ResultPanelProps) {
         {output.renderer === "architecture" ? (
           <>
             <section className="result-section">
-              <h3>System Boundary</h3>
+              <h3>시스템 경계</h3>
               <p>{(output.output as ArchitectureOutput).system_boundary}</p>
             </section>
             <section className="result-section">
-              <h3>Components</h3>
+              <h3>구성 요소</h3>
               <ul>
                 {(output.output as ArchitectureOutput).components.map((component) => (
                   <li key={component.name}>
@@ -75,7 +105,7 @@ export function ResultPanel({ onReset, result }: ResultPanelProps) {
         {output.renderer === "review-report" ? (
           <>
             <section className="result-section">
-              <h3>Verdict</h3>
+              <h3>판단</h3>
               <p>{(output.output as ReviewReportOutput).verdict}</p>
             </section>
             {(output.output as ReviewReportOutput).findings.map((finding) => (
@@ -137,13 +167,13 @@ function readOutputNotes(output: EngineResult["outputs"][number]) {
 function renderSummary(renderer: EngineResult["provisional_renderer"]) {
   switch (renderer) {
     case "plan":
-      return "문제, 대상, 방향이 보이는 기획 정리 결과입니다.";
+      return "문제, 대상, 방향이 보이도록 정리한 기획 결과입니다.";
     case "architecture":
-      return "경계, 구성요소, 흐름이 보이는 구조 설계 결과입니다.";
+      return "경계, 구성 요소, 흐름이 보이도록 정리한 구조 설계 결과입니다.";
     case "review-report":
       return "문제점과 보완 포인트가 먼저 보이도록 정리한 검토 결과입니다.";
     case "prompt":
     default:
-      return "바로 복사해 쓸 수 있는 실행형 프롬프트 결과입니다.";
+      return "다른 AI에 바로 붙여 넣을 수 있는 실행 프롬프트입니다.";
   }
 }

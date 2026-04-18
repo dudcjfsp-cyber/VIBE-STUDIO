@@ -9,6 +9,12 @@ export type HintOption = {
   prompt: string;
 };
 
+export type StartExample = {
+  cardHint?: "idea-structuring" | "command-optimization" | "system-architecture" | "critical-review";
+  id: string;
+  text: string;
+};
+
 export type StageSnapshot = {
   approvalLevel: ApprovalLevel;
   nextStep: NextStep;

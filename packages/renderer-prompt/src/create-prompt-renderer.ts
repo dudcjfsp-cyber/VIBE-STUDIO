@@ -58,11 +58,11 @@ export function createPromptRenderer(
         const generated = await options.llmClient.generateObject<PromptOutput>({
           schemaName: "prompt_output",
           schemaDescription:
-            "A reusable prompt draft with a short title, prompt body, and supporting notes.",
+            "A ready-to-paste AI prompt with a short title, a full prompt body, and supporting notes.",
           schema: promptOutputSchema,
           system: buildSystemPrompt(),
           user: buildUserPrompt(handoff),
-          temperature: 0.4,
+          temperature: 0.35,
         });
 
         return normalizePromptOutput(generated, fallback);
@@ -83,11 +83,12 @@ export function createPromptRenderer(
 function buildSystemPrompt(): string {
   return [
     "You generate prompt outputs for Vibe Studio.",
-    "Return directly usable prompt drafts, not meta commentary.",
+    "The prompt field must be a complete prompt that the user can paste into another AI model immediately.",
+    "Do not write a request to the user. Do not explain what the prompt does outside the prompt itself.",
     "Write in the user's source language unless the request clearly calls for another language.",
-    "The prompt field must contain the full prompt text that the user can copy and use immediately.",
-    "Make the prompt concrete enough that another model could act on it without extra explanation.",
-    "Keep the output grounded in the provided intent, context, and constraints.",
+    "Choose a prompting technique that fits the request: zero-shot by default, few-shot only when examples or style anchoring would materially help, and explicit structure/output-format instructions whenever they improve reliability.",
+    "Prefer crisp sectioned prompts with role, task, context, constraints, and output format when useful.",
+    "Keep the prompt grounded in the provided intent, context, and constraints.",
     "Do not mention internal engine fields or analysis terminology.",
   ].join("\n");
 }
@@ -125,7 +126,10 @@ function buildUserPrompt(handoff: RendererHandoff): string {
   }
 
   lines.push(
-    "Output expectation: Return a polished prompt draft with concrete instructions, useful output requirements, and no extra wrapper explanation.",
+    "Output expectation: Return one polished AI prompt that is ready to paste into another model right away.",
+    "The prompt should tell the downstream AI what role to take, what to produce, what to pay attention to, and what output format to follow.",
+    "Use few-shot examples only if the request itself implies examples, imitation, transformation from a sample, or a strong need for tone anchoring.",
+    "Do not produce meta commentary such as '안녕하세요, 저는...' unless the user explicitly wants that phrasing inside the downstream prompt.",
   );
 
   return lines.join("\n");
@@ -136,7 +140,7 @@ function normalizePromptOutput(
   fallback: PromptOutput,
 ): PromptOutput {
   const title = output.title?.trim() || fallback.title;
-  const prompt = output.prompt?.trim() || fallback.prompt;
+  const prompt = normalizePromptText(output.prompt) || fallback.prompt;
   const notes = (output.notes ?? [])
     .map((note) => note.trim())
     .filter(Boolean);
@@ -146,4 +150,8 @@ function normalizePromptOutput(
     prompt,
     notes: notes.length > 0 ? notes : fallback.notes,
   };
+}
+
+function normalizePromptText(value: string | undefined): string {
+  return value?.trim() ?? "";
 }

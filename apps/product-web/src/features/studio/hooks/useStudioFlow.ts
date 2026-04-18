@@ -98,6 +98,13 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
     );
   }
 
+  function reviseFromApproval() {
+    setSnapshot((current) => ({
+      ...current,
+      stage: "start",
+    }));
+  }
+
   function reset() {
     setInput("");
     setErrorMessage(undefined);
@@ -117,6 +124,7 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
     isBusy,
     request,
     reset,
+    reviseFromApproval,
     selectedHint,
     setInput(value: string) {
       setErrorMessage(undefined);

@@ -47,7 +47,7 @@ assert.equal(approvedResult.outputs[0]?.validation.status, "ready");
 const architectureOutput = approvedResult.outputs[0]?.output;
 
 assert.ok(architectureOutput);
-assert.equal(architectureOutput.title, "Architecture Outline");
+assert.ok(architectureOutput.title.trim().length > 0);
 assert.ok(architectureOutput.components.length >= 3);
 assert.ok(architectureOutput.interaction_flows.length >= 1);
 

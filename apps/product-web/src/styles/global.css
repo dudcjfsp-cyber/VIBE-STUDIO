@@ -426,10 +426,31 @@ textarea {
   gap: 16px;
 }
 
+.result-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.result-toolbar h3 {
+  margin: 0;
+}
+
+.copy-action {
+  margin: 0;
+  padding: 10px 14px;
+}
+
 .result-section {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.7);
   border-radius: 14px;
+  padding: 18px;
+}
+
+.result-section-prompt {
   padding: 18px;
 }
 

@@ -7,25 +7,25 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
   const sections: PlanSection[] = [];
 
   sections.push({
-    title: "Idea Summary",
+    title: "아이디어 요약",
     bullets: [intentIr.summary],
   });
 
   sections.push({
-    title: "Problem To Solve",
+    title: "해결하려는 문제",
     bullets: [intentIr.intent.goal.trim()],
   });
 
   sections.push({
-    title: "Target User",
+    title: "핵심 사용자",
     bullets: [
-      intentIr.intent.audience.trim() || "Target user is not specified yet.",
+      intentIr.intent.audience.trim() || "핵심 사용자는 아직 구체화되지 않았습니다.",
     ],
   });
 
   if (intentIr.intent.context.trim()) {
     sections.push({
-      title: "Context",
+      title: "맥락",
       bullets: [intentIr.intent.context.trim()],
     });
   }
@@ -35,7 +35,7 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
   if (intentIr.output_contract.constraints.length > 0) {
     directionBullets.push(
       ...intentIr.output_contract.constraints.map(
-        (constraint) => `Constraint: ${constraint}`,
+        (constraint) => `제약: ${constraint}`,
       ),
     );
   }
@@ -43,17 +43,17 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
   if (intentIr.output_contract.success_criteria.length > 0) {
     directionBullets.push(
       ...intentIr.output_contract.success_criteria.map(
-        (criterion) => `Success criterion: ${criterion}`,
+        (criterion) => `성공 기준: ${criterion}`,
       ),
     );
   }
 
   if (directionBullets.length === 0) {
-    directionBullets.push("Scope and success criteria need further refinement.");
+    directionBullets.push("범위와 성공 기준은 한 번 더 다듬을 여지가 있습니다.");
   }
 
   sections.push({
-    title: "Initial Direction",
+    title: "초기 방향",
     bullets: directionBullets,
   });
 
@@ -66,7 +66,7 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
 
   if (openQuestionBullets.length > 0) {
     sections.push({
-      title: "Open Questions",
+      title: "열린 질문",
       bullets: openQuestionBullets,
     });
   }
@@ -74,13 +74,13 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
   const riskBullets = [
     ...intentIr.analysis.risks,
     ...intentIr.analysis.assumptions.map(
-      (assumption) => `Assumption: ${assumption}`,
+      (assumption) => `가정: ${assumption}`,
     ),
   ];
 
   if (riskBullets.length > 0) {
     sections.push({
-      title: "Risks And Assumptions",
+      title: "리스크와 가정",
       bullets: riskBullets,
     });
   }

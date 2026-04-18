@@ -5,10 +5,10 @@ export function formatApprovalCopy(
   renderer: RendererId,
 ) {
   if (approvalLevel === "required") {
-    return `${formatRendererLabel(renderer)} 결과는 확인 없이 바로 만들면 위험할 수 있어요.`;
+    return `${formatRendererLabel(renderer)} 결과는 확인 없이 바로 만들기보다 한 번 점검하고 진행하는 편이 안전합니다.`;
   }
 
-  return "한 번 더 확인하면 지금 요청에 더 잘 맞출 수 있어요.";
+  return "지금 방향은 괜찮지만, 한 번 확인하면 결과를 더 맞춤형으로 다듬을 수 있습니다.";
 }
 
 export function formatClarifyLead(renderer: RendererId) {
@@ -18,7 +18,7 @@ export function formatClarifyLead(renderer: RendererId) {
 export function formatRendererLabel(renderer: RendererId) {
   switch (renderer) {
     case "plan":
-      return "기획 정리";
+      return "아이디어 정리";
     case "architecture":
       return "구조 설계";
     case "review-report":
