@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>Vibe Studio Validation Surface</title>
+    <title>Vibe Studio Thin App</title>
     <link rel="stylesheet" href="./styles.css" />
     <script type="importmap">
       {
@@ -24,18 +24,17 @@
   <body>
     <main class="shell">
       <section class="hero">
-        <p class="eyebrow">Thin App / Validation Surface</p>
-        <h1>Inspect engine signals, approval states, and renderer outputs in one place.</h1>
+        <p class="eyebrow">Thin App / Frozen Validation Surface</p>
+        <h1>Inspect engine signals, approval states, and minimum renderer outputs in one place.</h1>
         <p class="hero-copy">
-          This page exists for manual verification of MVP behavior. It helps check
-          create, review, clarify, and approval flows across all four renderers
-          without treating this UI as the product frontend spec.
+          This page stays as a frozen, minimal validation surface. Use it only for
+          low-level engine and renderer checks, not as the product frontend spec.
         </p>
         <div class="boundary-callout">
-          <strong>Validation surface only.</strong>
+          <strong>Frozen validation surface only.</strong>
           <p>
-            Use this page to verify engine and renderer behavior quickly in the
-            browser. Do not treat it as the final product UX source-of-truth.
+            `product-web` is the main manual verification baseline now. This page remains
+            as a small fallback surface so it can be retired later in one clean removal.
           </p>
         </div>
       </section>

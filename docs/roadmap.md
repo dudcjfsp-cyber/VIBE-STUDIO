@@ -62,7 +62,7 @@ Done when:
 - engine이 최소 신호 세트를 반환할 수 있다
 - `docs/approval-gate.md`의 strong rule override와 기본 흐름이 코드로 반영된다
 
-## Phase 3. Prompt Renderer + Thin App
+## Phase 3. Prompt Renderer + Initial Verification Surface
 Goal:
 - 가장 얇은 end-to-end 흐름을 먼저 성립시킨다
 
@@ -74,8 +74,8 @@ Includes:
 - 결과 표시
 
 Rule:
-- thin app은 이 단계부터 제품 프론트가 아니라 내부 검증 surface로 취급한다
-- 이후 renderer가 늘어나도 thin app은 검증 역할을 우선하고, 제품형 app의 기본 경로로 승격하지 않는다
+- 이 단계의 검증 surface는 초기 연결 확인용이다
+- 이후 제품 프론트가 같은 검증 포인트를 안정적으로 대체하면 별도 검증 surface는 제거할 수 있다
 
 Done when:
 - 사용자 입력 -> 질문/확인 -> prompt 결과 생성의 한 사이클이 동작한다
@@ -137,7 +137,7 @@ Goal:
 
 Includes:
 - renderer output baseline을 내부 검증 계약으로 유지할지 여부를 정리한 상태에서 판단
-- thin app을 내부 수동 검증 surface로 유지한다는 경계를 명시한 상태에서 판단
+- `product-web`를 현재 수동 제품 검증 기준면으로 정리한 상태에서 판단
 - beginner experience 점검
 - doc alignment 점검
 - success criteria 판정

@@ -19,6 +19,7 @@ export type StageSnapshot = {
   approvalLevel: ApprovalLevel;
   nextStep: NextStep;
   result?: EngineResult;
+  runId?: string;
   stage: FlowStage;
   targetRenderer?: RendererId;
 };

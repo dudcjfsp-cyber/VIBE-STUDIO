@@ -11,9 +11,8 @@ The current repo is a reference source for extracted boundaries, not the new cor
 ```text
 vibe-studio/
   apps/
-    prompt-web/
-    plan-web/
-    architecture-web/
+    product-web/
+    product-server/
 
   packages/
     engine-contracts/
@@ -121,4 +120,4 @@ vibe-studio/
 4. `renderer-plan`
 5. `renderer-architecture`
 6. `review-report` renderer
-7. optional lightweight app composition only if manual verification needs it
+7. `product-web` / `product-server` composition for product UX and manual verification

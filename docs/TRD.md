@@ -222,24 +222,26 @@ Rule:
 - product runtime은 사용자 API key를 서버 설정으로 승격하지 않는다
 - 모델 목록 조회와 renderer 실행은 같은 provider/key 범위 안에서 이뤄져야 한다
 
-### Thin App boundary
-`apps/prompt-web` 같은 thin app은 MVP에서 내부 수동 검증 surface로 취급한다.
+### Product-web verification boundary
+현재 브라우저 기준 제품 프론트와 수동 검증 기준면은 `apps/product-web`다.
 
-Thin app의 역할:
-- 엔진 신호와 renderer 최소 출력을 브라우저에서 빠르게 확인한다
-- 비개발자 관점에서 질문, 승인, direct render, review 흐름을 수동 점검한다
-- golden case와 renderer verify만으로 확인하기 어려운 연결 구간을 눈으로 검증한다
+`apps/product-web`의 역할:
+- 제품형 입력 / 질문 / 승인 / 결과 UX를 소유한다
+- 비개발자 관점에서 create, review, clarify, approval, follow-up 흐름을 수동 점검할 수 있게 한다
+- golden case와 renderer verify만으로 보기 어려운 제품 연결 구간을 눈으로 검증한다
 
-Thin app의 비역할:
-- 최종 제품 프론트엔드 기준면이 아니다
-- 제품 UX 사양이나 app wording source-of-truth가 아니다
-- 저장, 히스토리, 협업 같은 제품 기능을 먼저 수용하는 기본 app이 아니다
+비역할:
+- 저장, 히스토리, 협업 같은 Post-MVP 범위를 자동으로 포함하지 않는다
+- 제품 문구를 source-of-truth 문서 없이 임의 정책으로 확장하지 않는다
+
+Thin app fallback note:
+- `apps/prompt-web`는 과거 초기 검증 surface였고, 현재는 동결된 최소 fallback 검증 서페이스로만 남겨둔다
+- 브라우저 수동 검증의 기본 기준면은 `product-web`지만, low-level signal 확인에는 thin app을 보조적으로 쓸 수 있다
 
 Rule:
-- thin app은 검증 도구로 유지하고, 기본적으로 제품형 app으로 확장하지 않는다
-- thin app의 카피와 레이아웃은 검증 가독성을 위한 것이며 최종 제품 표현을 고정하지 않는다
-- 실제 제품 프론트가 같은 검증 포인트를 안정적으로 대체하면 thin app은 축소하거나 제거할 수 있다
-- thin app에 새 기능을 넣을 때는 제품 범위 확장이 아니라 검증 필요인지 먼저 설명해야 한다
+- 브라우저 수동 검증은 기본적으로 `apps/product-web`를 기준으로 한다
+- thin app에는 새 기능을 넣지 않는다
+- 향후 제거는 `apps/prompt-web`와 serve script를 한 번에 걷어내는 방식으로 처리한다
 
 ## 11. 검증 전략
 MVP 검증은 세 층으로 나눈다.
@@ -272,7 +274,7 @@ Rule:
 6. `renderer-architecture`
 7. `renderer-review-report`
 8. golden case verification loop
-9. optional lightweight app only when a manual verification surface is needed
+9. `apps/product-web` manual verification and product fit check
 
 ## 13. 오픈 이슈
 - approval gate threshold의 세밀한 튜닝

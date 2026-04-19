@@ -15,16 +15,21 @@ import type { PromptOutput } from "@vive-studio/renderer-prompt";
 import type { ReviewReportOutput } from "@vive-studio/renderer-review-report";
 
 import { runStage1FollowUp } from "../../../lib/engine/stage1FollowUpClient";
+import {
+  createTelemetryRunId,
+  trackProductEvent,
+} from "../../../lib/observability/browserTelemetry";
 import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
 import { buildPromptHelpLearningPanel } from "../../../lib/ux/promptHelpLearning";
 
 type ResultPanelProps = {
   onReset: () => void;
   result: EngineResult;
+  runId?: string;
   runtime: ProviderRuntimeConfig | undefined;
 };
 
-export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
+export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProps) {
   const output = result.outputs[0];
   const promptLearningPanel =
     output?.renderer === "prompt"
@@ -63,6 +68,20 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
     setIsReviewRefining(false);
   }, [followUp]);
 
+  useEffect(() => {
+    if (!promptLearningPanel || output?.renderer !== "prompt") {
+      return;
+    }
+
+    trackProductEvent("prompt_help_learning_panel_shown", "result", {
+      always_visible_technique_count: promptLearningPanel.techniques.length,
+      conditional_technique_count: promptLearningPanel.conditionalTechniques.length,
+      renderer: "prompt",
+      run_id: runId,
+      summary_item_count: promptLearningPanel.summaryItems.length,
+    });
+  }, [output?.renderer, promptLearningPanel, runId]);
+
   if (!output) {
     return null;
   }
@@ -74,6 +93,10 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
 
     try {
       await navigator.clipboard.writeText((output.output as PromptOutput).prompt);
+      trackProductEvent("prompt_help_copy_clicked", "result", {
+        renderer: "prompt",
+        run_id: runId,
+      });
       setCopyLabel("복사됨");
       window.setTimeout(() => setCopyLabel("복사"), 1600);
     } catch {
@@ -84,6 +107,7 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
 
   async function handleFollowUpAction(actionId: Stage1ActionId) {
     const request = buildStage1FollowUpRequest(result, actionId);
+    const followUpRunId = createTelemetryRunId();
 
     if (!request) {
       setFollowUpError("지금 결과에서는 이 후속 작업을 실행할 수 없어요.");
@@ -92,11 +116,39 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
 
     setFollowUpError(undefined);
     setPendingActionId(actionId);
+    trackProductEvent("followup_action_clicked", "followup", {
+      action_id: actionId,
+      run_id: followUpRunId,
+      source_renderer: output.renderer,
+      source_run_id: runId,
+    });
+    trackProductEvent("followup_request_started", "followup", {
+      action_id: actionId,
+      run_id: followUpRunId,
+      source_renderer: output.renderer,
+      source_run_id: runId,
+    });
 
     try {
       const nextResult = await runStage1FollowUp(request, runtime);
+      trackProductEvent("followup_request_completed", "followup", {
+        action_id: actionId,
+        result_kind: nextResult.result_kind,
+        run_id: followUpRunId,
+        source_renderer: output.renderer,
+        source_run_id: runId,
+      });
       setFollowUp(nextResult);
     } catch (error) {
+      trackProductEvent("followup_request_failed", "followup", {
+        action_id: actionId,
+        error_type: "client-followup-error",
+        message_preview:
+          error instanceof Error ? error.message.slice(0, 180) : "Unknown error",
+        run_id: followUpRunId,
+        source_renderer: output.renderer,
+        source_run_id: runId,
+      });
       setFollowUpError(
         error instanceof Error
           ? error.message
@@ -133,11 +185,35 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
 
     setFollowUpError(undefined);
     setIsReviewRefining(true);
+    const refinementRunId = createTelemetryRunId();
+    trackProductEvent("review_refinement_started", "followup", {
+      action_id: followUp.action_id,
+      answered_question_count: answers.length,
+      remaining_question_count: followUp.remaining_questions.length,
+      run_id: refinementRunId,
+      source_run_id: runId,
+    });
 
     try {
       const nextResult = await runStage1FollowUp(request, runtime);
+      trackProductEvent("review_refinement_completed", "followup", {
+        action_id: followUp.action_id,
+        answered_question_count: answers.length,
+        remaining_question_count: nextResult.remaining_questions.length,
+        run_id: refinementRunId,
+        source_run_id: runId,
+      });
       setFollowUp(nextResult);
     } catch (error) {
+      trackProductEvent("review_refinement_failed", "followup", {
+        action_id: followUp.action_id,
+        answered_question_count: answers.length,
+        error_type: "client-review-refinement-error",
+        message_preview:
+          error instanceof Error ? error.message.slice(0, 180) : "Unknown error",
+        run_id: refinementRunId,
+        source_run_id: runId,
+      });
       setFollowUpError(
         error instanceof Error
           ? error.message
@@ -417,7 +493,17 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
         </section>
       ) : null}
 
-      <button className="ghost-action" onClick={onReset} type="button">
+      <button
+        className="ghost-action"
+        onClick={() => {
+          trackProductEvent("result_restart_clicked", "result", {
+            renderer: output.renderer,
+            run_id: runId,
+          });
+          onReset();
+        }}
+        type="button"
+      >
         새로 시작
       </button>
     </section>

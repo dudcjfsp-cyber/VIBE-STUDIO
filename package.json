@@ -15,7 +15,7 @@
     "verify:architecture-renderer": "npm run build --silent && node ./scripts/verify-architecture-renderer.mjs",
     "verify:review-renderer": "npm run build --silent && node ./scripts/verify-review-renderer.mjs",
     "verify:agent-stage1": "npm run build --silent && node ./scripts/verify-agent-stage1.mjs",
-    "serve:prompt-web": "npm run build --silent && node ./scripts/serve-prompt-web.mjs",
+    "serve:thinapp": "npm run build --silent && node ./scripts/serve-prompt-web.mjs",
     "serve:product-server": "npm run build --silent && node ./apps/product-server/dist/server.js",
     "dev:product-stack": "node ./scripts/dev-product-stack.mjs",
     "dev:product-web": "npm run dev -w @vive-studio/product-web -- --host 127.0.0.1 --port 4174",

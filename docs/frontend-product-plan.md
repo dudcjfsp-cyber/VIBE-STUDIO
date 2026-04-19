@@ -1,21 +1,21 @@
 # Frontend Product Plan
 
-Updated: 2026-04-14
-Purpose: thin app을 동결한 상태에서 별도 React 제품 프론트의 목표, 경계, 첫 화면 구조를 계획해두기 위한 focused note
+Updated: 2026-04-20
+Purpose: 현재 `apps/product-web`의 제품 프론트 baseline과 남은 프론트 경계를 정리하는 focused note
 
 ## Rule
-- 이 문서는 제품 프론트 구현 전 planning note다
-- 이 문서는 현재 source-of-truth 문서를 덮어쓰지 않는다
+- 이 문서는 현재 제품 프론트의 baseline note다
+- 이 문서는 source-of-truth 문서를 덮어쓰지 않는다
 - 충돌이 있으면 `docs/product-intent.md`, `docs/workflow-charter.md`, `docs/PRD.md`, `docs/TRD.md`를 우선한다
-- 현재 thin app을 제품 프론트로 승격하지 않는다
-- 이 문서는 프론트 구현 코드를 대신하지 않는다
+- `apps/product-web`를 현재 제품 프론트 baseline으로 본다
+- `apps/prompt-web`는 동결된 최소 검증 서페이스로만 유지한다
 
 ## 1. 현재 결정
-- thin app은 동결한다
-- 새 제품 프론트는 별도 React app으로 시작한다
-- 첫 화면은 구글 메인 화면처럼 입력 중심으로 설계한다
-- 카드는 첫 화면의 주인공이 아니라 보조 힌트로 내린다
-- create/review 구분은 첫 입력 이후 engine이 판단한다
+- 현재 제품 프론트 baseline은 `apps/product-web`다
+- 첫 화면은 입력 중심 구조를 유지한다
+- 카드는 큰 진입 카드가 아니라 보조 힌트 수준으로 둔다
+- create / review 구분은 첫 입력 이후 engine이 판단한다
+- 수동 검증의 기본 기준면은 `product-web`로 둔다
 
 ## 2. 왜 이 방향인가
 현재 MVP의 핵심 가치는 초보 사용자가 자연어로 바로 시작할 수 있다는 점이다.
@@ -31,39 +31,30 @@ Purpose: thin app을 동결한 상태에서 별도 React 제품 프론트의 목
 - 초보자가 기술 용어를 몰라도 흐름을 따라갈 수 있어야 한다
 
 ## 3. 제품 프론트의 역할
-새 React 제품 프론트는 아래를 담당한다.
+`apps/product-web`은 아래를 담당한다.
+
 - 자유 입력 시작점 제공
 - 질문, 확인, 결과를 사용자 친화적인 UX로 번역
 - engine signal을 사용자-facing 흐름으로 표현
 - `prompt`, `plan`, `architecture`, `review-report` 결과를 서로 다른 성격으로 보여주기
 - provider 선택, API key 입력, 모델 선택 UI 제공
 - product runtime API를 호출하고, credential을 브라우저 세션 범위 안에서만 유지하기
+- post-result follow-up과 학습 패널 같은 제품형 후속 UX 제공
 
-새 React 제품 프론트가 아직 담당하지 않는 것:
+아직 담당하지 않는 것:
 - 저장/히스토리
 - 협업
 - adaptive policy
 - 고급 사용자용 세밀한 제어
 
-제품 프론트의 런타임 경계:
+## 4. 런타임 경계
 - `apps/product-web`은 브라우저 UX를 담당한다
 - 브라우저는 provider key를 session storage에만 30분 동안 유지한다
-- 실제 model/provider 호출은 `apps/product-server` 같은 server runtime이 요청 단위로 중계한다
+- 실제 model/provider 호출은 `apps/product-server`가 요청 단위로 중계한다
 - server runtime은 전달받은 key를 저장하지 않는다
 - 브라우저는 server runtime API를 통해 결과와 모델 목록을 요청한다
 
-## 4. thin app 동결 원칙
-현재 `apps/prompt-web`은 검증 surface로 유지한다.
-
-Rule:
-- thin app에는 제품 기능을 더 넣지 않는다
-- thin app은 회귀 확인과 연결 검증 용도로만 유지한다
-- 제품 프론트 설계/구현은 별도 app 경로에서 진행한다
-- 새 제품 프론트가 핵심 검증 포인트를 안정적으로 대체하면 thin app 축소 또는 제거를 검토한다
-
 ## 5. 첫 화면 원칙
-첫 화면은 아래 성격을 가져야 한다.
-
 ### 핵심 원칙
 - 중앙 입력창 하나가 화면의 중심이어야 한다
 - 사용자는 카드 선택 없이도 바로 시작할 수 있어야 한다
@@ -74,119 +65,53 @@ Rule:
 - 한 줄 설명
 - 짧은 예시 입력
 - 아주 약한 보조 액션
-- 선택형 카드 대신 작은 힌트 chip 또는 text link
+- 선택형 카드 대신 작은 hint chip
 
 ### 피해야 하는 것
 - 첫 화면에서 네 가지 결과 방향을 큰 카드로 전면 배치
 - 시작 전에 mode나 renderer를 강제 선택하게 하기
 - 설명 텍스트가 입력창보다 더 눈에 띄는 구성
-- 검증 surface처럼 보이는 상태 신호 grid 노출
+- 검증 도구처럼 보이는 상태 grid 노출
 
-## 6. 최소 화면 구조
-초기 제품 프론트는 아래 네 화면만 먼저 설계한다.
+## 6. 현재 화면 구조
+현재 제품 프론트는 아래 흐름을 가진다.
 
 1. Start
 - 자유 입력 중심
-- 보조 힌트만 제공
+- 예시와 보조 힌트만 제공
 
 2. Clarify
-- `clarify_first`일 때 필요한 질문을 보여줌
-- 왜 질문하는지 한 문장으로 설명
+- `clarify_first`일 때 필요한 질문을 inline으로 보여줌
+- 왜 질문하는지 짧게 설명
 
 3. Approval
 - `recommended`와 `required`를 서로 다른 강도로 보여줌
-- 사용자가 의식적으로 다음 행동을 고르게 함
+- 사용자가 진행 또는 입력 보완을 의식적으로 선택
 
 4. Result
 - renderer별 결과를 성격에 맞게 표시
-- `plan`, `architecture`, `review-report`, `prompt`가 서로 다른 결과처럼 보여야 함
+- `prompt`에는 학습 패널을 붙일 수 있음
+- `review`, `plan`, `architecture`에는 post-result follow-up을 붙일 수 있음
 
-## 7. 첫 화면 rough layout
-아래는 구현 전 rough sketch다.
+## 7. 제품 프론트와 검증 경계
+과거 `apps/prompt-web`는 내부 검증 surface 역할을 맡았고, 현재도 동결된 최소 검증 서페이스로만 남겨둔다.
 
-### Desktop
-```text
-+--------------------------------------------------------------+
-|                                                              |
-|                         Vibe Studio                          |
-|                                                              |
-|            만들고 싶은 것 또는 검토받고 싶은 초안을           |
-|                     그대로 적어보세요                         |
-|                                                              |
-|      +------------------------------------------------+      |
-|      | 어떤 걸 만들고 싶은지, 또는 지금 가진 초안을     |      |
-|      | 그대로 적어보세요...                           |      |
-|      +------------------------------------------------+      |
-|                                                              |
-|                   [ 시작하기 ]                               |
-|                                                              |
-|      예시: 회의 전에 물어볼 질문 정리해줘                    |
-|      예시: 이 기획안이 말이 되는지 봐줘                      |
-|                                                              |
-|      프롬프트 만들기  아이디어 정리  구조 설계  검토          |
-|      (optional hints, low emphasis)                          |
-|                                                              |
-+--------------------------------------------------------------+
-```
-
-### Mobile
-```text
-+----------------------------------+
-|          Vibe Studio             |
-|                                  |
-|  만들고 싶은 것 또는              |
-|  검토받고 싶은 초안을             |
-|  그대로 적어보세요                |
-|                                  |
-|  +----------------------------+  |
-|  | 무엇을 만들고 싶은지       |  |
-|  | 혹은 검토받고 싶은 초안을  |  |
-|  | 적어보세요...              |  |
-|  +----------------------------+  |
-|                                  |
-|        [ 시작하기 ]              |
-|                                  |
-|  예시 입력 1                     |
-|  예시 입력 2                     |
-|                                  |
-|  아이디어 정리  구조 설계         |
-|  프롬프트 도움  검토              |
-+----------------------------------+
-```
-
-## 8. 추천 화면 전환 흐름
-```text
-Start
-  -> Analyze
-    -> Clarify
-    -> Approval
-    -> Result
-
-Result
-  -> revise input
-  -> ask follow-up
-  -> switch direction with approval
-```
-
-## 9. engine signal -> UX 번역 원칙
-engine 내부 용어를 그대로 전면 노출하지 않는다.
-
-- `clarify_first`
-  - "바로 만들기 전에 이것만 더 알려주세요"
-- `approval_pending + recommended`
-  - "한 번 더 확인하면 더 잘 맞출 수 있어요"
-- `approval_pending + required`
-  - "이건 확인 없이 바로 만들면 위험할 수 있어요"
-- `pivot_recommended`
-  - "지금 요청은 다른 방향이 더 잘 맞아 보여요"
+현재 기준:
+- 브라우저 수동 검증의 기본 기준면은 `apps/product-web`
+- `apps/prompt-web`는 low-level 확인이 필요할 때만 쓰는 fallback surface다
+- 엔진 / renderer behavior baseline은 golden case와 verify 스크립트가 계속 보호
+- 제품 프론트 수동 확인은 `docs/product-web-manual-checklist.md`를 기준으로 진행
 
 Rule:
-- 내부 필드명 대신 이유 중심 문장으로 번역한다
-- 왜 질문하는지, 왜 바로 만들지 않는지 설명 가능해야 한다
+- thin app에는 새 기능을 붙이지 않는다
+- thin app은 fallback 검증 용도만 유지한다
+- 향후 제거는 `apps/prompt-web` 디렉터리와 serve script를 함께 걷어내는 방식으로 한다
+- 만약 새 검증 surface가 필요해지면, `product-web`로 대체 불가능한 이유가 먼저 설명되어야 한다
 
-## 10. renderer별 결과 표현 메모
+## 8. renderer별 결과 표현 메모
 ### prompt
 - 바로 복사/재사용 가능한 실행형 텍스트 중심
+- 학습 패널은 결과 아래에 붙는다
 
 ### plan
 - 문제, 대상, 방향, 열린 질문이 읽히는 구조화 문서형 결과
@@ -197,14 +122,14 @@ Rule:
 ### review-report
 - 문제점, 보완점, 다음 수정 포인트가 먼저 보이는 검토형 결과
 
-## 11. 구현 전 체크리스트
-- React app 경로를 thin app과 분리할 것
-- 첫 화면이 입력 중심인지 확인할 것
-- 카드가 선택 보조장치 수준으로 내려갔는지 확인할 것
-- `recommended`와 `required`가 UX에서 다르게 느껴지는지 확인할 것
-- review와 create 결과가 실제로 다르게 보이는지 확인할 것
-- thin app이 제품 프론트처럼 오해되지 않게 유지할 것
+## 9. 프론트 기준 남은 과제
+- product-web 수동 체크리스트를 반복 가능한 루프로 돌리기
+- 관측 이벤트를 실제 수집기로 연결하기
+- 제품 프론트 회귀 검증을 더 강화하기
+- 배포 구조를 실운영 기준으로 정리하기
 
-## 12. 현재 결론
-지금은 프론트 구현을 바로 시작하기보다, 위 계획을 기준으로 별도 React 제품 프론트를 설계하는 단계가 맞다.
-첫 화면은 입력창 하나 중심으로 가져가되, 초보자를 위한 약한 힌트를 남기는 방향이 가장 안전하다.
+## 10. 현재 결론
+지금 가장 안전한 기준은:
+- `product-web`를 제품 프론트 baseline으로 유지하고
+- golden case / verify 스크립트로 엔진 baseline을 보호하며
+- `prompt-web`는 동결된 최소 fallback 검증 서페이스로만 남겨두는 것이다.

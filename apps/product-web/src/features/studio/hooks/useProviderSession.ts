@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { trackProductEvent } from "../../../lib/observability/browserTelemetry";
 import { listProviderModels } from "../../../lib/provider/providerRuntimeClient";
 import type {
   ProviderId,
@@ -82,6 +83,11 @@ export function useProviderSession() {
       return;
     }
 
+    trackProductEvent("provider_session_expired", "provider-session", {
+      has_active_session: false,
+      model: state.model || undefined,
+      provider: state.provider,
+    });
     clearStoredSession();
     setState((current) => ({
       apiKey: "",
@@ -165,6 +171,9 @@ export function useProviderSession() {
       errorMessage: undefined,
       isLoading: true,
     }));
+    trackProductEvent("provider_session_connect_started", "provider-session", {
+      provider: state.provider,
+    });
 
     try {
       const models = await listProviderModels(state.provider, apiKey);
@@ -186,6 +195,11 @@ export function useProviderSession() {
       };
 
       writeStoredSession(record);
+      trackProductEvent("provider_session_connected", "provider-session", {
+        has_active_session: true,
+        model: nextModel,
+        provider: state.provider,
+      });
       setState({
         apiKey,
         errorMessage: undefined,
@@ -196,6 +210,12 @@ export function useProviderSession() {
         provider: state.provider,
       });
     } catch (error) {
+      trackProductEvent("provider_session_connect_failed", "provider-session", {
+        error_type: "provider-connect-failed",
+        message_preview:
+          error instanceof Error ? error.message.slice(0, 180) : "Unknown error",
+        provider: state.provider,
+      });
       setState((current) => ({
         ...current,
         errorMessage:
@@ -208,6 +228,11 @@ export function useProviderSession() {
   }
 
   function clearSession() {
+    trackProductEvent("provider_session_cleared", "provider-session", {
+      has_active_session: false,
+      model: state.model || undefined,
+      provider: state.provider,
+    });
     clearStoredSession();
     setState((current) => ({
       apiKey: "",
@@ -238,6 +263,11 @@ export function useProviderSession() {
   }
 
   function setModel(model: string) {
+    trackProductEvent("provider_model_changed", "provider-session", {
+      has_active_session: Boolean(state.expiresAt && state.expiresAt > Date.now()),
+      model,
+      provider: state.provider,
+    });
     setState((current) => {
       const nextState = {
         ...current,

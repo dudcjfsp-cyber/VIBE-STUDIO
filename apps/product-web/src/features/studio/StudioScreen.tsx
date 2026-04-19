@@ -94,6 +94,7 @@ export function StudioScreen() {
         <ResultPanel
           onReset={flow.reset}
           result={flow.snapshot.result}
+          runId={flow.snapshot.runId}
           runtime={providerSession.runtime}
         />
       ) : null}

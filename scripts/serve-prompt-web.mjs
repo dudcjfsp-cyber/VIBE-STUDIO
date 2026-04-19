@@ -60,5 +60,5 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, () => {
-  console.log(`Prompt web available at http://127.0.0.1:${port}/apps/prompt-web/`);
+  console.log(`Thin app available at http://127.0.0.1:${port}/apps/prompt-web/`);
 });
