@@ -2,10 +2,12 @@ import { createServer } from "node:http";
 
 import { createRuntimeEngine } from "./create-runtime-engine.js";
 import { listProviderModels } from "./provider-runtime.js";
+import { runStage1FollowUp } from "./run-stage1-follow-up.js";
 import type {
   ProductEngineRunPayload,
   ProviderModelsPayload,
   ProviderRuntimeSession,
+  Stage1FollowUpPayload,
 } from "./types.js";
 
 const port = Number(process.env.PORT ?? 4177);
@@ -93,6 +95,29 @@ const server = createServer(async (request, response) => {
       const runtime = normalizeRuntime(payload.runtime);
       const engine = createRuntimeEngine(runtime);
       const result = await engine.run(payload.request, payload.options ?? {});
+      sendJson(response, 200, result);
+    } catch (error) {
+      sendJson(response, 500, {
+        error: readErrorMessage(error),
+      });
+    }
+
+    return;
+  }
+
+  if (request.method === "POST" && request.url === "/api/follow-up") {
+    try {
+      const payload = (await readJson(request)) as Stage1FollowUpPayload;
+
+      if (!payload.request) {
+        sendJson(response, 400, {
+          error: "Request body must include a request field.",
+        });
+        return;
+      }
+
+      const runtime = normalizeRuntime(payload.runtime);
+      const result = await runStage1FollowUp(payload.request, runtime);
       sendJson(response, 200, result);
     } catch (error) {
       sendJson(response, 500, {

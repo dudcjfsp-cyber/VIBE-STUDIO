@@ -474,6 +474,77 @@ textarea {
   white-space: pre-wrap;
 }
 
+.follow-up-actions,
+.follow-up-result {
+  margin-top: 24px;
+}
+
+.follow-up-actions-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.follow-up-limit,
+.follow-up-origin {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.follow-up-action-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.follow-up-action-card {
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.follow-up-action-card:disabled {
+  opacity: 0.66;
+  cursor: wait;
+}
+
+.follow-up-action-card strong,
+.follow-up-action-card span {
+  display: block;
+}
+
+.follow-up-action-card span {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.follow-up-result-body {
+  margin-top: 16px;
+}
+
+.follow-up-body {
+  margin: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--ink);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.follow-up-meta + .follow-up-meta {
+  margin-top: 14px;
+}
+
 @media (max-width: 720px) {
   .app-shell {
     width: min(100vw - 20px, 100%);
@@ -524,5 +595,10 @@ textarea {
 
   .clarify-question {
     font-size: 1.16rem;
+  }
+
+  .follow-up-actions-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

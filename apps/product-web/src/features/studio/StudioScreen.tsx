@@ -90,7 +90,11 @@ export function StudioScreen() {
       ) : null}
 
       {flow.snapshot.stage === "result" && flow.snapshot.result ? (
-        <ResultPanel onReset={flow.reset} result={flow.snapshot.result} />
+        <ResultPanel
+          onReset={flow.reset}
+          result={flow.snapshot.result}
+          runtime={providerSession.runtime}
+        />
       ) : null}
     </main>
   );

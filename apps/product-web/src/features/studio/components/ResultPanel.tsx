@@ -1,19 +1,45 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { EngineResult } from "@vive-studio/engine-contracts";
+import {
+  buildStage1FollowUpRequest,
+  listVisibleStage1Actions,
+  type EngineResult,
+  type Stage1ActionId,
+  type Stage1FollowUpResult,
+} from "@vive-studio/engine-contracts";
 import type { ArchitectureOutput } from "@vive-studio/renderer-architecture";
 import type { PlanOutput } from "@vive-studio/renderer-plan";
 import type { PromptOutput } from "@vive-studio/renderer-prompt";
 import type { ReviewReportOutput } from "@vive-studio/renderer-review-report";
 
+import { runStage1FollowUp } from "../../../lib/engine/stage1FollowUpClient";
+import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
+
 type ResultPanelProps = {
   onReset: () => void;
   result: EngineResult;
+  runtime: ProviderRuntimeConfig | undefined;
 };
 
-export function ResultPanel({ onReset, result }: ResultPanelProps) {
+export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
   const output = result.outputs[0];
   const [copyLabel, setCopyLabel] = useState("복사");
+  const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
+  const [followUpError, setFollowUpError] = useState<string | undefined>();
+  const [pendingActionId, setPendingActionId] = useState<
+    Stage1ActionId | undefined
+  >();
+  const stage1Actions = useMemo(
+    () => (followUp ? [] : listVisibleStage1Actions(result)),
+    [followUp, result],
+  );
+
+  useEffect(() => {
+    setCopyLabel("복사");
+    setFollowUp(undefined);
+    setFollowUpError(undefined);
+    setPendingActionId(undefined);
+  }, [result]);
 
   if (!output) {
     return null;
@@ -31,6 +57,31 @@ export function ResultPanel({ onReset, result }: ResultPanelProps) {
     } catch {
       setCopyLabel("복사 실패");
       window.setTimeout(() => setCopyLabel("복사"), 1600);
+    }
+  }
+
+  async function handleFollowUpAction(actionId: Stage1ActionId) {
+    const request = buildStage1FollowUpRequest(result, actionId);
+
+    if (!request) {
+      setFollowUpError("지금 결과에서는 이 후속 작업을 실행할 수 없어요.");
+      return;
+    }
+
+    setFollowUpError(undefined);
+    setPendingActionId(actionId);
+
+    try {
+      const nextResult = await runStage1FollowUp(request, runtime);
+      setFollowUp(nextResult);
+    } catch (error) {
+      setFollowUpError(
+        error instanceof Error
+          ? error.message
+          : "후속 결과를 만드는 중 문제가 생겼어요.",
+      );
+    } finally {
+      setPendingActionId(undefined);
     }
   }
 
@@ -125,6 +176,79 @@ export function ResultPanel({ onReset, result }: ResultPanelProps) {
         ))}
       </ul>
 
+      {stage1Actions.length > 0 ? (
+        <section className="follow-up-actions">
+          <div className="follow-up-actions-header">
+            <p className="panel-kicker">결과 다음 행동</p>
+            <p className="follow-up-limit">Stage 1에서는 후속 결과를 1개만 만듭니다.</p>
+          </div>
+
+          <div className="follow-up-action-list">
+            {stage1Actions.map((action) => {
+              const isPending = pendingActionId === action.action_id;
+
+              return (
+                <button
+                  className="follow-up-action-card"
+                  disabled={Boolean(pendingActionId)}
+                  key={action.action_id}
+                  onClick={() => {
+                    void handleFollowUpAction(action.action_id);
+                  }}
+                  type="button"
+                >
+                  <strong>{action.user_label}</strong>
+                  <span>
+                    {isPending ? "후속 결과를 만드는 중..." : action.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {followUpError ? <p className="flow-error">{followUpError}</p> : null}
+
+      {followUp ? (
+        <section className="follow-up-result">
+          <p className="panel-kicker">후속 결과</p>
+          <h3>{followUp.result_title}</h3>
+          <p className="follow-up-origin">
+            원본 {followUp.source_result_ref.renderer}
+            {followUp.source_result_ref.title
+              ? ` 결과 "${followUp.source_result_ref.title}" 기준`
+              : " 결과 기준"}
+          </p>
+
+          <div className="follow-up-result-body">
+            <pre className="follow-up-body">{followUp.result_body}</pre>
+          </div>
+
+          {followUp.change_summary.length > 0 ? (
+            <section className="result-section follow-up-meta">
+              <h3>무엇이 달라졌는지</h3>
+              <ul>
+                {followUp.change_summary.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {followUp.remaining_questions.length > 0 ? (
+            <section className="result-section follow-up-meta">
+              <h3>남은 질문 또는 주의점</h3>
+              <ul>
+                {followUp.remaining_questions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </section>
+      ) : null}
+
       <button className="ghost-action" onClick={onReset} type="button">
         새로 시작
       </button>
@@ -174,6 +298,6 @@ function renderSummary(renderer: EngineResult["provisional_renderer"]) {
       return "문제점과 보완 포인트가 먼저 보이도록 정리한 검토 결과입니다.";
     case "prompt":
     default:
-      return "다른 AI에 바로 붙여 넣을 수 있는 실행 프롬프트입니다.";
+      return "다른 AI에 바로 붙여 넣을 수 있는 실행형 프롬프트입니다.";
   }
 }

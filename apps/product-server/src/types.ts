@@ -1,4 +1,8 @@
-import type { EngineRequest, RendererId } from "@vive-studio/engine-contracts";
+import type {
+  EngineRequest,
+  RendererId,
+  Stage1FollowUpRequest,
+} from "@vive-studio/engine-contracts";
 
 export type ProviderId = "local" | "openai" | "anthropic" | "gemini";
 
@@ -31,6 +35,11 @@ export type ProductEngineRunOptions = {
 export type ProductEngineRunPayload = {
   request: EngineRequest;
   options?: ProductEngineRunOptions;
+  runtime?: ProviderRuntimeSession;
+};
+
+export type Stage1FollowUpPayload = {
+  request: Stage1FollowUpRequest;
   runtime?: ProviderRuntimeSession;
 };
 
