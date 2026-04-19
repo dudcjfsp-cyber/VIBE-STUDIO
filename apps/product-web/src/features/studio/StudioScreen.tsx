@@ -32,6 +32,7 @@ export function StudioScreen() {
   return (
     <main className="app-shell">
       <StartPanel
+        approvalRevise={flow.approvalReviseResult}
         clarify={
           clarifyQuestion
             ? {

@@ -16,6 +16,7 @@ import type { ReviewReportOutput } from "@vive-studio/renderer-review-report";
 
 import { runStage1FollowUp } from "../../../lib/engine/stage1FollowUpClient";
 import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
+import { buildPromptHelpLearningPanel } from "../../../lib/ux/promptHelpLearning";
 
 type ResultPanelProps = {
   onReset: () => void;
@@ -25,6 +26,10 @@ type ResultPanelProps = {
 
 export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
   const output = result.outputs[0];
+  const promptLearningPanel =
+    output?.renderer === "prompt"
+      ? buildPromptHelpLearningPanel(result, output.output as PromptOutput)
+      : undefined;
   const [copyLabel, setCopyLabel] = useState("복사");
   const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
   const [followUpError, setFollowUpError] = useState<string | undefined>();
@@ -151,21 +156,88 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
 
       <div className="result-body">
         {output.renderer === "prompt" ? (
-          <section className="result-section result-section-prompt">
-            <div className="result-toolbar">
-              <h3>프롬프트</h3>
-              <button
-                className="ghost-action copy-action"
-                onClick={() => {
-                  void handleCopyPrompt();
-                }}
-                type="button"
-              >
-                {copyLabel}
-              </button>
-            </div>
-            <pre className="prompt-block">{(output.output as PromptOutput).prompt}</pre>
-          </section>
+          <>
+            <section className="result-section result-section-prompt">
+              <div className="result-toolbar">
+                <h3>프롬프트</h3>
+                <button
+                  className="ghost-action copy-action"
+                  onClick={() => {
+                    void handleCopyPrompt();
+                  }}
+                  type="button"
+                >
+                  {copyLabel}
+                </button>
+              </div>
+              <pre className="prompt-block">{(output.output as PromptOutput).prompt}</pre>
+            </section>
+
+            {promptLearningPanel ? (
+              <section className="result-section prompt-learning-panel">
+                <p className="panel-kicker">이번에 같이 볼 포인트</p>
+                <p className="prompt-learning-lead">
+                  이 프롬프트가 어떻게 더 안정적인 결과를 만들도록 정리됐는지,
+                  대표적인 방법만 짧게 보여드립니다.
+                </p>
+
+                {promptLearningPanel.summaryItems.length > 0 ? (
+                  <ul className="prompt-learning-summary">
+                    {promptLearningPanel.summaryItems.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                <div className="prompt-learning-grid">
+                  {promptLearningPanel.techniques.map((technique) => (
+                    <article className="prompt-learning-card" key={technique.label}>
+                      <div className="prompt-learning-card-header">
+                        <h3>{technique.label}</h3>
+                        <span
+                          className={`prompt-learning-badge${technique.applied ? " is-applied" : ""}`}
+                        >
+                          {technique.applied ? "이번 적용" : "이번 미적용"}
+                        </span>
+                      </div>
+                      <p>
+                        <strong>언제 쓰나</strong>
+                        <span>{technique.whenToUse}</span>
+                      </p>
+                      <p>
+                        <strong>왜 중요했나</strong>
+                        <span>{technique.reason}</span>
+                      </p>
+                    </article>
+                  ))}
+                </div>
+
+                {promptLearningPanel.conditionalTechniques.length > 0 ? (
+                  <div className="prompt-learning-conditional">
+                    <h3>이번 입력에서 더 중요했던 포인트</h3>
+                    <div className="prompt-learning-grid">
+                      {promptLearningPanel.conditionalTechniques.map((technique) => (
+                        <article className="prompt-learning-card" key={technique.label}>
+                          <div className="prompt-learning-card-header">
+                            <h4>{technique.label}</h4>
+                            <span className="prompt-learning-badge is-applied">이번 적용</span>
+                          </div>
+                          <p>
+                            <strong>언제 쓰나</strong>
+                            <span>{technique.whenToUse}</span>
+                          </p>
+                          <p>
+                            <strong>왜 중요했나</strong>
+                            <span>{technique.reason}</span>
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+          </>
         ) : null}
 
         {output.renderer === "plan"

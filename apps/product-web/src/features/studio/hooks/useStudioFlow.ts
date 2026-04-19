@@ -19,6 +19,9 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
   const [input, setInput] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [selectedHint, setSelectedHint] = useState<CardHint | undefined>();
+  const [approvalReviseResult, setApprovalReviseResult] = useState<
+    EngineResult | undefined
+  >();
   const [snapshot, setSnapshot] = useState<StageSnapshot>({
     stage: "start",
     nextStep: "direct_render",
@@ -51,6 +54,7 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
     }
 
     setErrorMessage(undefined);
+    setApprovalReviseResult(undefined);
     setIsBusy(true);
 
     try {
@@ -99,6 +103,10 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
   }
 
   function reviseFromApproval() {
+    if (snapshot.stage === "approval" && snapshot.result) {
+      setApprovalReviseResult(snapshot.result);
+    }
+
     setSnapshot((current) => ({
       ...current,
       stage: "start",
@@ -108,6 +116,7 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
   function reset() {
     setInput("");
     setErrorMessage(undefined);
+    setApprovalReviseResult(undefined);
     setSelectedHint(undefined);
     setSnapshot({
       stage: "start",
@@ -122,6 +131,7 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
     errorMessage,
     input,
     isBusy,
+    approvalReviseResult,
     request,
     reset,
     reviseFromApproval,

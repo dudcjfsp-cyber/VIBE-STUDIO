@@ -364,6 +364,92 @@ textarea {
   line-height: 1.6;
 }
 
+.approval-revise-inline .clarify-question {
+  max-width: 760px;
+}
+
+.approval-revise-current,
+.approval-revise-editor {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.approval-revise-current h3,
+.approval-revise-editor h3 {
+  margin: 0 0 10px;
+}
+
+.approval-revise-current p,
+.approval-revise-editor p,
+.approval-revise-block p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.approval-revise-current p {
+  white-space: pre-wrap;
+}
+
+.approval-revise-grid {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.approval-revise-grid-issues {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.approval-revise-block {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.approval-revise-block h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.approval-revise-label {
+  margin-top: 12px !important;
+  color: var(--ink) !important;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.approval-revise-editor-header {
+  display: grid;
+  gap: 6px;
+}
+
+.approval-revise-textarea {
+  width: 100%;
+  min-height: 160px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.approval-revise-example {
+  margin-top: 12px !important;
+}
+
+.approval-revise-submit {
+  margin: 16px 0 0;
+}
+
 .ghost-action-inline {
   margin: 0;
   padding: 10px 14px;
@@ -472,6 +558,91 @@ textarea {
   color: #f4f0e8;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+.prompt-learning-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.prompt-learning-lead {
+  margin: 0;
+}
+
+.prompt-learning-summary {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.prompt-learning-summary li + li {
+  margin-top: 8px;
+}
+
+.prompt-learning-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.prompt-learning-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.prompt-learning-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.prompt-learning-card-header h3,
+.prompt-learning-card-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.prompt-learning-card p + p {
+  margin-top: 12px;
+}
+
+.prompt-learning-card strong,
+.prompt-learning-card span {
+  display: block;
+}
+
+.prompt-learning-card span {
+  margin-top: 6px;
+}
+
+.prompt-learning-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.prompt-learning-badge.is-applied {
+  border-color: rgba(29, 107, 87, 0.16);
+  background: rgba(29, 107, 87, 0.08);
+  color: var(--accent-strong);
+}
+
+.prompt-learning-conditional {
+  display: grid;
+  gap: 12px;
+}
+
+.prompt-learning-conditional h3 {
+  margin: 0;
 }
 
 .follow-up-actions,
@@ -617,9 +788,21 @@ textarea {
     font-size: 1.16rem;
   }
 
+  .approval-revise-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .approval-revise-textarea {
+    min-height: 180px;
+  }
+
   .follow-up-actions-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .prompt-learning-grid {
+    grid-template-columns: 1fr;
   }
 
   .follow-up-answer-input {
