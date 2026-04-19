@@ -81,12 +81,27 @@ export type Stage1PolicyContext = {
   present_as_separate_block: true;
 };
 
+export type Stage1ReviewRefinementAnswer = {
+  answer: string;
+  question: string;
+};
+
+export type Stage1ReviewRefinementContext = {
+  answers: Stage1ReviewRefinementAnswer[];
+  base_result_body: string;
+  base_remaining_questions: string[];
+  base_result_title: string;
+  kind: "review-remaining-question-answers";
+};
+
 export type Stage1FollowUpRequest = {
   policy_context: Stage1PolicyContext;
   primary_result: Record<string, unknown>;
   renderer: Stage1SupportedRenderer;
+  review_refinement?: Stage1ReviewRefinementContext;
   result_context: Stage1ResultContext;
   selected_action: Stage1ActionId;
+  source_result_ref?: Stage1SourceResultRef;
   source_text: string;
 };
 
@@ -251,6 +266,43 @@ export function buildStage1FollowUpRequest(
   return undefined;
 }
 
+export function buildStage1ReviewRefinementRequest(
+  result: EngineResult,
+  followUp: Stage1FollowUpResult,
+  answers: Stage1ReviewRefinementAnswer[],
+): Stage1FollowUpRequest | undefined {
+  if (
+    followUp.action_id !== "revise-from-review" ||
+    followUp.result_kind !== "revised-draft"
+  ) {
+    return undefined;
+  }
+
+  const baseRequest = buildStage1FollowUpRequest(result, "revise-from-review");
+  const normalizedAnswers = answers
+    .map((entry) => ({
+      answer: entry.answer.trim(),
+      question: entry.question.trim(),
+    }))
+    .filter((entry) => entry.question.length > 0 && entry.answer.length > 0);
+
+  if (!baseRequest || normalizedAnswers.length === 0) {
+    return undefined;
+  }
+
+  return {
+    ...baseRequest,
+    review_refinement: {
+      answers: normalizedAnswers,
+      base_result_body: followUp.result_body,
+      base_remaining_questions: followUp.remaining_questions,
+      base_result_title: followUp.result_title,
+      kind: "review-remaining-question-answers",
+    },
+    source_result_ref: followUp.source_result_ref,
+  };
+}
+
 export function runDeterministicStage1FollowUp(
   request: Stage1FollowUpRequest,
 ): Stage1FollowUpResult {
@@ -272,28 +324,65 @@ function buildReviewFollowUp(
   }
 
   const artifactText = resolveReviewArtifact(request.result_context.artifact_text);
-  const korean = prefersKorean(request.source_text, artifactText);
+  const refinement = readReviewRefinement(request);
+  const answeredQuestions = refinement?.answers ?? [];
+  const korean = prefersKorean(
+    request.source_text,
+    artifactText,
+    ...answeredQuestions.map((entry) => `${entry.question} ${entry.answer}`),
+  );
   const findings = request.result_context.findings;
   const topFindings = findings.slice(0, 3);
+  const defaultRemainingQuestions = findings.slice(3, 5).map((finding) =>
+    korean
+      ? `${finding.title}까지 반영하려면 추가 맥락이 더 필요한지 확인`
+      : `Check whether ${finding.title} needs more source context before another pass`,
+  );
+  const remainingQuestionSource =
+    refinement?.base_remaining_questions.length
+      ? refinement.base_remaining_questions
+      : defaultRemainingQuestions;
+  const remainingQuestions = refinement
+    ? remainingQuestionSource.filter(
+        (question) =>
+          !answeredQuestions.some((entry) => entry.question.trim() === question.trim()),
+      )
+    : defaultRemainingQuestions;
+  const refinementSummary = answeredQuestions.slice(0, 2).map((entry) =>
+    korean
+      ? `"${shortenSentence(entry.question)}" 답변을 반영해 수정안을 더 구체화했다.`
+      : `Applied an answer to "${shortenSentence(entry.question)}" to refine the draft.`,
+  );
 
   return {
     action_id: request.selected_action,
-    change_summary: topFindings.map((finding) =>
-      korean
-        ? `${finding.title} 지적을 반영해 ${shortenSentence(finding.recommendation)}`
-        : `Addressed ${finding.title} by ${shortenSentence(finding.recommendation)}`,
-    ),
-    remaining_questions: findings.slice(3, 5).map((finding) =>
-      korean
-        ? `${finding.title}까지 반영하려면 추가 맥락이 더 필요한지 확인`
-        : `Check whether ${finding.title} needs more source context before another pass`,
-    ),
+    change_summary: [
+      ...topFindings.map((finding) =>
+        korean
+          ? `${finding.title} 지적을 반영해 ${shortenSentence(finding.recommendation)}`
+          : `Addressed ${finding.title} by ${shortenSentence(finding.recommendation)}`,
+      ),
+      ...refinementSummary,
+    ],
+    remaining_questions: remainingQuestions,
     result_body: korean
-      ? buildKoreanReviewRevision(artifactText, request.source_text, topFindings)
-      : buildEnglishReviewRevision(artifactText, request.source_text, topFindings),
+      ? buildKoreanReviewRevision(
+          artifactText,
+          request.source_text,
+          topFindings,
+          refinement,
+        )
+      : buildEnglishReviewRevision(
+          artifactText,
+          request.source_text,
+          topFindings,
+          refinement,
+        ),
     result_kind: "revised-draft",
-    result_title: korean ? "지적 반영 수정안" : "Revision Based on Review",
-    source_result_ref: buildSourceResultRef(request),
+    result_title:
+      refinement?.base_result_title?.trim() ||
+      (korean ? "지적 반영 수정안" : "Revision Based on Review"),
+    source_result_ref: request.source_result_ref ?? buildSourceResultRef(request),
   };
 }
 
@@ -405,24 +494,60 @@ function buildKoreanReviewRevision(
   artifactText: string,
   sourceText: string,
   findings: Stage1ReviewFinding[],
+  refinement?: Stage1ReviewRefinementContext,
 ): string {
   const subject = inferKoreanSubject(artifactText, sourceText);
   const audiencePrefix = hasKeyword(`${artifactText} ${sourceText}`, ["초보자"])
     ? "초보자도 바로 적응할 수 있는 "
     : "";
-  const featureSentence =
+  const defaultFeatureSentence =
     subject === "생산성 앱"
       ? "복잡한 할 일을 쉽게 정리하고 우선순위를 빠르게 잡아 시간을 아끼게 도와줍니다."
       : `${subject}의 핵심 가치와 사용 이점을 더 분명하게 전달합니다.`;
   const ctaSentence = hasFindingKeyword(findings, ["흥미", "유도", "설득", "행동"])
     ? "지금 바로 시작해 더 가볍고 선명하게 하루를 관리해보세요."
     : "";
+  const baseLines = (
+    refinement?.base_result_body.trim() ||
+    [`${audiencePrefix}${subject}입니다.`, defaultFeatureSentence, ctaSentence]
+      .filter(Boolean)
+      .join("\n")
+  )
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const audienceAnswer = findReviewAnswer(refinement, ["대상 사용자", "핵심 대상", "누가"]);
+  const valueAnswer = findReviewAnswer(refinement, ["가치", "문제", "해결", "효율"]);
+  const extraAnswers = (refinement?.answers ?? [])
+    .filter(
+      (entry) =>
+        entry.answer !== audienceAnswer &&
+        entry.answer !== valueAnswer,
+    )
+    .map((entry) => ensureSentence(entry.answer))
+    .filter(Boolean);
 
-  return [
-    `${audiencePrefix}${subject}입니다.`,
-    featureSentence,
-    ctaSentence,
-  ]
+  if (audienceAnswer) {
+    baseLines[0] = buildAudienceLine(audienceAnswer, subject, "ko");
+  } else if (!baseLines[0]) {
+    baseLines[0] = `${audiencePrefix}${subject}입니다.`;
+  }
+
+  if (valueAnswer) {
+    baseLines[1] = ensureSentence(valueAnswer);
+  } else if (!baseLines[1]) {
+    baseLines[1] = defaultFeatureSentence;
+  }
+
+  if (ctaSentence) {
+    if (baseLines.length >= 3) {
+      baseLines[2] = ctaSentence;
+    } else {
+      baseLines.push(ctaSentence);
+    }
+  }
+
+  return [...baseLines.slice(0, 2), ...extraAnswers.slice(0, 1), ...baseLines.slice(2)]
     .filter(Boolean)
     .join("\n");
 }
@@ -431,20 +556,54 @@ function buildEnglishReviewRevision(
   artifactText: string,
   sourceText: string,
   findings: Stage1ReviewFinding[],
+  refinement?: Stage1ReviewRefinementContext,
 ): string {
   const subject = inferEnglishSubject(artifactText, sourceText);
-  const firstSentence = /\bbeginner|first-time\b/i.test(`${artifactText} ${sourceText}`)
+  const defaultFirstSentence = /\bbeginner|first-time\b/i.test(
+    `${artifactText} ${sourceText}`,
+  )
     ? `A beginner-friendly ${subject}.`
     : `A clearer ${subject}.`;
-  const featureSentence =
+  const defaultFeatureSentence =
     subject === "productivity app"
       ? "It helps you organize tasks quickly, set priorities with less friction, and save time as you work."
       : `It makes the core value and practical benefit of this ${subject} easier to understand.`;
   const ctaSentence = hasFindingKeyword(findings, ["engage", "persuade", "interest", "action"])
     ? "Start now and build a more focused, productive routine."
     : "";
+  const baseLines = (
+    refinement?.base_result_body.trim() ||
+    [defaultFirstSentence, defaultFeatureSentence, ctaSentence]
+      .filter(Boolean)
+      .join("\n")
+  )
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const audienceAnswer = findReviewAnswer(refinement, ["target user", "audience", "who"]);
+  const valueAnswer = findReviewAnswer(refinement, ["value", "problem", "benefit"]);
 
-  return [firstSentence, featureSentence, ctaSentence].filter(Boolean).join("\n");
+  if (audienceAnswer) {
+    baseLines[0] = buildAudienceLine(audienceAnswer, subject, "en");
+  } else if (!baseLines[0]) {
+    baseLines[0] = defaultFirstSentence;
+  }
+
+  if (valueAnswer) {
+    baseLines[1] = ensureSentence(valueAnswer);
+  } else if (!baseLines[1]) {
+    baseLines[1] = defaultFeatureSentence;
+  }
+
+  if (ctaSentence) {
+    if (baseLines.length >= 3) {
+      baseLines[2] = ctaSentence;
+    } else {
+      baseLines.push(ctaSentence);
+    }
+  }
+
+  return baseLines.filter(Boolean).join("\n");
 }
 
 function inferKoreanSubject(artifactText: string, sourceText: string): string {
@@ -677,6 +836,18 @@ function isArchitectureContext(
   return "interaction_flows" in value && "system_boundary" in value;
 }
 
+function readReviewRefinement(
+  request: Stage1FollowUpRequest,
+): Stage1ReviewRefinementContext | undefined {
+  if (!request.review_refinement) {
+    return undefined;
+  }
+
+  return isReviewRefinementContext(request.review_refinement)
+    ? request.review_refinement
+    : undefined;
+}
+
 function resolveArtifactText(result: EngineResult): string {
   const artifactText = result.source.artifacts?.[0]?.text?.trim();
 
@@ -757,4 +928,89 @@ function hasFindingKeyword(
 
 function isRecord(value: unknown): value is Record<string, any> {
   return typeof value === "object" && value !== null;
+}
+
+function isReviewRefinementContext(
+  value: unknown,
+): value is Stage1ReviewRefinementContext {
+  return (
+    isRecord(value) &&
+    value.kind === "review-remaining-question-answers" &&
+    typeof value.base_result_body === "string" &&
+    Array.isArray(value.base_remaining_questions) &&
+    value.base_remaining_questions.every(
+      (entry) => typeof entry === "string",
+    ) &&
+    typeof value.base_result_title === "string" &&
+    Array.isArray(value.answers) &&
+    value.answers.every(isReviewRefinementAnswer)
+  );
+}
+
+function isReviewRefinementAnswer(
+  value: unknown,
+): value is Stage1ReviewRefinementAnswer {
+  return (
+    isRecord(value) &&
+    typeof value.question === "string" &&
+    typeof value.answer === "string"
+  );
+}
+
+function findReviewAnswer(
+  refinement: Stage1ReviewRefinementContext | undefined,
+  keywords: string[],
+): string | undefined {
+  if (!refinement) {
+    return undefined;
+  }
+
+  const loweredKeywords = keywords.map((keyword) => keyword.toLowerCase());
+  const entry = refinement.answers.find((candidate) => {
+    const question = candidate.question.toLowerCase();
+
+    return loweredKeywords.some((keyword) => question.includes(keyword));
+  });
+
+  return entry?.answer.trim() || undefined;
+}
+
+function ensureSentence(value: string): string {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (/[.!?。！？]$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `${trimmed}.`;
+}
+
+function buildAudienceLine(
+  audience: string,
+  subject: string,
+  language: "ko" | "en",
+): string {
+  const trimmed = audience.trim();
+
+  if (!trimmed) {
+    return language === "ko" ? `${subject}입니다.` : `A clearer ${subject}.`;
+  }
+
+  if (language === "ko") {
+    if (trimmed.includes(subject)) {
+      return /[.!?。！？]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+    }
+
+    return `${trimmed}를 위한 ${subject}입니다.`;
+  }
+
+  if (trimmed.toLowerCase().includes(subject.toLowerCase())) {
+    return ensureSentence(trimmed);
+  }
+
+  return `A ${subject} for ${trimmed}.`;
 }

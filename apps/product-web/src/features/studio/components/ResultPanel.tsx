@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   buildStage1FollowUpRequest,
+  buildStage1ReviewRefinementRequest,
   listVisibleStage1Actions,
   type EngineResult,
   type Stage1ActionId,
   type Stage1FollowUpResult,
+  type Stage1ReviewRefinementAnswer,
 } from "@vive-studio/engine-contracts";
 import type { ArchitectureOutput } from "@vive-studio/renderer-architecture";
 import type { PlanOutput } from "@vive-studio/renderer-plan";
@@ -26,6 +28,10 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
   const [copyLabel, setCopyLabel] = useState("복사");
   const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
   const [followUpError, setFollowUpError] = useState<string | undefined>();
+  const [reviewRefinementAnswers, setReviewRefinementAnswers] = useState<string[]>(
+    [],
+  );
+  const [isReviewRefining, setIsReviewRefining] = useState(false);
   const [pendingActionId, setPendingActionId] = useState<
     Stage1ActionId | undefined
   >();
@@ -38,8 +44,19 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
     setCopyLabel("복사");
     setFollowUp(undefined);
     setFollowUpError(undefined);
+    setReviewRefinementAnswers([]);
+    setIsReviewRefining(false);
     setPendingActionId(undefined);
   }, [result]);
+
+  useEffect(() => {
+    setReviewRefinementAnswers(
+      followUp?.action_id === "revise-from-review"
+        ? followUp.remaining_questions.map(() => "")
+        : [],
+    );
+    setIsReviewRefining(false);
+  }, [followUp]);
 
   if (!output) {
     return null;
@@ -82,6 +99,47 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
       );
     } finally {
       setPendingActionId(undefined);
+    }
+  }
+
+  function handleReviewRefinementAnswerChange(index: number, value: string) {
+    setReviewRefinementAnswers((current) =>
+      current.map((entry, entryIndex) => (entryIndex === index ? value : entry)),
+    );
+  }
+
+  async function handleReviewRefinement() {
+    if (!followUp || followUp.action_id !== "revise-from-review") {
+      return;
+    }
+
+    const answers: Stage1ReviewRefinementAnswer[] = followUp.remaining_questions
+      .map((question, index) => ({
+        answer: reviewRefinementAnswers[index] ?? "",
+        question,
+      }))
+      .filter((entry) => entry.answer.trim().length > 0);
+    const request = buildStage1ReviewRefinementRequest(result, followUp, answers);
+
+    if (!request) {
+      setFollowUpError("남은 질문에 대한 답변을 입력한 뒤 다시 시도해 주세요.");
+      return;
+    }
+
+    setFollowUpError(undefined);
+    setIsReviewRefining(true);
+
+    try {
+      const nextResult = await runStage1FollowUp(request, runtime);
+      setFollowUp(nextResult);
+    } catch (error) {
+      setFollowUpError(
+        error instanceof Error
+          ? error.message
+          : "답변을 반영해 수정안을 보완하는 중 문제가 생겼어요.",
+      );
+    } finally {
+      setIsReviewRefining(false);
     }
   }
 
@@ -240,10 +298,48 @@ export function ResultPanel({ onReset, result, runtime }: ResultPanelProps) {
             <section className="result-section follow-up-meta">
               <h3>남은 질문 또는 주의점</h3>
               <ul>
-                {followUp.remaining_questions.map((item) => (
-                  <li key={item}>{item}</li>
+                {followUp.remaining_questions.map((item, index) => (
+                  <li
+                    className={
+                      followUp.action_id === "revise-from-review"
+                        ? "follow-up-question-item"
+                        : undefined
+                    }
+                    key={item}
+                  >
+                    <span>{item}</span>
+                    {followUp.action_id === "revise-from-review" ? (
+                      <textarea
+                        className="follow-up-answer-input"
+                        onChange={(event) => {
+                          handleReviewRefinementAnswerChange(index, event.target.value);
+                        }}
+                        placeholder="이 질문에 대한 답을 입력하면 수정안에 바로 반영됩니다."
+                        rows={3}
+                        value={reviewRefinementAnswers[index] ?? ""}
+                      />
+                    ) : null}
+                  </li>
                 ))}
               </ul>
+
+              {followUp.action_id === "revise-from-review" ? (
+                <button
+                  className="primary-action follow-up-refine-action"
+                  disabled={
+                    isReviewRefining ||
+                    !reviewRefinementAnswers.some((entry) => entry.trim().length > 0)
+                  }
+                  onClick={() => {
+                    void handleReviewRefinement();
+                  }}
+                  type="button"
+                >
+                  {isReviewRefining
+                    ? "답변 반영 중..."
+                    : "답변 반영해서 수정안 보완하기"}
+                </button>
+              ) : null}
             </section>
           ) : null}
         </section>

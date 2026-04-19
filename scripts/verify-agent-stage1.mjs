@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import {
   buildStage1FollowUpRequest,
+  buildStage1ReviewRefinementRequest,
   listVisibleStage1Actions,
 } from "../packages/engine-contracts/dist/index.js";
 import { createEngine } from "../packages/engine-core/dist/index.js";
@@ -65,6 +66,40 @@ assert.ok(
   reviewFollowUp.result_body.includes("A clearer draft.") ||
     reviewFollowUp.result_body.includes("productivity app"),
 );
+
+const reviewRefinementRequest = buildStage1ReviewRefinementRequest(
+  reviewResult,
+  reviewFollowUp,
+  [
+    {
+      question: "Can you name the target user more concretely?",
+      answer: "solo founders handling many tasks alone",
+    },
+    {
+      question:
+        "Can you explain the biggest value or problem this app solves in more detail?",
+      answer:
+        "It helps them prioritize work quickly and close the day without losing track of tasks.",
+    },
+  ],
+);
+
+assert.ok(reviewRefinementRequest);
+assert.equal(
+  reviewRefinementRequest.review_refinement?.kind,
+  "review-remaining-question-answers",
+);
+
+const refinedReviewFollowUp = await runStage1FollowUp(reviewRefinementRequest, {
+  provider: "local",
+});
+
+assert.ok(refinedReviewFollowUp.result_body.includes("solo founders"));
+assert.ok(
+  refinedReviewFollowUp.result_body.includes("prioritize work") ||
+    refinedReviewFollowUp.result_body.includes("losing track of tasks"),
+);
+assert.equal(refinedReviewFollowUp.remaining_questions.length, 0);
 
 const planApprovalPending = await planEngine.run({
   source: {
@@ -195,6 +230,7 @@ console.log(
       ),
       follow_up_kind: reviewFollowUp.result_kind,
       change_summary_count: reviewFollowUp.change_summary.length,
+      refinement_remaining_questions: refinedReviewFollowUp.remaining_questions.length,
     },
     plan_stage1: {
       gated_action_count: listVisibleStage1Actions(planApprovalPending).length,

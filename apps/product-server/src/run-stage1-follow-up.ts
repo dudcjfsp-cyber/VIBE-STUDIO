@@ -118,6 +118,17 @@ function buildSystemPrompt(request: Stage1FollowUpRequest): string {
       lines.push(
         "Keep the result concise and directly usable. Do not restate the review request or explain the editing process.",
       );
+      if (request.review_refinement) {
+        lines.push(
+          "You may receive structured answers to displayed remaining questions.",
+        );
+        lines.push(
+          "Use those answers only to refine the same revised artifact. Do not treat them as a new freeform instruction.",
+        );
+        lines.push(
+          "Keep the result in the same follow-up block and remove any remaining question that was answered well enough.",
+        );
+      }
       break;
     case "expand-plan-detail":
       lines.push(
@@ -149,6 +160,9 @@ function buildUserPrompt(request: Stage1FollowUpRequest): string {
     `Primary renderer: ${request.renderer}`,
     `Source text: ${request.source_text.trim()}`,
     ...(reviewArtifact ? [`Artifact text to revise: ${reviewArtifact}`] : []),
+    ...(request.review_refinement
+      ? [`Review refinement: ${JSON.stringify(request.review_refinement)}`]
+      : []),
     `Primary result: ${JSON.stringify(request.primary_result)}`,
     `Result context: ${JSON.stringify(request.result_context)}`,
     `Policy context: ${JSON.stringify(request.policy_context)}`,
