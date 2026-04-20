@@ -732,6 +732,24 @@ textarea {
   line-height: 1.55;
 }
 
+.follow-up-instruction-help {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.follow-up-instruction-input {
+  width: 100%;
+  min-height: 104px;
+  padding: 12px 14px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
 .follow-up-refine-action {
   margin: 16px 0 0;
 }
@@ -807,5 +825,9 @@ textarea {
 
   .follow-up-answer-input {
     min-height: 96px;
+  }
+
+  .follow-up-instruction-input {
+    min-height: 112px;
   }
 }

@@ -94,7 +94,16 @@ export type Stage1ReviewRefinementContext = {
   kind: "review-remaining-question-answers";
 };
 
+export type Stage1FollowUpInstructionContext = {
+  base_result_body: string;
+  base_remaining_questions: string[];
+  base_result_title: string;
+  instruction: string;
+  kind: "bounded-follow-up-instruction";
+};
+
 export type Stage1FollowUpRequest = {
+  follow_up_instruction?: Stage1FollowUpInstructionContext;
   policy_context: Stage1PolicyContext;
   primary_result: Record<string, unknown>;
   renderer: Stage1SupportedRenderer;
@@ -303,6 +312,38 @@ export function buildStage1ReviewRefinementRequest(
   };
 }
 
+export function buildStage1InstructionRevisionRequest(
+  result: EngineResult,
+  followUp: Stage1FollowUpResult,
+  instruction: string,
+): Stage1FollowUpRequest | undefined {
+  const normalizedInstruction = instruction.trim();
+  const baseRequest = buildStage1FollowUpRequest(result, followUp.action_id);
+
+  if (!baseRequest || normalizedInstruction.length === 0) {
+    return undefined;
+  }
+
+  return {
+    ...baseRequest,
+    policy_context: {
+      ...baseRequest.policy_context,
+      boundary_rules: [
+        ...baseRequest.policy_context.boundary_rules,
+        "A bounded follow-up instruction is allowed only after action selection and must stay inside the same follow-up block.",
+      ],
+    },
+    follow_up_instruction: {
+      base_result_body: followUp.result_body,
+      base_remaining_questions: followUp.remaining_questions,
+      base_result_title: followUp.result_title,
+      instruction: normalizedInstruction,
+      kind: "bounded-follow-up-instruction",
+    },
+    source_result_ref: followUp.source_result_ref,
+  };
+}
+
 export function runDeterministicStage1FollowUp(
   request: Stage1FollowUpRequest,
 ): Stage1FollowUpResult {
@@ -325,10 +366,12 @@ function buildReviewFollowUp(
 
   const artifactText = resolveReviewArtifact(request.result_context.artifact_text);
   const refinement = readReviewRefinement(request);
+  const instructionRevision = readFollowUpInstruction(request);
   const answeredQuestions = refinement?.answers ?? [];
   const korean = prefersKorean(
     request.source_text,
     artifactText,
+    instructionRevision?.instruction ?? "",
     ...answeredQuestions.map((entry) => `${entry.question} ${entry.answer}`),
   );
   const findings = request.result_context.findings;
@@ -341,6 +384,8 @@ function buildReviewFollowUp(
   const remainingQuestionSource =
     refinement?.base_remaining_questions.length
       ? refinement.base_remaining_questions
+      : instructionRevision?.base_remaining_questions.length
+        ? instructionRevision.base_remaining_questions
       : defaultRemainingQuestions;
   const remainingQuestions = refinement
     ? remainingQuestionSource.filter(
@@ -362,24 +407,36 @@ function buildReviewFollowUp(
           ? `${finding.title} 지적을 반영해 ${shortenSentence(finding.recommendation)}`
           : `Addressed ${finding.title} by ${shortenSentence(finding.recommendation)}`,
       ),
+      ...(instructionRevision
+        ? [
+            korean
+              ? "추가 지시를 반영해 같은 수정안 블록 안에서 내용을 더 다듬었다."
+              : "Refined the same revision block using the bounded follow-up instruction.",
+          ]
+        : []),
       ...refinementSummary,
     ],
     remaining_questions: remainingQuestions,
-    result_body: korean
-      ? buildKoreanReviewRevision(
-          artifactText,
-          request.source_text,
-          topFindings,
-          refinement,
-        )
-      : buildEnglishReviewRevision(
-          artifactText,
-          request.source_text,
-          topFindings,
-          refinement,
-        ),
+    result_body: applyInstructionRevision(
+      korean
+        ? buildKoreanReviewRevision(
+            artifactText,
+            request.source_text,
+            topFindings,
+            refinement,
+          )
+        : buildEnglishReviewRevision(
+            artifactText,
+            request.source_text,
+            topFindings,
+            refinement,
+          ),
+      instructionRevision,
+      korean,
+    ),
     result_kind: "revised-draft",
     result_title:
+      instructionRevision?.base_result_title?.trim() ||
       refinement?.base_result_title?.trim() ||
       (korean ? "지적 반영 수정안" : "Revision Based on Review"),
     source_result_ref: request.source_result_ref ?? buildSourceResultRef(request),
@@ -394,6 +451,7 @@ function buildPlanFollowUp(
   }
 
   const context = request.result_context;
+  const instructionRevision = readFollowUpInstruction(request);
   const korean = prefersKorean(request.source_text, context.title);
   const expandedSections = context.sections.map((section) =>
     renderExpandedPlanSection(section, korean),
@@ -404,13 +462,24 @@ function buildPlanFollowUp(
 
   return {
     action_id: request.selected_action,
-    change_summary: context.sections.slice(0, 3).map((section) =>
-      korean
-        ? `${section.title} 섹션에 실행 관점과 확인 포인트를 덧붙였다.`
-        : `Added execution detail and checkpoints to ${section.title}.`,
-    ),
+    change_summary: [
+      ...context.sections.slice(0, 3).map((section) =>
+        korean
+          ? `${section.title} 섹션에 실행 관점과 확인 포인트를 덧붙였다.`
+          : `Added execution detail and checkpoints to ${section.title}.`,
+      ),
+      ...(instructionRevision
+        ? [
+            korean
+              ? "추가 지시를 반영해 같은 계획 결과 안에서 세부 내용을 더 조정했다."
+              : "Used the bounded follow-up instruction to refine the same plan result.",
+          ]
+        : []),
+    ],
     remaining_questions:
-      thinSections.length > 0
+      instructionRevision?.base_remaining_questions.length
+        ? instructionRevision.base_remaining_questions
+        : thinSections.length > 0
         ? thinSections.map((title) =>
             korean
               ? `${title} 섹션은 아직 근거 사례나 범위 기준을 더 채울 수 있다.`
@@ -421,13 +490,19 @@ function buildPlanFollowUp(
               ? "세부화한 계획을 실제 우선순위와 일정 관점에서 한 번 더 정리할 수 있다."
               : "The expanded plan could still be tightened around priority and sequencing.",
           ],
-    result_body: [
-      korean ? "확장된 계획 초안" : "Expanded Plan Draft",
-      "",
-      ...expandedSections,
-    ].join("\n"),
+    result_body: applyInstructionRevision(
+      [
+        korean ? "확장된 계획 초안" : "Expanded Plan Draft",
+        "",
+        ...expandedSections,
+      ].join("\n"),
+      instructionRevision,
+      korean,
+    ),
     result_kind: "expanded-plan",
-    result_title: korean ? "더 구체화한 계획" : "More Detailed Plan",
+    result_title:
+      instructionRevision?.base_result_title?.trim() ||
+      (korean ? "더 구체화한 계획" : "More Detailed Plan"),
     source_result_ref: buildSourceResultRef(request),
   };
 }
@@ -443,6 +518,7 @@ function buildArchitectureFollowUp(
   }
 
   const context = request.result_context;
+  const instructionRevision = readFollowUpInstruction(request);
   const korean = prefersKorean(request.source_text, context.system_boundary);
   const flowDetails = context.interaction_flows.map((flow) =>
     renderDetailedFlow(flow, context.components, korean),
@@ -470,22 +546,38 @@ function buildArchitectureFollowUp(
           ? `${flow.name} 흐름을 단계별 책임 관점으로 더 잘게 풀었다.`
           : `Expanded ${flow.name} into finer-grained flow responsibilities.`,
       ),
+      ...(instructionRevision
+        ? [
+            korean
+              ? "추가 지시를 반영하되 flow-detail 중심의 같은 구조 설계 범위는 유지했다."
+              : "Applied the bounded follow-up instruction while keeping the same flow-detail architecture scope.",
+          ]
+        : []),
     ],
-    remaining_questions: outOfScope,
-    result_body: [
-      korean ? "세부 설계 확장" : "Detailed Flow Expansion",
-      "",
-      korean
-        ? `이번 후속 결과는 "${context.system_boundary}" 구조를 유지한 채 주요 흐름을 더 세밀하게 풀어쓴 것이다.`
-        : `This follow-up keeps the existing boundary around "${context.system_boundary}" and expands the main flows in more detail.`,
-      "",
-      ...(korean
-        ? ["확장 초점: flow-detail", ""]
-        : ["Expansion focus: flow-detail", ""]),
-      ...flowDetails,
-    ].join("\n"),
+    remaining_questions:
+      instructionRevision?.base_remaining_questions.length
+        ? instructionRevision.base_remaining_questions
+        : outOfScope,
+    result_body: applyInstructionRevision(
+      [
+        korean ? "세부 설계 확장" : "Detailed Flow Expansion",
+        "",
+        korean
+          ? `이번 후속 결과는 "${context.system_boundary}" 구조를 유지한 채 주요 흐름을 더 세밀하게 풀어쓴 것이다.`
+          : `This follow-up keeps the existing boundary around "${context.system_boundary}" and expands the main flows in more detail.`,
+        "",
+        ...(korean
+          ? ["확장 초점: flow-detail", ""]
+          : ["Expansion focus: flow-detail", ""]),
+        ...flowDetails,
+      ].join("\n"),
+      instructionRevision,
+      korean,
+    ),
     result_kind: "expanded-architecture",
-    result_title: korean ? "세부 설계 확장안" : "Detailed Architecture Expansion",
+    result_title:
+      instructionRevision?.base_result_title?.trim() ||
+      (korean ? "세부 설계 확장안" : "Detailed Architecture Expansion"),
     source_result_ref: buildSourceResultRef(request),
   };
 }
@@ -848,6 +940,18 @@ function readReviewRefinement(
     : undefined;
 }
 
+function readFollowUpInstruction(
+  request: Stage1FollowUpRequest,
+): Stage1FollowUpInstructionContext | undefined {
+  if (!request.follow_up_instruction) {
+    return undefined;
+  }
+
+  return isFollowUpInstructionContext(request.follow_up_instruction)
+    ? request.follow_up_instruction
+    : undefined;
+}
+
 function resolveArtifactText(result: EngineResult): string {
   const artifactText = result.source.artifacts?.[0]?.text?.trim();
 
@@ -957,6 +1061,22 @@ function isReviewRefinementAnswer(
   );
 }
 
+function isFollowUpInstructionContext(
+  value: unknown,
+): value is Stage1FollowUpInstructionContext {
+  return (
+    isRecord(value) &&
+    value.kind === "bounded-follow-up-instruction" &&
+    typeof value.base_result_body === "string" &&
+    Array.isArray(value.base_remaining_questions) &&
+    value.base_remaining_questions.every(
+      (entry) => typeof entry === "string",
+    ) &&
+    typeof value.base_result_title === "string" &&
+    typeof value.instruction === "string"
+  );
+}
+
 function findReviewAnswer(
   refinement: Stage1ReviewRefinementContext | undefined,
   keywords: string[],
@@ -1013,4 +1133,32 @@ function buildAudienceLine(
   }
 
   return `A ${subject} for ${trimmed}.`;
+}
+
+function applyInstructionRevision(
+  nextBody: string,
+  instructionRevision: Stage1FollowUpInstructionContext | undefined,
+  korean: boolean,
+): string {
+  if (!instructionRevision) {
+    return nextBody;
+  }
+
+  const baseBody = instructionRevision.base_result_body.trim();
+  const revisedBody = nextBody.trim();
+  const instructionLines = [
+    korean ? "추가 반영 요청" : "Additional Follow-Up Applied",
+    `- ${ensureSentence(instructionRevision.instruction)}`,
+    korean
+      ? "- 같은 결과 방향 안에서만 이 지시를 반영했다."
+      : "- This instruction was applied within the same result direction only.",
+  ];
+
+  if (!baseBody || baseBody === revisedBody) {
+    return [baseBody || revisedBody, "", ...instructionLines]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  return revisedBody;
 }

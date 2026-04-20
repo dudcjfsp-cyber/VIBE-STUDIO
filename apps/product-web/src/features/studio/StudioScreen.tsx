@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { ResultPanel } from "./components/ResultPanel";
 import { StartPanel } from "./components/StartPanel";
@@ -6,6 +8,8 @@ import { useProviderSession } from "./hooks/useProviderSession";
 import { useStudioFlow } from "./hooks/useStudioFlow";
 
 export function StudioScreen() {
+  const approvalPanelRef = useRef<HTMLDivElement | null>(null);
+  const resultPanelRef = useRef<HTMLDivElement | null>(null);
   const providerSession = useProviderSession();
   const flow = useStudioFlow({
     blockReason: providerSession.blockReason,
@@ -19,6 +23,23 @@ export function StudioScreen() {
     flow.snapshot.stage === "clarify" && flow.snapshot.result
       ? Math.max(flow.snapshot.result.intent_ir.analysis.clarification_questions.length - 1, 0)
       : 0;
+
+  useEffect(() => {
+    if (flow.snapshot.stage === "approval" && approvalPanelRef.current) {
+      approvalPanelRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      return;
+    }
+
+    if (flow.snapshot.stage === "result" && resultPanelRef.current) {
+      resultPanelRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [flow.snapshot.runId, flow.snapshot.stage]);
 
   function handleExampleClick(example: StartExample) {
     flow.setInput(example.text);
@@ -76,27 +97,31 @@ export function StudioScreen() {
       />
 
       {flow.snapshot.stage === "approval" && flow.snapshot.result ? (
-        <ApprovalPanel
-          isBusy={flow.isBusy}
-          onApprove={(level) => {
-            if (level === "none") {
-              return;
-            }
+        <div ref={approvalPanelRef}>
+          <ApprovalPanel
+            isBusy={flow.isBusy}
+            onApprove={(level) => {
+              if (level === "none") {
+                return;
+              }
 
-            void flow.continueAfterApproval(level);
-          }}
-          onRevise={flow.reviseFromApproval}
-          result={flow.snapshot.result}
-        />
+              void flow.continueAfterApproval(level);
+            }}
+            onRevise={flow.reviseFromApproval}
+            result={flow.snapshot.result}
+          />
+        </div>
       ) : null}
 
       {flow.snapshot.stage === "result" && flow.snapshot.result ? (
-        <ResultPanel
-          onReset={flow.reset}
-          result={flow.snapshot.result}
-          runId={flow.snapshot.runId}
-          runtime={providerSession.runtime}
-        />
+        <div ref={resultPanelRef}>
+          <ResultPanel
+            onReset={flow.reset}
+            result={flow.snapshot.result}
+            runId={flow.snapshot.runId}
+            runtime={providerSession.runtime}
+          />
+        </div>
       ) : null}
     </main>
   );

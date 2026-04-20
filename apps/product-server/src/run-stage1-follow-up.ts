@@ -145,6 +145,15 @@ function buildSystemPrompt(request: Stage1FollowUpRequest): string {
       break;
   }
 
+  if (request.follow_up_instruction) {
+    lines.push(
+      "You may receive one bounded follow-up instruction for revising the same follow-up block.",
+    );
+    lines.push(
+      "Apply it only within the current renderer family and do not turn it into a new chain, a renderer switch, or a fresh task.",
+    );
+  }
+
   return lines.join("\n");
 }
 
@@ -160,6 +169,9 @@ function buildUserPrompt(request: Stage1FollowUpRequest): string {
     `Primary renderer: ${request.renderer}`,
     `Source text: ${request.source_text.trim()}`,
     ...(reviewArtifact ? [`Artifact text to revise: ${reviewArtifact}`] : []),
+    ...(request.follow_up_instruction
+      ? [`Follow-up instruction: ${JSON.stringify(request.follow_up_instruction)}`]
+      : []),
     ...(request.review_refinement
       ? [`Review refinement: ${JSON.stringify(request.review_refinement)}`]
       : []),

@@ -18,6 +18,7 @@ export type { EngineRequest } from "./engine-request.js";
 export type { EngineResult } from "./engine-result.js";
 export {
   buildStage1FollowUpRequest,
+  buildStage1InstructionRevisionRequest,
   buildStage1ReviewRefinementRequest,
   listStage1ActionRegistry,
   listVisibleStage1Actions,
@@ -31,6 +32,7 @@ export type {
   Stage1ArchitectureResultContext,
   Stage1FollowUpRequest,
   Stage1FollowUpResult,
+  Stage1FollowUpInstructionContext,
   Stage1PlanResultContext,
   Stage1PlanSection,
   Stage1PolicyContext,

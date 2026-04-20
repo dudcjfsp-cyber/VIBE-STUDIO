@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   buildStage1FollowUpRequest,
+  buildStage1InstructionRevisionRequest,
   buildStage1ReviewRefinementRequest,
   listVisibleStage1Actions,
   type EngineResult,
@@ -38,9 +39,11 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
   const [copyLabel, setCopyLabel] = useState("복사");
   const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
   const [followUpError, setFollowUpError] = useState<string | undefined>();
+  const [followUpInstruction, setFollowUpInstruction] = useState("");
   const [reviewRefinementAnswers, setReviewRefinementAnswers] = useState<string[]>(
     [],
   );
+  const [isFollowUpRevising, setIsFollowUpRevising] = useState(false);
   const [isReviewRefining, setIsReviewRefining] = useState(false);
   const [pendingActionId, setPendingActionId] = useState<
     Stage1ActionId | undefined
@@ -54,17 +57,21 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
     setCopyLabel("복사");
     setFollowUp(undefined);
     setFollowUpError(undefined);
+    setFollowUpInstruction("");
+    setIsFollowUpRevising(false);
     setReviewRefinementAnswers([]);
     setIsReviewRefining(false);
     setPendingActionId(undefined);
   }, [result]);
 
   useEffect(() => {
+    setFollowUpInstruction("");
     setReviewRefinementAnswers(
       followUp?.action_id === "revise-from-review"
         ? followUp.remaining_questions.map(() => "")
         : [],
     );
+    setIsFollowUpRevising(false);
     setIsReviewRefining(false);
   }, [followUp]);
 
@@ -221,6 +228,65 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       );
     } finally {
       setIsReviewRefining(false);
+    }
+  }
+
+  async function handleFollowUpInstructionRevision() {
+    if (!followUp) {
+      return;
+    }
+
+    const request = buildStage1InstructionRevisionRequest(
+      result,
+      followUp,
+      followUpInstruction,
+    );
+
+    if (!request) {
+      setFollowUpError("같은 방향에서 더 다듬고 싶은 내용을 먼저 적어 주세요.");
+      return;
+    }
+
+    setFollowUpError(undefined);
+    setIsFollowUpRevising(true);
+    const revisionRunId = createTelemetryRunId();
+    trackProductEvent("followup_request_started", "followup", {
+      action_id: followUp.action_id,
+      has_instruction: true,
+      run_id: revisionRunId,
+      source_renderer: output.renderer,
+      source_run_id: runId,
+    });
+
+    try {
+      const nextResult = await runStage1FollowUp(request, runtime);
+      trackProductEvent("followup_request_completed", "followup", {
+        action_id: followUp.action_id,
+        has_instruction: true,
+        result_kind: nextResult.result_kind,
+        run_id: revisionRunId,
+        source_renderer: output.renderer,
+        source_run_id: runId,
+      });
+      setFollowUp(nextResult);
+    } catch (error) {
+      trackProductEvent("followup_request_failed", "followup", {
+        action_id: followUp.action_id,
+        error_type: "client-followup-instruction-error",
+        has_instruction: true,
+        message_preview:
+          error instanceof Error ? error.message.slice(0, 180) : "Unknown error",
+        run_id: revisionRunId,
+        source_renderer: output.renderer,
+        source_run_id: runId,
+      });
+      setFollowUpError(
+        error instanceof Error
+          ? error.message
+          : "후속 지시를 반영하는 중 문제가 생겼어요.",
+      );
+    } finally {
+      setIsFollowUpRevising(false);
     }
   }
 
@@ -386,7 +452,7 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
         <section className="follow-up-actions">
           <div className="follow-up-actions-header">
             <p className="panel-kicker">결과 다음 행동</p>
-            <p className="follow-up-limit">Stage 1에서는 후속 결과를 1개만 만듭니다.</p>
+            <p className="follow-up-limit">후속 결과는 1개만 유지하고 같은 방향 안에서만 이어집니다.</p>
           </div>
 
           <div className="follow-up-action-list">
@@ -441,6 +507,37 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
               </ul>
             </section>
           ) : null}
+
+          <section className="result-section follow-up-meta">
+            <h3>같은 방향에서 더 다듬기</h3>
+            <p className="follow-up-instruction-help">
+              지금 결과 방향은 유지한 채, 같은 후속 결과 블록 안에서만 더 보완합니다.
+            </p>
+            <textarea
+              className="follow-up-instruction-input"
+              disabled={isFollowUpRevising || isReviewRefining}
+              onChange={(event) => {
+                setFollowUpInstruction(event.target.value);
+              }}
+              placeholder={readFollowUpInstructionPlaceholder(followUp.action_id)}
+              rows={4}
+              value={followUpInstruction}
+            />
+            <button
+              className="primary-action follow-up-refine-action"
+              disabled={
+                isFollowUpRevising ||
+                isReviewRefining ||
+                followUpInstruction.trim().length === 0
+              }
+              onClick={() => {
+                void handleFollowUpInstructionRevision();
+              }}
+              type="button"
+            >
+              {isFollowUpRevising ? "후속 지시 반영 중..." : "같은 방향으로 더 다듬기"}
+            </button>
+          </section>
 
           {followUp.remaining_questions.length > 0 ? (
             <section className="result-section follow-up-meta">
@@ -553,5 +650,18 @@ function renderSummary(renderer: EngineResult["provisional_renderer"]) {
     case "prompt":
     default:
       return "다른 AI에 바로 붙여 넣을 수 있는 실행형 프롬프트입니다.";
+  }
+}
+
+function readFollowUpInstructionPlaceholder(actionId: Stage1ActionId): string {
+  switch (actionId) {
+    case "revise-from-review":
+      return "예: 대상 사용자를 더 분명히 드러내고 첫 문장을 덜 추상적으로 다듬어 줘";
+    case "expand-plan-detail":
+      return "예: 우선순위와 실행 순서를 더 분명하게 정리해 줘";
+    case "expand-architecture-detail":
+      return "예: 주문 승인 이후 알림 흐름을 더 자세히 풀어 줘";
+    default:
+      return "같은 방향에서 더 다듬고 싶은 내용을 적어 주세요.";
   }
 }
