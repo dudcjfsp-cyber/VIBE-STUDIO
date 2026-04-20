@@ -73,7 +73,7 @@ jobs:
           VITE_PRODUCT_ENGINE_MODE: local
           VITE_AVAILABLE_PROVIDERS: local
           VITE_PRODUCT_BASE_PATH: /${{ github.event.repository.name }}/
-        run: npm run build:product-web
+        run: npm run build:deploy
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
