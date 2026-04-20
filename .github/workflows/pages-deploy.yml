@@ -42,7 +42,7 @@ jobs:
         env:
           VITE_PRODUCT_ENGINE_MODE: local
           VITE_AVAILABLE_PROVIDERS: local
-          VITE_PRODUCT_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_PRODUCT_BASE_PATH: /VIBE-STUDIO/
         run: npm run build:product-web
 
   deploy:
@@ -72,7 +72,7 @@ jobs:
         env:
           VITE_PRODUCT_ENGINE_MODE: local
           VITE_AVAILABLE_PROVIDERS: local
-          VITE_PRODUCT_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_PRODUCT_BASE_PATH: /VIBE-STUDIO/
         run: npm run build:deploy
 
       - name: Upload Pages artifact
