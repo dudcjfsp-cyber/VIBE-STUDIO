@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "tsc -b",
+    "build:deploy": "npm run build --silent && npm run build:product-web",
     "typecheck": "tsc -b --pretty false",
     "verify:prompt-cycle": "npm run build --silent && node ./scripts/verify-prompt-cycle.mjs",
     "verify:golden-cases": "npm run build --silent && node ./scripts/verify-golden-cases.mjs",
@@ -15,8 +16,10 @@
     "verify:architecture-renderer": "npm run build --silent && node ./scripts/verify-architecture-renderer.mjs",
     "verify:review-renderer": "npm run build --silent && node ./scripts/verify-review-renderer.mjs",
     "verify:agent-stage1": "npm run build --silent && node ./scripts/verify-agent-stage1.mjs",
+    "verify:deploy": "npm run verify:golden-cases && npm run build:product-web",
     "serve:thinapp": "npm run build --silent && node ./scripts/serve-prompt-web.mjs",
     "serve:product-server": "npm run build --silent && node ./apps/product-server/dist/server.js",
+    "start": "node ./apps/product-server/dist/server.js",
     "dev:product-stack": "node ./scripts/dev-product-stack.mjs",
     "dev:product-web": "npm run dev -w @vive-studio/product-web -- --host 127.0.0.1 --port 4174",
     "build:product-web": "npm run build -w @vive-studio/product-web"
