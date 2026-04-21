@@ -8,6 +8,7 @@ import { runRemoteProductEngine } from "../provider/providerRuntimeClient";
 import type { ProviderRuntimeConfig } from "../provider/types";
 import { productEngine } from "./createProductEngine";
 import { runBrowserGeminiEngine } from "../provider/browserGeminiClient";
+import { runBrowserOpenAiEngine } from "../provider/browserOpenAiClient";
 import {
   isBrowserProviderMode,
   productEngineMode,
@@ -39,7 +40,11 @@ export async function runProductEngine(
       return runBrowserGeminiEngine(request, options, runtime);
     }
 
-    throw new Error("브라우저 데모 모드에서는 Gemini만 직접 연결할 수 있어요.");
+    if (runtime.provider === "openai") {
+      return runBrowserOpenAiEngine(request, options, runtime);
+    }
+
+    throw new Error("브라우저 데모 모드에서는 Gemini와 OpenAI만 직접 연결할 수 있어요.");
   }
 
   try {

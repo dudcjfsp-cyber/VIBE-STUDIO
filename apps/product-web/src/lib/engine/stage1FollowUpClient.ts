@@ -6,6 +6,7 @@ import {
 
 import type { ProviderRuntimeConfig } from "../provider/types";
 import { runBrowserGeminiFollowUp } from "../provider/browserGeminiClient";
+import { runBrowserOpenAiFollowUp } from "../provider/browserOpenAiClient";
 import {
   isBrowserProviderMode,
   productApiBaseUrl,
@@ -29,7 +30,11 @@ export async function runStage1FollowUp(
       return runBrowserGeminiFollowUp(request, runtime);
     }
 
-    throw new Error("브라우저 데모 모드에서는 Gemini 후속 결과만 지원해요.");
+    if (runtime.provider === "openai") {
+      return runBrowserOpenAiFollowUp(request, runtime);
+    }
+
+    throw new Error("브라우저 데모 모드에서는 Gemini와 OpenAI 후속 결과만 지원해요.");
   }
 
   try {

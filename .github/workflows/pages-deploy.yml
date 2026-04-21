@@ -41,7 +41,7 @@ jobs:
       - name: Build GitHub Pages bundle
         env:
           VITE_PRODUCT_ENGINE_MODE: browser
-          VITE_AVAILABLE_PROVIDERS: local,gemini
+          VITE_AVAILABLE_PROVIDERS: local,gemini,openai
           VITE_PRODUCT_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build:product-web
 
@@ -71,7 +71,7 @@ jobs:
       - name: Build GitHub Pages bundle
         env:
           VITE_PRODUCT_ENGINE_MODE: browser
-          VITE_AVAILABLE_PROVIDERS: ${{ vars.AVAILABLE_PROVIDERS || 'local,gemini' }}
+          VITE_AVAILABLE_PROVIDERS: ${{ vars.AVAILABLE_PROVIDERS || 'local,gemini,openai' }}
           VITE_PRODUCT_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build:deploy
 

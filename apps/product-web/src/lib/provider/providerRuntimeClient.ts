@@ -4,6 +4,7 @@ import type {
   RemoteProviderId,
 } from "./types";
 import { listBrowserGeminiModels } from "./browserGeminiClient";
+import { listBrowserOpenAiModels } from "./browserOpenAiClient";
 import {
   isBrowserProviderMode,
   productApiBaseUrl,
@@ -23,6 +24,10 @@ export async function listProviderModels(
 ): Promise<ProviderModel[]> {
   if (isBrowserProviderMode && provider === "gemini") {
     return listBrowserGeminiModels(apiKey);
+  }
+
+  if (isBrowserProviderMode && provider === "openai") {
+    return listBrowserOpenAiModels(apiKey);
   }
 
   const response = await postJson<{ models: ProviderModel[] }>(

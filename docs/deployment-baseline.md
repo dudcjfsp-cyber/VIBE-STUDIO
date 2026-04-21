@@ -28,15 +28,17 @@ Rule:
 
 - GitHub Actions가 `main` 기준으로 `apps/product-web`를 GitHub Pages에 자동 배포한다
 - 이 배포는 `VITE_PRODUCT_ENGINE_MODE=browser`로 빌드한다
-- 이 배포는 기본적으로 `VITE_AVAILABLE_PROVIDERS=local,gemini`로 빌드한다
-- Gemini provider/model 호출은 사용자의 브라우저에서 사용자가 입력한 API key로 직접 호출한다
+- 이 배포는 기본적으로 `VITE_AVAILABLE_PROVIDERS=local,gemini,openai`로 빌드한다
+- Gemini/OpenAI provider/model 호출은 사용자의 브라우저에서 사용자가 입력한 API key로 직접 호출한다
 
 Rule:
 - GitHub Pages는 프론트만 호스팅한다
 - 무료 데모 배포에서는 `product-server`가 없어도 Gemini 모델 목록과 결과 생성이 가능해야 한다
 - browser mode는 데모 편의용이다
 - 사용자의 API key는 브라우저 session storage에만 임시 저장되고 Gemini API 호출에 직접 사용된다
-- browser mode에서는 현재 Gemini만 직접 연결한다
+- browser mode에서는 현재 Gemini와 OpenAI만 직접 연결한다
+- OpenAI 공식 문서는 API key를 브라우저/client-side 코드에 노출하지 말라고 안내한다
+- 따라서 OpenAI browser mode는 사용자 본인 키로 쓰는 무료 데모 편의 기능이며, 운영 기본 구조는 server-backed runtime이다
 
 ## 1.6 Render product-server 배포
 유료 또는 상시 서버 운영을 선택할 경우의 runtime 배포 기준은 Render Web Service다.
@@ -107,7 +109,7 @@ Note:
 - `VITE_AVAILABLE_PROVIDERS`
   - 기본값: `local,openai,anthropic,gemini`
   - 쉼표 구분 provider allowlist
-  - 현재 GitHub Pages 무료 데모 배포에서는 기본적으로 `local,gemini`를 사용한다
+  - 현재 GitHub Pages 무료 데모 배포에서는 기본적으로 `local,gemini,openai`를 사용한다
 
 Rule:
 - server-backed 제품 배포에서는 `VITE_PRODUCT_API_URL`을 명시한다
@@ -120,7 +122,8 @@ Rule:
 2. GitHub Pages source를 GitHub Actions로 설정
 3. 브라우저에서 local runtime 흐름 확인
 4. Gemini API key로 모델 목록 조회 확인
-5. Gemini 모델 선택 후 create, clarify, approval, review 흐름 수동 점검
+5. OpenAI API key로 모델 목록 조회 확인
+6. Gemini 또는 OpenAI 모델 선택 후 create, clarify, approval, review 흐름 수동 점검
 
 유료/상시 서버를 쓰는 경우의 GitHub / Render 설정 체크:
 1. Render에서 `render.yaml` 기반 Web Service 생성
