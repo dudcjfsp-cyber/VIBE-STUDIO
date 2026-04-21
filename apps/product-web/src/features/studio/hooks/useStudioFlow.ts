@@ -8,6 +8,7 @@ import {
   trackProductEvent,
 } from "../../../lib/observability/browserTelemetry";
 import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
+import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMessage";
 import type { StageSnapshot } from "../types";
 
 type SubmitOptions = {
@@ -139,9 +140,10 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
         run_id: runId,
       });
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "요청을 처리하는 중에 문제가 생겼어요.",
+        formatVisibleErrorMessage(
+          error,
+          "요청을 처리하는 중에 문제가 생겼어요.",
+        ),
       );
     } finally {
       setIsBusy(false);

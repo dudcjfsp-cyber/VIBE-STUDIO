@@ -12,6 +12,7 @@ import {
   enabledProviders,
   isProviderEnabled,
 } from "../../../lib/runtime/productRuntimeConfig";
+import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMessage";
 
 const SESSION_KEY = "vive-studio.provider-session.v1";
 const SESSION_TTL_MS = 30 * 60 * 1000;
@@ -224,10 +225,10 @@ export function useProviderSession() {
       });
       setState((current) => ({
         ...current,
-        errorMessage:
-          error instanceof Error
-            ? error.message
-            : "모델 목록을 불러오는 중에 문제가 생겼어요.",
+        errorMessage: formatVisibleErrorMessage(
+          error,
+          "모델 목록을 불러오는 중에 문제가 생겼어요.",
+        ),
         isLoading: false,
       }));
     }

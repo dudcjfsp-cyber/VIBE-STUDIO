@@ -20,6 +20,7 @@ import {
   trackProductEvent,
 } from "../../../lib/observability/browserTelemetry";
 import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
+import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMessage";
 import { buildPromptHelpLearningPanel } from "../../../lib/ux/promptHelpLearning";
 
 type ResultPanelProps = {
@@ -150,9 +151,10 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
         source_run_id: runId,
       });
       setFollowUpError(
-        error instanceof Error
-          ? error.message
-          : "후속 결과를 만드는 중 문제가 생겼어요.",
+        formatVisibleErrorMessage(
+          error,
+          "후속 결과를 만드는 중 문제가 생겼어요.",
+        ),
       );
     } finally {
       setPendingActionId(undefined);
@@ -215,9 +217,10 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
         source_run_id: runId,
       });
       setFollowUpError(
-        error instanceof Error
-          ? error.message
-          : "답변을 반영해 수정안을 보완하는 중 문제가 생겼어요.",
+        formatVisibleErrorMessage(
+          error,
+          "답변을 반영해 수정안을 보완하는 중 문제가 생겼어요.",
+        ),
       );
     } finally {
       setIsReviewRefining(false);
