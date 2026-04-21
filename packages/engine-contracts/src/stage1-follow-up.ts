@@ -350,7 +350,7 @@ function buildReviewFollowUp(
     : defaultRemainingQuestions;
   const refinementSummary = answeredQuestions.slice(0, 2).map((entry) =>
     korean
-      ? `"${shortenSentence(entry.question)}" 답변을 반영해 수정안을 더 구체화했다.`
+      ? `"${shortenSentence(entry.question)}" 답변을 반영해 수정안을 더 구체화했습니다.`
       : `Applied an answer to "${shortenSentence(entry.question)}" to refine the draft.`,
   );
 
@@ -406,19 +406,19 @@ function buildPlanFollowUp(
     action_id: request.selected_action,
     change_summary: context.sections.slice(0, 3).map((section) =>
       korean
-        ? `${section.title} 섹션에 실행 관점과 확인 포인트를 덧붙였다.`
+        ? `${section.title} 섹션에 실행 관점과 확인 포인트를 덧붙였습니다.`
         : `Added execution detail and checkpoints to ${section.title}.`,
     ),
     remaining_questions:
       thinSections.length > 0
         ? thinSections.map((title) =>
             korean
-              ? `${title} 섹션은 아직 근거 사례나 범위 기준을 더 채울 수 있다.`
+              ? `${title} 섹션은 아직 근거 사례나 범위 기준을 더 채울 수 있습니다.`
               : `${title} still needs stronger examples or clearer scope boundaries.`,
           )
         : [
             korean
-              ? "세부화한 계획을 실제 우선순위와 일정 관점에서 한 번 더 정리할 수 있다."
+              ? "세부화한 계획을 실제 우선순위와 일정 관점에서 한 번 더 정리할 수 있습니다."
               : "The expanded plan could still be tightened around priority and sequencing.",
           ],
     result_body: [
@@ -449,9 +449,9 @@ function buildArchitectureFollowUp(
   );
   const outOfScope = korean
     ? [
-        "API 명세 확장은 이번 단계에 포함하지 않았다.",
-        "데이터 모델 세부화는 이번 단계에 포함하지 않았다.",
-        "구현 작업 분해나 코드 생성으로는 넘어가지 않았다.",
+        "API 명세 확장은 이번 단계에 포함하지 않았습니다.",
+        "데이터 모델 세부화는 이번 단계에 포함하지 않았습니다.",
+        "구현 작업 분해나 코드 생성으로는 넘어가지 않았습니다.",
       ]
     : [
         "API specification expansion stays out of scope in this pass.",
@@ -463,11 +463,11 @@ function buildArchitectureFollowUp(
     action_id: request.selected_action,
     change_summary: [
       korean
-        ? "기본 확장 축을 flow-detail로 고정했다."
+        ? "기본 확장 축을 flow-detail로 고정했습니다."
         : "Kept the expansion anchored to flow-detail.",
       ...context.interaction_flows.slice(0, 2).map((flow) =>
         korean
-          ? `${flow.name} 흐름을 단계별 책임 관점으로 더 잘게 풀었다.`
+          ? `${flow.name} 흐름을 단계별 책임 관점으로 더 잘게 풀었습니다.`
           : `Expanded ${flow.name} into finer-grained flow responsibilities.`,
       ),
     ],
@@ -476,7 +476,7 @@ function buildArchitectureFollowUp(
       korean ? "세부 설계 확장" : "Detailed Flow Expansion",
       "",
       korean
-        ? `이번 후속 결과는 "${context.system_boundary}" 구조를 유지한 채 주요 흐름을 더 세밀하게 풀어쓴 것이다.`
+        ? `이번 후속 결과는 "${context.system_boundary}" 구조를 유지한 채 주요 흐름을 더 세밀하게 풀어쓴 내용입니다.`
         : `This follow-up keeps the existing boundary around "${context.system_boundary}" and expands the main flows in more detail.`,
       "",
       ...(korean
@@ -656,12 +656,12 @@ function renderExpandedPlanSection(
     lines.push(`- ${bullet}`);
     lines.push(
       korean
-        ? "  - 더 구체하게: 이 항목이 실제 판단이나 실행에서 어떻게 쓰이는지 한 번 더 적는다."
+        ? "  - 더 구체하게: 이 항목이 실제 판단이나 실행에서 어떻게 쓰이는지 한 번 더 적습니다."
         : "  - More detail: state how this point changes an actual decision or next step.",
     );
     lines.push(
       korean
-        ? "  - 확인 포인트: 범위, 우선순위, 성공 기준 중 무엇을 먼저 잠글지 적는다."
+        ? "  - 확인 포인트: 범위, 우선순위, 성공 기준 중 무엇을 먼저 잠글지 적습니다."
         : "  - Checkpoint: clarify whether scope, priority, or success criteria should be locked first.",
     );
   }
@@ -686,7 +686,7 @@ function renderDetailedFlow(
     );
     lines.push(
       korean
-        ? "   - 세부 설명: 입력 조건, 상태 변화, 다음 전달 대상을 짧게 적는다."
+        ? "   - 세부 설명: 입력 조건, 상태 변화, 다음 전달 대상을 짧게 적습니다."
         : "   - Detail: capture the entry condition, state change, and next handoff.",
     );
   });

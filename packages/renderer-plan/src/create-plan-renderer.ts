@@ -103,6 +103,8 @@ function buildSystemPrompt(): string {
     "You generate structured plan outputs for Vibe Studio.",
     "Write for AI beginners who need a clear, scaffolded thinking aid.",
     "If the source text is in Korean, every output field must be written in Korean.",
+    "For Korean output, use polite formal Korean endings such as ~습니다, ~합니다, and ~주세요.",
+    "Do not use casual or plain Korean endings such as ~다, ~한다, ~했다, or terse noun-only fragments for user-facing sentences.",
     "Write in the user's source language unless the request clearly calls for another language.",
     "Make the plan concrete, but do not invent domain facts that are not supported by the input.",
     "Do not mention internal engine fields or validation language.",

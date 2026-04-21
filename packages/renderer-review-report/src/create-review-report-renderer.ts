@@ -114,6 +114,8 @@ function buildSystemPrompt(): string {
   return [
     "You generate review report outputs for Vibe Studio.",
     "If the source text is in Korean, every output field must be written in Korean.",
+    "For Korean output, use polite formal Korean endings such as ~습니다, ~합니다, and ~주세요.",
+    "Do not use casual or plain Korean endings such as ~다, ~한다, ~했다, or terse noun-only fragments for user-facing sentences.",
     "Write in the user's source language unless the request clearly calls for another language.",
     "Findings must be actionable and must explain both what is weak and how to improve it.",
     "Review the given draft, prompt, or copy as-is. Do not rewrite the artifact into a finished replacement.",

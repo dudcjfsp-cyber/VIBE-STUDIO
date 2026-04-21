@@ -106,6 +106,8 @@ function buildFollowUpSystemPrompt(request: Stage1FollowUpRequest): string {
 
   if (/[가-힣]/u.test(request.source_text)) {
     lines.push("The source is Korean. Write every field in Korean.");
+    lines.push("Use polite formal Korean endings such as ~습니다, ~합니다, and ~주세요.");
+    lines.push("Do not use casual or plain Korean endings such as ~다, ~한다, ~했다, or terse noun-only fragments for user-facing sentences.");
   } else {
     lines.push("Write in the user's language unless the source clearly requests another language.");
   }

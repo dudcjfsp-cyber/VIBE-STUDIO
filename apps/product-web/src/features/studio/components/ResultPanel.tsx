@@ -547,7 +547,11 @@ function ArchitectureDiagram({
         {architecture.components.map((component) => (
           <article className="architecture-node" key={component.name}>
             <strong>{component.name}</strong>
-            <span>{component.responsibility}</span>
+            <ul className="architecture-node-lines">
+              {splitArchitectureResponsibility(component.responsibility).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
           </article>
         ))}
       </div>
@@ -569,6 +573,21 @@ function ArchitectureDiagram({
       </div>
     </section>
   );
+}
+
+function splitArchitectureResponsibility(value: string): string[] {
+  const normalized = value.replace(/\s+/g, " ").trim();
+
+  if (!normalized) {
+    return [];
+  }
+
+  const parts = normalized
+    .split(/[,，]\s*|\s+및\s+|\s+그리고\s+|\s+and\s+/iu)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return parts.length > 1 ? parts : [normalized];
 }
 
 function readOutputTitle(output: EngineResult["outputs"][number]) {

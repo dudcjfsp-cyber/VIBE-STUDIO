@@ -645,8 +645,7 @@ textarea {
   background: rgba(248, 255, 252, 0.92);
 }
 
-.architecture-node strong,
-.architecture-node span {
+.architecture-node strong {
   display: block;
 }
 
@@ -654,10 +653,18 @@ textarea {
   color: var(--accent-strong);
 }
 
-.architecture-node span {
+.architecture-node-lines {
   margin-top: 8px;
+  padding-left: 18px;
+}
+
+.architecture-node-lines li {
   color: var(--muted);
   line-height: 1.55;
+}
+
+.architecture-node-lines li + li {
+  margin-top: 4px;
 }
 
 .architecture-flow-list {
@@ -733,6 +740,11 @@ textarea {
 .result-section ul,
 .result-section ol {
   margin: 0;
+  padding-left: 18px;
+}
+
+.result-section .architecture-node-lines {
+  margin: 8px 0 0;
   padding-left: 18px;
 }
 
