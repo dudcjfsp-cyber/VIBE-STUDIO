@@ -25,37 +25,6 @@ type GeneratedFollowUpFields = Pick<
   "change_summary" | "remaining_questions" | "result_body" | "result_title"
 >;
 
-const followUpResultSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    result_title: {
-      type: "string",
-    },
-    result_body: {
-      type: "string",
-    },
-    change_summary: {
-      type: "array",
-      items: {
-        type: "string",
-      },
-    },
-    remaining_questions: {
-      type: "array",
-      items: {
-        type: "string",
-      },
-    },
-  },
-  required: [
-    "result_title",
-    "result_body",
-    "change_summary",
-    "remaining_questions",
-  ],
-} satisfies Record<string, unknown>;
-
 export async function runStage1FollowUp(
   request: Stage1FollowUpRequest,
   runtime: ProviderRuntimeSession | undefined,
@@ -71,17 +40,139 @@ export async function runStage1FollowUp(
   }
 
   try {
-    const generated = await llmClient.generateObject<GeneratedFollowUpFields>({
-      schema: followUpResultSchema,
-      schemaDescription:
-        "A single Stage 1 follow-up result with a title, one result body, a short change summary, and remaining questions.",
-      schemaName: "stage1_follow_up_result",
-      system: buildSystemPrompt(request),
-      temperature: 0.35,
-      user: buildUserPrompt(request),
-    });
+    const korean = prefersKorean(request.source_text);
+    const system = buildSystemPrompt(request);
+    const user = buildUserPrompt(request);
+    const temperature = 0.35;
 
-    return normalizeGeneratedFollowUp(generated, fallback);
+    let generatedMapped: GeneratedFollowUpFields;
+
+    if (request.selected_action === "revise-from-review") {
+      const generated = await llmClient.generateObject<any>({
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            result_title: { type: "string" },
+            revised_draft: { type: "string" },
+            change_summary: { type: "array", items: { type: "string" } },
+            remaining_questions: { type: "array", items: { type: "string" } },
+          },
+          required: ["result_title", "revised_draft", "change_summary", "remaining_questions"],
+        },
+        schemaDescription: "A revised text draft based on the review.",
+        schemaName: "revise_from_review_result",
+        system,
+        temperature,
+        user,
+      });
+
+      generatedMapped = {
+        result_title: generated.result_title,
+        result_body: generated.revised_draft ?? "",
+        change_summary: generated.change_summary,
+        remaining_questions: generated.remaining_questions,
+      };
+    } else if (request.selected_action === "expand-plan-detail") {
+      const generated = await llmClient.generateObject<any>({
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            result_title: { type: "string" },
+            expanded_sections: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  bullets: { type: "array", items: { type: "string" } },
+                },
+                required: ["title", "bullets"],
+                additionalProperties: false,
+              },
+            },
+            change_summary: { type: "array", items: { type: "string" } },
+            remaining_questions: { type: "array", items: { type: "string" } },
+          },
+          required: ["result_title", "expanded_sections", "change_summary", "remaining_questions"],
+        },
+        schemaDescription: "An expanded plan with structured sections containing bullets.",
+        schemaName: "expand_plan_detail_result",
+        system,
+        temperature,
+        user,
+      });
+
+      const sections = generated.expanded_sections ?? [];
+      const expandedSectionsText = sections.map((section: any) =>
+        [`### ${section.title}`, ...section.bullets.map((b: string) => `- ${b}`)].join("\n")
+      );
+
+      generatedMapped = {
+        result_title: generated.result_title,
+        result_body: [
+          korean ? "확장된 계획 초안" : "Expanded Plan Draft",
+          "",
+          ...expandedSectionsText,
+        ].join("\n\n"),
+        change_summary: generated.change_summary,
+        remaining_questions: generated.remaining_questions,
+      };
+    } else if (request.selected_action === "expand-architecture-detail") {
+      const generated = await llmClient.generateObject<any>({
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            result_title: { type: "string" },
+            expanded_flows: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  steps: { type: "array", items: { type: "string" } },
+                },
+                required: ["name", "steps"],
+                additionalProperties: false,
+              },
+            },
+            change_summary: { type: "array", items: { type: "string" } },
+            remaining_questions: { type: "array", items: { type: "string" } },
+          },
+          required: ["result_title", "expanded_flows", "change_summary", "remaining_questions"],
+        },
+        schemaDescription: "An expanded architecture with interaction flows containing step-by-step details.",
+        schemaName: "expand_architecture_detail_result",
+        system,
+        temperature,
+        user,
+      });
+
+      const flows = generated.expanded_flows ?? [];
+      const flowDetailsText = flows.map((flow: any) =>
+        [`### ${flow.name}`, ...flow.steps.map((s: string, i: number) => `${i + 1}. ${s}`)].join("\n")
+      );
+
+      generatedMapped = {
+        result_title: generated.result_title,
+        result_body: [
+          korean ? "세부 설계 확장" : "Detailed Flow Expansion",
+          "",
+          ...(korean
+            ? ["확장 초점: flow-detail", ""]
+            : ["Expansion focus: flow-detail", ""]),
+          ...flowDetailsText,
+        ].join("\n\n"),
+        change_summary: generated.change_summary,
+        remaining_questions: generated.remaining_questions,
+      };
+    } else {
+      return fallback;
+    }
+
+    return normalizeGeneratedFollowUp(generatedMapped, fallback);
   } catch (error) {
     if (strictLlm) {
       throw error instanceof Error
