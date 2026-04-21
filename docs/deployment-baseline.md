@@ -113,7 +113,8 @@ Note:
 
 Rule:
 - server-backed 제품 배포에서는 `VITE_PRODUCT_API_URL`을 명시한다
-- server-backed production에서 로컬 기본값 `http://127.0.0.1:4177/api`에 기대지 않는다
+- 프론트에는 로컬 API 기본값을 두지 않는다
+- server-backed 모드에서 `VITE_PRODUCT_API_URL`이 없으면 명시적으로 실패해야 한다
 
 ## 6. 현재 운영 전 체크리스트
 배포 전 최소 확인:

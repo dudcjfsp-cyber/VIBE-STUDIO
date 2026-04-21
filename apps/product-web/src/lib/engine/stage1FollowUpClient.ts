@@ -9,8 +9,8 @@ import { runBrowserGeminiFollowUp } from "../provider/browserGeminiClient";
 import { runBrowserOpenAiFollowUp } from "../provider/browserOpenAiClient";
 import {
   isBrowserProviderMode,
-  productApiBaseUrl,
   productEngineMode,
+  requireProductApiBaseUrl,
 } from "../runtime/productRuntimeConfig";
 
 export async function runStage1FollowUp(
@@ -38,7 +38,7 @@ export async function runStage1FollowUp(
   }
 
   try {
-    return await postJson<Stage1FollowUpResult>(`${productApiBaseUrl}/follow-up`, {
+    return await postJson<Stage1FollowUpResult>(`${requireProductApiBaseUrl()}/follow-up`, {
       request,
       ...(runtime ? { runtime } : {}),
     });

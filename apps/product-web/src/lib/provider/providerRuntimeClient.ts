@@ -7,7 +7,7 @@ import { listBrowserGeminiModels } from "./browserGeminiClient";
 import { listBrowserOpenAiModels } from "./browserOpenAiClient";
 import {
   isBrowserProviderMode,
-  productApiBaseUrl,
+  requireProductApiBaseUrl,
 } from "../runtime/productRuntimeConfig";
 
 type ProductEngineRunOptions = {
@@ -30,8 +30,9 @@ export async function listProviderModels(
     return listBrowserOpenAiModels(apiKey);
   }
 
+  const apiBaseUrl = requireProductApiBaseUrl();
   const response = await postJson<{ models: ProviderModel[] }>(
-    `${productApiBaseUrl}/providers/models`,
+    `${apiBaseUrl}/providers/models`,
     {
       provider,
       apiKey,
@@ -46,7 +47,7 @@ export async function runRemoteProductEngine(
   options: ProductEngineRunOptions,
   runtime: ProviderRuntimeConfig | undefined,
 ): Promise<import("@vive-studio/engine-contracts").EngineResult> {
-  return postJson(`${productApiBaseUrl}/run`, {
+  return postJson(`${requireProductApiBaseUrl()}/run`, {
     request,
     ...(hasRunOptions(options) ? { options } : {}),
     ...(runtime ? { runtime } : {}),
