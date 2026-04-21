@@ -193,6 +193,8 @@ function buildSystemPrompt(request: Stage1FollowUpRequest): string {
     "Do not overwrite the primary result. Produce one separate follow-up result only.",
     "Do not ask the user for a freeform follow-up instruction in Stage 1.",
     "Keep the tone concrete, explainable, and useful for an AI beginner.",
+    "IMPORTANT: DO NOT output any meta-commentary, introductions, or explanations about what you changed.",
+    "IMPORTANT: ONLY output the actual extended document or structured draft itself.",
   ];
 
   if (prefersKorean(request.source_text)) {
@@ -225,6 +227,9 @@ function buildSystemPrompt(request: Stage1FollowUpRequest): string {
       lines.push(
         "Stay in the plan family. Make the plan more concrete, but do not turn it into architecture or implementation tasks.",
       );
+      lines.push(
+        "CRITICAL: Output the expanded plan content itself as structured sections. Do NOT write an introduction or summarize what changes you made. Each section should have a clear title and a list of specific, actionable bullets.",
+      );
       break;
     case "expand-architecture-detail":
       lines.push(
@@ -232,6 +237,9 @@ function buildSystemPrompt(request: Stage1FollowUpRequest): string {
       );
       lines.push(
         "Do not turn the result into API specs, data models, code generation, or implementation tasks.",
+      );
+      lines.push(
+        "CRITICAL: Output the actual expanded architecture components and interaction flows. Do NOT write meta-commentary summarizing what you have expanded.",
       );
       break;
   }
