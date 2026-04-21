@@ -26,6 +26,10 @@ export async function runStage1FollowUp(
       return runDeterministicStage1FollowUp(request);
     }
 
+    if (request.renderer === "plan" && request.selected_action === "expand-plan-detail") {
+      return runDeterministicStage1FollowUp(request);
+    }
+
     if (runtime.provider === "gemini") {
       return runBrowserGeminiFollowUp(request, runtime);
     }
