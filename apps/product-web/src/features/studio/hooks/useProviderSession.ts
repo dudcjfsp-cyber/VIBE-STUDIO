@@ -15,6 +15,10 @@ import {
 
 const SESSION_KEY = "vive-studio.provider-session.v1";
 const SESSION_TTL_MS = 30 * 60 * 1000;
+const preferredDefaultModels: Partial<Record<ProviderId, string[]>> = {
+  openai: ["gpt-5-nano", "gpt5-nano"],
+  gemini: ["gemini-2.5-flash"],
+};
 
 type ProviderSessionState = {
   apiKey: string;
@@ -186,9 +190,7 @@ export function useProviderSession() {
         throw new Error("이 키로 사용할 수 있는 모델을 찾지 못했어요.");
       }
 
-      const nextModel = models.some((model) => model.id === state.model)
-        ? state.model
-        : models[0]?.id ?? "";
+      const nextModel = selectDefaultModel(state.provider, models);
       const expiresAt = Date.now() + SESSION_TTL_MS;
       const record: ProviderSessionRecord = {
         provider: state.provider,
@@ -402,4 +404,35 @@ function clearStoredSession() {
   }
 
   window.sessionStorage.removeItem(SESSION_KEY);
+}
+
+function selectDefaultModel(provider: ProviderId, models: ProviderModel[]): string {
+  const preferredIds = preferredDefaultModels[provider] ?? [];
+  const exactMatch = preferredIds
+    .map((preferredId) =>
+      models.find((model) => normalizeModelId(model.id) === normalizeModelId(preferredId)),
+    )
+    .find((model): model is ProviderModel => Boolean(model));
+
+  if (exactMatch) {
+    return exactMatch.id;
+  }
+
+  if (provider === "gemini") {
+    const flashMatch = models.find((model) => {
+      const searchableText = normalizeModelId(`${model.id} ${model.label}`);
+
+      return searchableText.includes("gemini-2.5-flash");
+    });
+
+    if (flashMatch) {
+      return flashMatch.id;
+    }
+  }
+
+  return models[0]?.id ?? "";
+}
+
+function normalizeModelId(value: string): string {
+  return value.trim().toLowerCase().replace(/^models\//, "");
 }
