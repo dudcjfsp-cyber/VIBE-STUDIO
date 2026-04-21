@@ -5,7 +5,9 @@ import {
 } from "@vive-studio/engine-contracts";
 
 import type { ProviderRuntimeConfig } from "../provider/types";
+import { runBrowserGeminiFollowUp } from "../provider/browserGeminiClient";
 import {
+  isBrowserProviderMode,
   productApiBaseUrl,
   productEngineMode,
 } from "../runtime/productRuntimeConfig";
@@ -16,6 +18,18 @@ export async function runStage1FollowUp(
 ): Promise<Stage1FollowUpResult> {
   if (productEngineMode === "local") {
     return runDeterministicStage1FollowUp(request);
+  }
+
+  if (isBrowserProviderMode) {
+    if (!runtime || runtime.provider === "local") {
+      return runDeterministicStage1FollowUp(request);
+    }
+
+    if (runtime.provider === "gemini") {
+      return runBrowserGeminiFollowUp(request, runtime);
+    }
+
+    throw new Error("브라우저 데모 모드에서는 Gemini 후속 결과만 지원해요.");
   }
 
   try {

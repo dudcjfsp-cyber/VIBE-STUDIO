@@ -1,7 +1,7 @@
+import type { ProviderId } from "../provider/types";
+
 const fallbackApiBaseUrl = "http://127.0.0.1:4177/api";
 const defaultProviderList = "local,openai,anthropic,gemini";
-
-import type { ProviderId } from "../provider/types";
 
 export const productApiBaseUrl = normalizeApiBaseUrl(
   import.meta.env.VITE_PRODUCT_API_URL as string | undefined,
@@ -14,6 +14,8 @@ export const productBasePath = normalizeBasePath(
 export const productEngineMode =
   (import.meta.env.VITE_PRODUCT_ENGINE_MODE as string | undefined)?.trim() ||
   "auto";
+
+export const isBrowserProviderMode = productEngineMode === "browser";
 
 export const enabledProviders = readEnabledProviders(
   import.meta.env.VITE_AVAILABLE_PROVIDERS as string | undefined,

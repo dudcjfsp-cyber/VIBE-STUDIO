@@ -23,22 +23,23 @@ Rule:
 - 실제 제품 흐름 배포에서는 `product-web` 단독 정적 배포만으로 끝내지 않는다
 - `VITE_PRODUCT_ENGINE_MODE=local`은 데모/로컬 fallback 용도다
 
-## 1.5 GitHub Actions 정식 프론트 배포
-현재 정식 프론트 배포는 아래 기준으로 둔다.
+## 1.5 GitHub Actions 무료 데모 배포
+현재 무료 데모 배포는 아래 기준으로 둔다.
 
 - GitHub Actions가 `main` 기준으로 `apps/product-web`를 GitHub Pages에 자동 배포한다
-- `main` 배포는 GitHub repository variable `PRODUCT_API_URL`을 반드시 요구한다
-- 이 배포는 `VITE_PRODUCT_ENGINE_MODE=auto`로 빌드한다
+- 이 배포는 `VITE_PRODUCT_ENGINE_MODE=browser`로 빌드한다
 - 이 배포는 기본적으로 `VITE_AVAILABLE_PROVIDERS=local,gemini`로 빌드한다
-- provider/model 호출은 별도 배포된 `product-server`로 요청 단위 중계한다
+- Gemini provider/model 호출은 사용자의 브라우저에서 사용자가 입력한 API key로 직접 호출한다
 
 Rule:
 - GitHub Pages는 프론트만 호스팅한다
-- remote provider를 쓰려면 `product-server` 배포와 `PRODUCT_API_URL` 설정이 먼저 완료되어야 한다
-- `PRODUCT_API_URL`은 `/api`까지 포함한 base URL이어야 한다
+- 무료 데모 배포에서는 `product-server`가 없어도 Gemini 모델 목록과 결과 생성이 가능해야 한다
+- browser mode는 데모 편의용이다
+- 사용자의 API key는 브라우저 session storage에만 임시 저장되고 Gemini API 호출에 직접 사용된다
+- browser mode에서는 현재 Gemini만 직접 연결한다
 
 ## 1.6 Render product-server 배포
-현재 가장 빠른 정식 runtime 배포 기준은 Render Web Service다.
+유료 또는 상시 서버 운영을 선택할 경우의 runtime 배포 기준은 Render Web Service다.
 
 루트의 `render.yaml`은 아래를 고정한다.
 - service name: `vive-studio-product-server`
@@ -99,28 +100,29 @@ Note:
 - `VITE_PRODUCT_ENGINE_MODE`
   - 기본값: `auto`
   - `local`이면 브라우저 내 fallback engine을 우선 사용한다
+  - `browser`이면 지원 provider를 브라우저에서 직접 호출한다
 - `VITE_PRODUCT_BASE_PATH`
   - 기본값: `/`
   - GitHub Pages 같은 서브패스 배포 시 base path를 맞춘다
 - `VITE_AVAILABLE_PROVIDERS`
   - 기본값: `local,openai,anthropic,gemini`
   - 쉼표 구분 provider allowlist
-  - 현재 GitHub Pages 정식 배포에서는 기본적으로 `local,gemini`를 사용한다
+  - 현재 GitHub Pages 무료 데모 배포에서는 기본적으로 `local,gemini`를 사용한다
 
 Rule:
-- 실제 제품 배포에서는 `VITE_PRODUCT_API_URL`을 명시한다
-- production에서 로컬 기본값 `http://127.0.0.1:4177/api`에 기대지 않는다
+- server-backed 제품 배포에서는 `VITE_PRODUCT_API_URL`을 명시한다
+- server-backed production에서 로컬 기본값 `http://127.0.0.1:4177/api`에 기대지 않는다
 
 ## 6. 현재 운영 전 체크리스트
 배포 전 최소 확인:
 
 1. `npm run verify:deploy` 통과
-2. `product-server` health endpoint 확인
-3. `VITE_PRODUCT_API_URL`이 실제 서버 주소를 가리키는지 확인
-4. `VIBE_ALLOWED_ORIGINS`를 실제 프론트 도메인으로 제한
-5. 브라우저에서 create, clarify, approval, review 흐름 수동 점검
+2. GitHub Pages source를 GitHub Actions로 설정
+3. 브라우저에서 local runtime 흐름 확인
+4. Gemini API key로 모델 목록 조회 확인
+5. Gemini 모델 선택 후 create, clarify, approval, review 흐름 수동 점검
 
-GitHub / Render 설정 체크:
+유료/상시 서버를 쓰는 경우의 GitHub / Render 설정 체크:
 1. Render에서 `render.yaml` 기반 Web Service 생성
 2. Render 배포 URL의 `/api/health` 확인
 3. GitHub repository variable `PRODUCT_API_URL` 생성
@@ -134,6 +136,6 @@ GitHub / Render 설정 체크:
 - 장기 관측 스택의 최종 도입 시점
 
 현재 결론:
-- 지금 단계에서는 정적 프론트 + Node 서버 분리가 가장 안전하다
-- 정식 배포는 GitHub Pages + Render Web Service 조합으로 시작한다
+- 데모 단계에서는 GitHub Pages + browser Gemini mode가 가장 비용이 낮다
+- server-backed 운영 단계에서는 정적 프론트 + Node 서버 분리가 가장 안전하다
 - 관측 이벤트 수집은 이후 별도 endpoint로 얇게 붙이는 편이 맞다

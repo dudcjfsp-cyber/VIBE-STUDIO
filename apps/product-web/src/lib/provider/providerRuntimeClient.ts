@@ -3,7 +3,11 @@ import type {
   ProviderRuntimeConfig,
   RemoteProviderId,
 } from "./types";
-import { productApiBaseUrl } from "../runtime/productRuntimeConfig";
+import { listBrowserGeminiModels } from "./browserGeminiClient";
+import {
+  isBrowserProviderMode,
+  productApiBaseUrl,
+} from "../runtime/productRuntimeConfig";
 
 type ProductEngineRunOptions = {
   targets?: import("@vive-studio/engine-contracts").RendererId[];
@@ -17,6 +21,10 @@ export async function listProviderModels(
   provider: RemoteProviderId,
   apiKey: string,
 ): Promise<ProviderModel[]> {
+  if (isBrowserProviderMode && provider === "gemini") {
+    return listBrowserGeminiModels(apiKey);
+  }
+
   const response = await postJson<{ models: ProviderModel[] }>(
     `${productApiBaseUrl}/providers/models`,
     {

@@ -7,7 +7,11 @@ import type {
 import { runRemoteProductEngine } from "../provider/providerRuntimeClient";
 import type { ProviderRuntimeConfig } from "../provider/types";
 import { productEngine } from "./createProductEngine";
-import { productEngineMode } from "../runtime/productRuntimeConfig";
+import { runBrowserGeminiEngine } from "../provider/browserGeminiClient";
+import {
+  isBrowserProviderMode,
+  productEngineMode,
+} from "../runtime/productRuntimeConfig";
 
 export type ProductEngineRunOptions = {
   targets?: RendererId[];
@@ -24,6 +28,18 @@ export async function runProductEngine(
 ): Promise<EngineResult> {
   if (productEngineMode === "local") {
     return productEngine.run(request, options);
+  }
+
+  if (isBrowserProviderMode) {
+    if (!runtime || runtime.provider === "local") {
+      return productEngine.run(request, options);
+    }
+
+    if (runtime.provider === "gemini") {
+      return runBrowserGeminiEngine(request, options, runtime);
+    }
+
+    throw new Error("브라우저 데모 모드에서는 Gemini만 직접 연결할 수 있어요.");
   }
 
   try {
