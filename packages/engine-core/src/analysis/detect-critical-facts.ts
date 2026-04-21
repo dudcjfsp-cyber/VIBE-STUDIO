@@ -30,6 +30,7 @@ const SPEC_SCOPE_PATTERNS = [
   /기획/u,
   /아이디어/u,
   /플랫폼/u,
+  /mvp/i,
 ];
 
 const ARCHITECTURE_FOCUS_PATTERNS = [
@@ -71,6 +72,10 @@ function hasMeaningfulArchitectureBoundary(text: string): boolean {
   return /[가-힣a-z0-9]{2,}\s*(앱|서비스|플랫폼)/u.test(text);
 }
 
+function hasConcretePlanSubject(text: string): boolean {
+  return /[가-힣a-z0-9][가-힣a-z0-9\s]{2,}\s*(앱|서비스|플랫폼|모임)/u.test(text);
+}
+
 export function detectCriticalFacts(
   request: EngineRequest,
   mode: ModeId,
@@ -109,6 +114,7 @@ export function detectCriticalFacts(
       includesAny(text, SPEC_PROBLEM_PATTERNS),
       includesAny(text, SPEC_AUDIENCE_PATTERNS),
       includesAny(text, SPEC_SCOPE_PATTERNS),
+      hasConcretePlanSubject(text),
     ].filter(Boolean).length;
 
     if (planSignals < 2) {

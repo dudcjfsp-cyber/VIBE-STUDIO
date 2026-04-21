@@ -161,6 +161,20 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `pivot_recommended`: `false`
 - Reason: once the system boundary and design focus are present, architecture should move from clarify-first to explicit approval rather than stay blocked.
 
+### Case 10: Lightweight MVP Plan Free Input
+- Input: `동네 커피 모임 앱 mvp 기획 정리해줘`
+- Selected card: none
+- Expected `mode_guess`: `create`
+- Expected `provisional_renderer`: `plan`
+- Expected `missing_critical_facts`: `false`
+- Expected `ambiguity_score`: `1`
+- Expected `structure_score`: `1`
+- Expected `risk_score`: `1`
+- Expected `next_step`: `approval_pending`
+- Expected `approval_level`: `recommended`
+- Expected `pivot_recommended`: `false`
+- Reason: a concrete app subject plus MVP planning scope is enough for a soft checkpoint; it should not fall into clarify-first or feel like a template-gated path.
+
 ## Coverage Notes
 This first set should lock these boundaries:
 - what `direct_render` looks like
@@ -171,6 +185,7 @@ This first set should lock these boundaries:
 - what `strong renderer mismatch` looks like
 - what `structure_score = 2` looks like for beginner requests
 - what architecture follow-up looks like after critical facts are supplied
+- what lightweight free-input MVP planning looks like without unnecessary clarification
 
 ## Expansion Rule
 Add a new golden case only when it locks a new boundary that is not already covered by an existing case.
