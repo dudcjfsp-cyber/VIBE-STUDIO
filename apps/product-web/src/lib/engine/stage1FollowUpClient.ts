@@ -26,7 +26,11 @@ export async function runStage1FollowUp(
       return runDeterministicStage1FollowUp(request);
     }
 
-    if (request.renderer === "plan" && request.selected_action === "expand-plan-detail") {
+    if (
+      (request.renderer === "plan" && request.selected_action === "expand-plan-detail") ||
+      (request.renderer === "architecture" &&
+        request.selected_action === "expand-architecture-detail")
+    ) {
       return runDeterministicStage1FollowUp(request);
     }
 

@@ -609,6 +609,120 @@ textarea {
   margin: 0 0 10px;
 }
 
+.architecture-diagram {
+  display: grid;
+  gap: 18px;
+}
+
+.architecture-diagram-header {
+  display: grid;
+  gap: 6px;
+}
+
+.architecture-diagram-header h3,
+.architecture-diagram-header p,
+.architecture-flow-chart h4,
+.architecture-flow-chart p {
+  margin: 0;
+}
+
+.architecture-diagram-header p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.architecture-node-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.architecture-node {
+  min-height: 118px;
+  padding: 14px;
+  border: 1px solid rgba(29, 107, 87, 0.18);
+  border-radius: 8px;
+  background: rgba(248, 255, 252, 0.92);
+}
+
+.architecture-node strong,
+.architecture-node span {
+  display: block;
+}
+
+.architecture-node strong {
+  color: var(--accent-strong);
+}
+
+.architecture-node span {
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.architecture-flow-list {
+  display: grid;
+  gap: 14px;
+}
+
+.architecture-flow-chart {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.architecture-flow-chart ol {
+  position: relative;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.architecture-flow-chart ol::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  background: rgba(29, 107, 87, 0.18);
+}
+
+.architecture-flow-chart li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.architecture-flow-chart li + li {
+  margin-top: 14px;
+}
+
+.architecture-step-index {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.architecture-flow-chart p {
+  min-height: 32px;
+  padding: 5px 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .result-section ul,
 .result-section ol {
   margin: 0;

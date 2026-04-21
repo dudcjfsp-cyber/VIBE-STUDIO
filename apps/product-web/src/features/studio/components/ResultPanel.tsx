@@ -335,6 +335,9 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
               <h3>시스템 경계</h3>
               <p>{(output.output as ArchitectureOutput).system_boundary}</p>
             </section>
+
+            <ArchitectureDiagram architecture={output.output as ArchitectureOutput} />
+
             <section className="result-section">
               <h3>구성 요소</h3>
               <ul>
@@ -427,6 +430,15 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
               : " 결과 기준"}
           </p>
 
+          {followUp.result_kind === "expanded-architecture" &&
+          output.renderer === "architecture" ? (
+            <ArchitectureDiagram
+              architecture={output.output as ArchitectureOutput}
+              intro="원본 구조를 기준으로 후속 결과가 더 자세히 풀어쓴 흐름입니다."
+              title="후속 흐름도"
+            />
+          ) : null}
+
           <div className="follow-up-result-body">
             <pre className="follow-up-body">{followUp.result_body}</pre>
           </div>
@@ -506,6 +518,52 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       >
         새로 시작
       </button>
+    </section>
+  );
+}
+
+type ArchitectureDiagramProps = {
+  architecture: ArchitectureOutput;
+  intro?: string;
+  title?: string;
+};
+
+function ArchitectureDiagram({
+  architecture,
+  intro = "주요 구성요소와 처리 흐름을 한눈에 볼 수 있게 정리했습니다.",
+  title = "구성도와 흐름도",
+}: ArchitectureDiagramProps) {
+  return (
+    <section className="result-section architecture-diagram">
+      <div className="architecture-diagram-header">
+        <h3>{title}</h3>
+        <p>{intro}</p>
+      </div>
+
+      <div className="architecture-node-grid" aria-label="아키텍처 구성요소">
+        {architecture.components.map((component) => (
+          <article className="architecture-node" key={component.name}>
+            <strong>{component.name}</strong>
+            <span>{component.responsibility}</span>
+          </article>
+        ))}
+      </div>
+
+      <div className="architecture-flow-list">
+        {architecture.interaction_flows.map((flow) => (
+          <section className="architecture-flow-chart" key={flow.name}>
+            <h4>{flow.name}</h4>
+            <ol>
+              {flow.steps.map((step, index) => (
+                <li key={step}>
+                  <span className="architecture-step-index">{index + 1}</span>
+                  <p>{step}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
     </section>
   );
 }
