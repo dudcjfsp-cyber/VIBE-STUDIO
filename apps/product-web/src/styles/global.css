@@ -528,6 +528,8 @@ textarea {
 .result-section li {
   color: var(--muted);
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: keep-all;
 }
 
 .action-row {
