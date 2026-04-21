@@ -30,7 +30,7 @@ export function StudioScreen() {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" aria-busy={flow.isBusy}>
       <StartPanel
         approvalRevise={flow.approvalReviseResult}
         clarify={
@@ -97,6 +97,13 @@ export function StudioScreen() {
           runId={flow.snapshot.runId}
           runtime={providerSession.runtime}
         />
+      ) : null}
+
+      {flow.isBusy ? (
+        <div className="busy-toast" role="status" aria-live="polite">
+          <span className="busy-spinner" aria-hidden="true" />
+          <span>요청을 정리하고 있어요. 잠시만 기다려 주세요.</span>
+        </div>
       ) : null}
     </main>
   );

@@ -226,6 +226,42 @@ textarea {
   line-height: 1.5;
 }
 
+.busy-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 1px solid rgba(29, 107, 87, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--accent-strong);
+  box-shadow: 0 12px 34px rgba(23, 32, 24, 0.14);
+  line-height: 1.45;
+  transform: translateX(-50%);
+}
+
+.busy-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(29, 107, 87, 0.22);
+  border-top-color: var(--accent);
+  border-radius: 999px;
+  animation: busy-spin 0.8s linear infinite;
+}
+
+@keyframes busy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .composer {
   margin: 30px auto 0;
   width: min(720px, 100%);
