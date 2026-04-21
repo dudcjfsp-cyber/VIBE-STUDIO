@@ -1,5 +1,6 @@
 declare module "node:http" {
   export type IncomingMessage = AsyncIterable<Uint8Array> & {
+    headers?: Record<string, string | string[] | undefined>;
     method?: string;
     url?: string;
   };

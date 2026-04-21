@@ -23,17 +23,39 @@ Rule:
 - 실제 제품 흐름 배포에서는 `product-web` 단독 정적 배포만으로 끝내지 않는다
 - `VITE_PRODUCT_ENGINE_MODE=local`은 데모/로컬 fallback 용도다
 
-## 1.5 임시 GitHub Actions 배포
-지금 당장 바로 열어보는 임시 배포는 아래 기준으로 둔다.
+## 1.5 GitHub Actions 정식 프론트 배포
+현재 정식 프론트 배포는 아래 기준으로 둔다.
 
 - GitHub Actions가 `main` 기준으로 `apps/product-web`를 GitHub Pages에 자동 배포한다
-- 이 배포는 `VITE_PRODUCT_ENGINE_MODE=local`로 빌드한다
-- 이 배포는 `VITE_AVAILABLE_PROVIDERS=local`로 빌드해 remote provider 선택지를 숨긴다
-- 따라서 이 배포는 제품 프론트 데모/검증용 기준면이며, `product-server`가 필요한 실제 remote runtime 배포를 대체하지 않는다
+- `main` 배포는 GitHub repository variable `PRODUCT_API_URL`을 반드시 요구한다
+- 이 배포는 `VITE_PRODUCT_ENGINE_MODE=auto`로 빌드한다
+- 이 배포는 기본적으로 `VITE_AVAILABLE_PROVIDERS=local,gemini`로 빌드한다
+- provider/model 호출은 별도 배포된 `product-server`로 요청 단위 중계한다
 
 Rule:
-- GitHub Pages 임시 배포를 실제 remote-provider 운영 배포와 같은 것으로 오해하지 않는다
-- 임시 공개 링크는 create / review / clarify / approval 흐름 데모에 우선 사용한다
+- GitHub Pages는 프론트만 호스팅한다
+- remote provider를 쓰려면 `product-server` 배포와 `PRODUCT_API_URL` 설정이 먼저 완료되어야 한다
+- `PRODUCT_API_URL`은 `/api`까지 포함한 base URL이어야 한다
+
+## 1.6 Render product-server 배포
+현재 가장 빠른 정식 runtime 배포 기준은 Render Web Service다.
+
+루트의 `render.yaml`은 아래를 고정한다.
+- service name: `vive-studio-product-server`
+- runtime: `node`
+- build command: `npm ci && npm run build`
+- start command: `npm run start`
+- health check path: `/api/health`
+- `HOST=0.0.0.0`
+- `VIBE_ALLOWED_ORIGINS=https://dudcjfsp-cyber.github.io`
+
+Render 배포 후 실제 API base URL은 보통 아래 형태가 된다.
+- `https://vive-studio-product-server.onrender.com/api`
+
+Rule:
+- 실제 Render URL이 다르면 GitHub repository variable `PRODUCT_API_URL`에는 실제 URL을 넣는다
+- CORS origin은 origin만 넣고 path는 넣지 않는다
+- GitHub Pages URL이 custom domain으로 바뀌면 `VIBE_ALLOWED_ORIGINS`도 함께 바꾼다
 
 ## 2. 왜 이 구조가 현재 기준인가
 - 현재 제품 문서는 `product-web` / `product-server` 경계를 전제로 한다
@@ -83,7 +105,7 @@ Note:
 - `VITE_AVAILABLE_PROVIDERS`
   - 기본값: `local,openai,anthropic,gemini`
   - 쉼표 구분 provider allowlist
-  - GitHub Pages 임시 배포에서는 `local`만 사용한다
+  - 현재 GitHub Pages 정식 배포에서는 기본적으로 `local,gemini`를 사용한다
 
 Rule:
 - 실제 제품 배포에서는 `VITE_PRODUCT_API_URL`을 명시한다
@@ -98,6 +120,13 @@ Rule:
 4. `VIBE_ALLOWED_ORIGINS`를 실제 프론트 도메인으로 제한
 5. 브라우저에서 create, clarify, approval, review 흐름 수동 점검
 
+GitHub / Render 설정 체크:
+1. Render에서 `render.yaml` 기반 Web Service 생성
+2. Render 배포 URL의 `/api/health` 확인
+3. GitHub repository variable `PRODUCT_API_URL` 생성
+4. 필요하면 GitHub repository variable `AVAILABLE_PROVIDERS` 생성
+5. GitHub Pages source를 GitHub Actions로 설정
+
 ## 7. 지금 문서가 고정하지 않는 것
 - 특정 클라우드 벤더 선택
 - IaC 도구 선택
@@ -106,4 +135,5 @@ Rule:
 
 현재 결론:
 - 지금 단계에서는 정적 프론트 + Node 서버 분리가 가장 안전하다
+- 정식 배포는 GitHub Pages + Render Web Service 조합으로 시작한다
 - 관측 이벤트 수집은 이후 별도 endpoint로 얇게 붙이는 편이 맞다

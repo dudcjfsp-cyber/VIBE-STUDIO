@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: vive-studio-product-server
+    runtime: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: HOST
+        value: 0.0.0.0
+      - key: VIBE_ALLOWED_ORIGINS
+        value: https://dudcjfsp-cyber.github.io
+      - key: VIBE_OBSERVABILITY_DEBUG
+        value: "0"

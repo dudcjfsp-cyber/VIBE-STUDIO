@@ -8,6 +8,10 @@ import type {
   ProviderRuntimeConfig,
   ProviderSessionRecord,
 } from "../../../lib/provider/types";
+import {
+  enabledProviders,
+  isProviderEnabled,
+} from "../../../lib/runtime/productRuntimeConfig";
 
 const SESSION_KEY = "vive-studio.provider-session.v1";
 const SESSION_TTL_MS = 30 * 60 * 1000;
@@ -50,13 +54,13 @@ function createInitialState(): ProviderSessionState {
   }
 
   return {
-    apiKey: stored.apiKey,
+    apiKey: isProviderEnabled(stored.provider) ? stored.apiKey : "",
     errorMessage: undefined,
-    expiresAt: stored.expiresAt,
+    expiresAt: isProviderEnabled(stored.provider) ? stored.expiresAt : undefined,
     isLoading: false,
-    model: stored.model,
-    models: stored.models,
-    provider: stored.provider,
+    model: isProviderEnabled(stored.provider) ? stored.model : "",
+    models: isProviderEnabled(stored.provider) ? stored.models : [],
+    provider: isProviderEnabled(stored.provider) ? stored.provider : "local",
   };
 }
 
@@ -294,6 +298,10 @@ export function useProviderSession() {
   }
 
   function setProvider(provider: ProviderId) {
+    if (!isProviderEnabled(provider)) {
+      return;
+    }
+
     if (provider === "local") {
       clearStoredSession();
       setState({
@@ -335,6 +343,7 @@ export function useProviderSession() {
   }
 
   return {
+    availableProviders: enabledProviders,
     blockReason,
     clearSession,
     connect,

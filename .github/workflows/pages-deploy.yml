@@ -42,7 +42,7 @@ jobs:
         env:
           VITE_PRODUCT_ENGINE_MODE: local
           VITE_AVAILABLE_PROVIDERS: local
-          VITE_PRODUCT_BASE_PATH: /VIBE-STUDIO/
+          VITE_PRODUCT_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build:product-web
 
   deploy:
@@ -68,11 +68,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate production API URL
+        env:
+          PRODUCT_API_URL: ${{ vars.PRODUCT_API_URL }}
+        run: |
+          if [ -z "$PRODUCT_API_URL" ]; then
+            echo "Missing repository variable PRODUCT_API_URL. Set it to your product-server API base URL, for example https://vive-studio-product-server.onrender.com/api."
+            exit 1
+          fi
+
       - name: Build GitHub Pages bundle
         env:
-          VITE_PRODUCT_ENGINE_MODE: local
-          VITE_AVAILABLE_PROVIDERS: local
-          VITE_PRODUCT_BASE_PATH: /VIBE-STUDIO/
+          VITE_PRODUCT_API_URL: ${{ vars.PRODUCT_API_URL }}
+          VITE_PRODUCT_ENGINE_MODE: auto
+          VITE_AVAILABLE_PROVIDERS: ${{ vars.AVAILABLE_PROVIDERS || 'local,gemini' }}
+          VITE_PRODUCT_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build:deploy
 
       - name: Upload Pages artifact

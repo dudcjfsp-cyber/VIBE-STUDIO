@@ -7,6 +7,7 @@ import type {
 import { runRemoteProductEngine } from "../provider/providerRuntimeClient";
 import type { ProviderRuntimeConfig } from "../provider/types";
 import { productEngine } from "./createProductEngine";
+import { productEngineMode } from "../runtime/productRuntimeConfig";
 
 export type ProductEngineRunOptions = {
   targets?: RendererId[];
@@ -16,16 +17,12 @@ export type ProductEngineRunOptions = {
   };
 };
 
-const engineMode =
-  (import.meta.env.VITE_PRODUCT_ENGINE_MODE as string | undefined)?.trim() ||
-  "auto";
-
 export async function runProductEngine(
   request: EngineRequest,
   options: ProductEngineRunOptions = {},
   runtime?: ProviderRuntimeConfig,
 ): Promise<EngineResult> {
-  if (engineMode === "local") {
+  if (productEngineMode === "local") {
     return productEngine.run(request, options);
   }
 

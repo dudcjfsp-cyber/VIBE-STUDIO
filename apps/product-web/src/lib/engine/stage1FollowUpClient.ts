@@ -5,25 +5,21 @@ import {
 } from "@vive-studio/engine-contracts";
 
 import type { ProviderRuntimeConfig } from "../provider/types";
-
-const apiBaseUrl =
-  (import.meta.env.VITE_PRODUCT_API_URL as string | undefined)?.trim() ||
-  "http://127.0.0.1:4177/api";
-
-const engineMode =
-  (import.meta.env.VITE_PRODUCT_ENGINE_MODE as string | undefined)?.trim() ||
-  "auto";
+import {
+  productApiBaseUrl,
+  productEngineMode,
+} from "../runtime/productRuntimeConfig";
 
 export async function runStage1FollowUp(
   request: Stage1FollowUpRequest,
   runtime: ProviderRuntimeConfig | undefined,
 ): Promise<Stage1FollowUpResult> {
-  if (engineMode === "local") {
+  if (productEngineMode === "local") {
     return runDeterministicStage1FollowUp(request);
   }
 
   try {
-    return await postJson<Stage1FollowUpResult>(`${apiBaseUrl}/follow-up`, {
+    return await postJson<Stage1FollowUpResult>(`${productApiBaseUrl}/follow-up`, {
       request,
       ...(runtime ? { runtime } : {}),
     });

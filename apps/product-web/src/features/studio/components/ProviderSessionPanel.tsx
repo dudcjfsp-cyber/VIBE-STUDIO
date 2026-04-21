@@ -1,5 +1,6 @@
 import { providerOptions } from "../../../lib/provider/types";
 import type { ProviderId, ProviderModel } from "../../../lib/provider/types";
+import { enabledProviders } from "../../../lib/runtime/productRuntimeConfig";
 
 type ProviderSessionPanelProps = {
   apiKey: string;
@@ -34,6 +35,9 @@ export function ProviderSessionPanel(props: ProviderSessionPanelProps) {
     sessionLabel,
   } = props;
   const isRemoteProvider = provider !== "local";
+  const visibleProviderOptions = providerOptions.filter((option) =>
+    enabledProviders.includes(option.id),
+  );
 
   return (
     <section className="provider-panel">
@@ -45,7 +49,7 @@ export function ProviderSessionPanel(props: ProviderSessionPanelProps) {
             onChange={(event) => onProviderChange(event.target.value as ProviderId)}
             value={provider}
           >
-            {providerOptions.map((option) => (
+            {visibleProviderOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>

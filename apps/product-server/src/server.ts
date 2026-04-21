@@ -11,14 +11,23 @@ import type {
   Stage1FollowUpPayload,
 } from "./types.js";
 
+const host = process.env.HOST?.trim() || "0.0.0.0";
 const port = Number(process.env.PORT ?? 4177);
+const allowedOrigins = readAllowedOrigins(process.env.VIBE_ALLOWED_ORIGINS);
 
 const server = createServer(async (request, response) => {
-  setCorsHeaders(response);
+  const corsStatus = setCorsHeaders(request, response);
 
   if (request.method === "OPTIONS") {
-    response.writeHead(204);
+    response.writeHead(corsStatus === "blocked" ? 403 : 204);
     response.end();
+    return;
+  }
+
+  if (corsStatus === "blocked") {
+    sendJson(response, 403, {
+      error: "Origin is not allowed.",
+    });
     return;
   }
 
@@ -195,8 +204,13 @@ const server = createServer(async (request, response) => {
   });
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Product server available at http://127.0.0.1:${port}/api/health`);
+server.listen(port, host, () => {
+  console.log(`Product server available at http://${host}:${port}/api/health`);
+  console.log(
+    allowedOrigins.size > 0
+      ? `CORS allowlist active for ${allowedOrigins.size} origin(s).`
+      : "CORS allowlist not set. Allowing all origins.",
+  );
   console.log("Credential mode: browser session -> per-request runtime forwarding");
 });
 
@@ -220,10 +234,26 @@ function normalizeRuntime(
   };
 }
 
-function setCorsHeaders(response: import("node:http").ServerResponse) {
-  response.setHeader("access-control-allow-origin", "*");
+function setCorsHeaders(
+  request: import("node:http").IncomingMessage,
+  response: import("node:http").ServerResponse,
+): "allowed" | "blocked" {
+  const requestOrigin = readRequestOrigin(request);
+  const allowedOrigin = resolveAllowedOrigin(requestOrigin);
+
+  if (allowedOrigin) {
+    response.setHeader("access-control-allow-origin", allowedOrigin);
+  }
+
+  response.setHeader("vary", "Origin");
   response.setHeader("access-control-allow-headers", "content-type");
   response.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+
+  if (requestOrigin && !allowedOrigin) {
+    return "blocked";
+  }
+
+  return "allowed";
 }
 
 function sendJson(
@@ -261,4 +291,37 @@ function readErrorMessage(error: unknown): string {
   }
 
   return "Unknown server error.";
+}
+
+function readAllowedOrigins(value: string | undefined): Set<string> {
+  const origins = (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return new Set(origins);
+}
+
+function readRequestOrigin(
+  request: import("node:http").IncomingMessage,
+): string | undefined {
+  const originHeader = request.headers?.origin;
+
+  if (Array.isArray(originHeader)) {
+    return originHeader[0]?.trim();
+  }
+
+  return originHeader?.trim();
+}
+
+function resolveAllowedOrigin(origin: string | undefined): string | undefined {
+  if (allowedOrigins.size === 0) {
+    return "*";
+  }
+
+  if (!origin) {
+    return undefined;
+  }
+
+  return allowedOrigins.has(origin) ? origin : undefined;
 }

@@ -3,6 +3,7 @@ import type {
   ProviderRuntimeConfig,
   RemoteProviderId,
 } from "./types";
+import { productApiBaseUrl } from "../runtime/productRuntimeConfig";
 
 type ProductEngineRunOptions = {
   targets?: import("@vive-studio/engine-contracts").RendererId[];
@@ -12,16 +13,12 @@ type ProductEngineRunOptions = {
   };
 };
 
-const apiBaseUrl =
-  (import.meta.env.VITE_PRODUCT_API_URL as string | undefined)?.trim() ||
-  "http://127.0.0.1:4177/api";
-
 export async function listProviderModels(
   provider: RemoteProviderId,
   apiKey: string,
 ): Promise<ProviderModel[]> {
   const response = await postJson<{ models: ProviderModel[] }>(
-    `${apiBaseUrl}/providers/models`,
+    `${productApiBaseUrl}/providers/models`,
     {
       provider,
       apiKey,
@@ -36,7 +33,7 @@ export async function runRemoteProductEngine(
   options: ProductEngineRunOptions,
   runtime: ProviderRuntimeConfig | undefined,
 ): Promise<import("@vive-studio/engine-contracts").EngineResult> {
-  return postJson(`${apiBaseUrl}/run`, {
+  return postJson(`${productApiBaseUrl}/run`, {
     request,
     ...(hasRunOptions(options) ? { options } : {}),
     ...(runtime ? { runtime } : {}),
