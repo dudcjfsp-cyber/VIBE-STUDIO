@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { ResultPanel } from "./components/ResultPanel";
 import { StartPanel } from "./components/StartPanel";
@@ -6,11 +8,22 @@ import { useProviderSession } from "./hooks/useProviderSession";
 import { useStudioFlow } from "./hooks/useStudioFlow";
 
 export function StudioScreen() {
+  const approvalPanelRef = useRef<HTMLDivElement | null>(null);
+  const resultPanelRef = useRef<HTMLDivElement | null>(null);
+  const [completionMessage, setCompletionMessage] = useState<string | undefined>();
   const providerSession = useProviderSession();
   const flow = useStudioFlow({
     blockReason: providerSession.blockReason,
     runtime: providerSession.runtime,
   });
+  const resultToastKey =
+    flow.snapshot.stage === "result" && flow.snapshot.result
+      ? [
+          flow.snapshot.runId ?? "no-run",
+          flow.snapshot.result.outputs[0]?.renderer ?? flow.snapshot.result.provisional_renderer,
+          flow.snapshot.result.outputs.length,
+        ].join(":")
+      : undefined;
   const clarifyQuestion =
     flow.snapshot.stage === "clarify" && flow.snapshot.result
       ? flow.snapshot.result.intent_ir.analysis.clarification_questions[0]
@@ -19,6 +32,35 @@ export function StudioScreen() {
     flow.snapshot.stage === "clarify" && flow.snapshot.result
       ? Math.max(flow.snapshot.result.intent_ir.analysis.clarification_questions.length - 1, 0)
       : 0;
+
+  useEffect(() => {
+    if (flow.snapshot.stage === "approval" && approvalPanelRef.current) {
+      approvalPanelRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [flow.snapshot.stage, flow.snapshot.runId]);
+
+  useEffect(() => {
+    if (flow.snapshot.stage !== "result" || !resultToastKey) {
+      return undefined;
+    }
+
+    resultPanelRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    setCompletionMessage("생성 완료");
+
+    const timeoutId = window.setTimeout(() => {
+      setCompletionMessage(undefined);
+    }, 2600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [flow.snapshot.stage, resultToastKey]);
 
   function handleExampleClick(example: StartExample) {
     flow.setInput(example.text);
@@ -76,33 +118,44 @@ export function StudioScreen() {
       />
 
       {flow.snapshot.stage === "approval" && flow.snapshot.result ? (
-        <ApprovalPanel
-          isBusy={flow.isBusy}
-          onApprove={(level) => {
-            if (level === "none") {
-              return;
-            }
+        <div ref={approvalPanelRef}>
+          <ApprovalPanel
+            isBusy={flow.isBusy}
+            onApprove={(level) => {
+              if (level === "none") {
+                return;
+              }
 
-            void flow.continueAfterApproval(level);
-          }}
-          onRevise={flow.reviseFromApproval}
-          result={flow.snapshot.result}
-        />
+              void flow.continueAfterApproval(level);
+            }}
+            onRevise={flow.reviseFromApproval}
+            result={flow.snapshot.result}
+          />
+        </div>
       ) : null}
 
       {flow.snapshot.stage === "result" && flow.snapshot.result ? (
-        <ResultPanel
-          onReset={flow.reset}
-          result={flow.snapshot.result}
-          runId={flow.snapshot.runId}
-          runtime={providerSession.runtime}
-        />
+        <div ref={resultPanelRef}>
+          <ResultPanel
+            onReset={flow.reset}
+            result={flow.snapshot.result}
+            runId={flow.snapshot.runId}
+            runtime={providerSession.runtime}
+          />
+        </div>
       ) : null}
 
       {flow.isBusy ? (
         <div className="busy-toast" role="status" aria-live="polite">
           <span className="busy-spinner" aria-hidden="true" />
           <span>요청을 정리하고 있어요. 잠시만 기다려 주세요.</span>
+        </div>
+      ) : null}
+
+      {completionMessage ? (
+        <div className="busy-toast is-complete" role="status" aria-live="polite">
+          <span className="complete-dot" aria-hidden="true" />
+          <span>{completionMessage}</span>
         </div>
       ) : null}
     </main>

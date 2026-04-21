@@ -256,6 +256,33 @@ textarea {
   animation: busy-spin 0.8s linear infinite;
 }
 
+.busy-toast.is-complete {
+  border-color: rgba(29, 107, 87, 0.18);
+  background: rgba(248, 255, 252, 0.98);
+  font-weight: 700;
+}
+
+.complete-dot {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent);
+  position: relative;
+}
+
+.complete-dot::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 4px;
+  width: 6px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 @keyframes busy-spin {
   to {
     transform: rotate(360deg);
