@@ -380,8 +380,8 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       </div>
 
       <ul className="note-list">
-        {readOutputNotes(output).map((note) => (
-          <li key={note}>{note}</li>
+        {readOutputNotes(output).map((note, index) => (
+          <li key={`${note}-${index}`}>{note}</li>
         ))}
       </ul>
 
@@ -585,19 +585,196 @@ function readOutputTitle(output: EngineResult["outputs"][number]) {
 }
 
 function readOutputNotes(output: EngineResult["outputs"][number]) {
-  if (output.renderer === "plan") {
-    return (output.output as PlanOutput).notes;
+  const notes =
+    output.renderer === "plan"
+      ? (output.output as PlanOutput).notes
+      : output.renderer === "architecture"
+        ? (output.output as ArchitectureOutput).notes
+        : output.renderer === "review-report"
+          ? (output.output as ReviewReportOutput).notes
+          : (output.output as PromptOutput).notes;
+
+  return notes
+    .map(formatVisibleNote)
+    .filter((note): note is string => Boolean(note));
+}
+
+function formatVisibleNote(note: string): string | undefined {
+  const normalized = note.trim();
+
+  if (!normalized || normalized.startsWith("Fallback:")) {
+    return undefined;
   }
 
-  if (output.renderer === "architecture") {
-    return (output.output as ArchitectureOutput).notes;
+  const [rawLabel, ...rest] = normalized.split(":");
+  const value = rest.join(":").trim();
+
+  switch (rawLabel.trim()) {
+    case "Mode":
+      return `작업 방식: ${formatMode(value)}`;
+    case "Confidence":
+      return `판단 신뢰도: ${formatConfidence(value)}`;
+    case "Summary":
+      return `요청 이해: ${formatSummary(value)}`;
+    case "Recommended renderer":
+      return `추천 결과 유형: ${formatOutputKind(value)}`;
+    case "Technique":
+      return `프롬프트 구성 방식: ${formatPromptTechnique(value)}`;
+    case "Risk note":
+      return `주의할 점: ${formatSummary(value)}`;
+    case "Artifact kind":
+      return `검토 대상 유형: ${formatArtifactKind(value.replace(/\.$/, ""))}`;
+    case "Finding profile":
+      return `발견 항목: ${formatFindingProfile(value)}`;
+    case "Strength snapshot":
+      return `강점 요약: ${formatStrengthSnapshot(value)}`;
+    case "Coverage snapshot":
+      return `검토 범위: ${formatCoverageSnapshot(value)}`;
+    case "Coverage gaps":
+      return `비어 있는 부분: ${formatListLikeText(value)}`;
+    case "Next best move":
+      return `다음 우선 작업: ${formatNextBestMove(value)}`;
+    case "Review focus":
+      return `검토 초점: ${formatReviewFocus(value)}`;
+    case "Artifact excerpt":
+      return `검토 원문 일부: ${value}`;
+    case "Artifact size":
+      return `검토 분량: ${value.replace(/\btokens?\b\.?/i, "토큰")}`;
+    default:
+      return normalized;
+  }
+}
+
+function formatMode(value: string): string {
+  switch (value) {
+    case "create":
+      return "생성";
+    case "review":
+      return "검토";
+    default:
+      return value || "알 수 없음";
+  }
+}
+
+function formatConfidence(value: string): string {
+  switch (value) {
+    case "low":
+      return "낮음";
+    case "medium":
+      return "보통";
+    case "high":
+      return "높음";
+    default:
+      return value || "알 수 없음";
+  }
+}
+
+function formatSummary(value: string): string {
+  const normalized = value.trim().replace(/\.$/, "");
+
+  switch (normalized) {
+    case "Define the system structure before implementation":
+      return "구현 전에 시스템 구조를 먼저 정리합니다.";
+    case "Review an existing artifact and surface issues or missing points":
+      return "기존 초안을 검토하고 문제나 빠진 부분을 드러냅니다.";
+    case "Structure the idea into a clearer product plan":
+      return "아이디어를 더 선명한 제품 기획으로 구조화합니다.";
+    case "High-impact output should be confirmed before final rendering":
+      return "영향도가 큰 결과는 최종 생성 전에 확인이 필요합니다.";
+    default:
+      return value;
+  }
+}
+
+function formatOutputKind(value: string): string {
+  switch (value) {
+    case "directly usable prompt or wording":
+      return "바로 쓸 수 있는 프롬프트 또는 문구";
+    case "structured planning summary":
+      return "구조화된 기획 정리";
+    case "service or system structure":
+      return "서비스 또는 시스템 구조";
+    case "evaluation and improvement report":
+      return "평가와 개선 리포트";
+    default:
+      return value;
+  }
+}
+
+function formatPromptTechnique(value: string): string {
+  switch (value) {
+    case "few-shot or pattern-anchored prompt":
+      return "예시나 패턴을 기준으로 잡는 프롬프트";
+    case "zero-shot structured prompt":
+      return "예시 없이 구조를 먼저 잡는 프롬프트";
+    default:
+      return value;
+  }
+}
+
+function formatArtifactKind(value: string): string {
+  switch (value) {
+    case "prompt":
+      return "프롬프트";
+    case "product-copy":
+      return "제품 문구";
+    case "plan":
+      return "기획 초안";
+    case "architecture":
+      return "구조 설계";
+    default:
+      return value || "초안";
+  }
+}
+
+function formatFindingProfile(value: string): string {
+  return value
+    .replace(/(\d+)\s+high/i, "높음 $1개")
+    .replace(/(\d+)\s+medium/i, "보통 $1개")
+    .replace(/(\d+)\s+low/i, "낮음 $1개")
+    .replace(/\s*\/\s*/g, " / ")
+    .replace(/\.$/, "");
+}
+
+function formatStrengthSnapshot(value: string): string {
+  if (/no strong anchors yet/i.test(value)) {
+    return "아직 강하게 잡힌 근거가 없습니다.";
   }
 
-  if (output.renderer === "review-report") {
-    return (output.output as ReviewReportOutput).notes;
+  return formatListLikeText(value.replace(/^explicit\s+/i, ""));
+}
+
+function formatCoverageSnapshot(value: string): string {
+  return formatListLikeText(value.replace(/^explicit\s+/i, ""));
+}
+
+function formatListLikeText(value: string): string {
+  return value.replace(/\.$/, "").trim();
+}
+
+function formatNextBestMove(value: string): string {
+  if (/keep the current direction/i.test(value)) {
+    return "현재 방향을 유지하고 마지막으로 더 다듬습니다.";
   }
 
-  return (output.output as PromptOutput).notes;
+  return value.replace(/^address\s+/i, "먼저 보완: ").replace(/\.$/, "");
+}
+
+function formatReviewFocus(value: string): string {
+  switch (value.replace(/\.$/, "")) {
+    case "instruction clarity, task framing, input context, and explicit output constraints":
+      return "지시 명확성, 작업 framing, 입력 맥락, 출력 제약";
+    case "audience fit, value clarity, usage context, and overclaim control":
+      return "대상 적합성, 가치 명확성, 사용 맥락, 과장 통제";
+    case "scope clarity, target user, success criteria, and non-goal discipline":
+      return "범위 명확성, 핵심 사용자, 성공 기준, 제외 범위";
+    case "boundary clarity, component responsibility, interaction flow, and design tradeoffs":
+      return "경계 명확성, 구성요소 책임, 상호작용 흐름, 설계 trade-off";
+    case "clarity, audience fit, completeness, and explicit constraints":
+      return "명확성, 대상 적합성, 완성도, 명시적 제약";
+    default:
+      return value;
+  }
 }
 
 function renderSummary(renderer: EngineResult["provisional_renderer"]) {
