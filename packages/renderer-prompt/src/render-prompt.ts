@@ -47,30 +47,37 @@ function chooseTechniqueLabel(text: string): string {
 
 export function renderPrompt(handoff: RendererHandoff): PromptOutput {
   const contextLines = buildContextBlock(handoff);
+  const sourceText = handoff.source.text.trim();
+  const goal = handoff.intent_ir.intent.goal.trim();
+  const specializedPrompt = buildSpecializedPrompt(sourceText, goal, contextLines);
+  const promptText =
+    specializedPrompt ??
+    [
+      "당신은 사용자의 목표를 실행 가능한 결과로 바꾸는 숙련된 AI 작업 파트너입니다.",
+      "",
+      "[목표]",
+      `- ${normalizePromptGoal(goal || sourceText)}`,
+      "",
+      "[참고 맥락]",
+      ...(
+        contextLines.length > 0
+          ? contextLines
+          : ["- 추가 배경은 주어지지 않았습니다. 부족한 정보는 과도하게 추측하지 말고 필요한 경우 질문으로 분리하세요."]
+      ),
+      "",
+      "[작업]",
+      "- 위 목표에 맞는 최종 결과를 작성하세요.",
+      "- 결과를 만들기 전에 꼭 확인해야 할 정보가 있다면, 먼저 질문 목록으로 분리하세요.",
+      "- 사용자가 바로 다음 행동으로 옮길 수 있게 구체적이고 실행 가능한 문장으로 작성하세요.",
+      "- 불필요한 인사말, 자기소개, 메타 해설은 쓰지 마세요.",
+      "",
+      "[출력 형식]",
+      "1. 핵심 결과",
+      "2. 확인해야 할 질문",
+      "3. 누락되기 쉬운 포인트",
+    ].join("\n");
   const promptLines = [
-    "당신은 요구사항을 빠르게 구조화해 주는 숙련된 PM/프로덕트 디스커버리 코치입니다.",
-    "",
-    "[작업]",
-    handoff.intent_ir.intent.goal.trim(),
-    "",
-    "[배경]",
-    ...(
-      contextLines.length > 0
-        ? contextLines
-        : ["- 추가 배경은 주어지지 않았으니, 과도한 가정 없이 바로 쓸 수 있는 형태로 정리하세요."]
-    ),
-    "",
-    "[작성 원칙]",
-    "- 실행 가능한 결과를 바로 제시하세요.",
-    "- 빠진 정보를 메우기 위해 필요한 항목은 결과 안에서 구조적으로 드러내세요.",
-    "- 설명보다 실제 사용 가능한 문장을 우선하세요.",
-    "- 불필요한 인사말이나 메타 해설은 쓰지 마세요.",
-    "",
-    "[출력 형식]",
-    "- 먼저 기능 요청을 검토할 때 바로 쓸 결과물을 작성하세요.",
-    "- 필요한 경우 항목별 체크리스트나 질문 목록을 카테고리별로 나누세요.",
-    "- 각 항목은 짧고 구체적으로 쓰세요.",
-    "- 마지막에는 누락되기 쉬운 확인 포인트를 별도 섹션으로 정리하세요.",
+    promptText,
   ];
 
   const notes = [
@@ -89,4 +96,52 @@ export function renderPrompt(handoff: RendererHandoff): PromptOutput {
     prompt: promptLines.join("\n"),
     notes,
   };
+}
+
+function buildSpecializedPrompt(
+  sourceText: string,
+  goal: string,
+  contextLines: string[],
+): string | undefined {
+  const searchableText = `${sourceText} ${goal}`;
+
+  if (
+    /질문|물어봐|물어봐야|확인 질문/u.test(searchableText) &&
+    /회의|킥오프|기능 요청|요구사항|PM|기획자|개발자/u.test(searchableText)
+  ) {
+    return [
+      "당신은 기능 요청을 구조화하는 숙련된 PM/프로덕트 디스커버리 코치입니다.",
+      "",
+      "[입력]",
+      "- 기능 요청 또는 회의 주제: {{여기에 기능 요청이나 회의 주제를 붙여 넣으세요}}",
+      "- 회의 상황: 기획자와 개발자가 함께 보는 킥오프 또는 요구사항 확인 자리",
+      "",
+      "[작업]",
+      "- 입력된 기능 요청을 바로 구현 논의로 넘기기 전에 확인해야 할 질문을 정리해 주세요.",
+      "- 질문은 답변자가 실제로 답하기 쉬운 문장으로 작성해 주세요.",
+      "- 질문마다 왜 필요한지 한 줄로 덧붙여 주세요.",
+      "- 정보가 부족한 부분은 추측하지 말고 확인 질문으로 남겨 주세요.",
+      "",
+      "[출력 형식]",
+      "1. 기능 목적 확인 질문",
+      "2. 사용자와 사용 상황 질문",
+      "3. 범위와 제외 범위 질문",
+      "4. 데이터, 화면, 정책 관련 질문",
+      "5. 개발 전에 꼭 합의해야 할 결정",
+      "",
+      "[작성 원칙]",
+      "- 인사말이나 회의 진행 멘트는 쓰지 마세요.",
+      "- 질문 목록 자체만 바로 사용할 수 있게 작성하세요.",
+      "- 초보 PM도 이해할 수 있게 쉬운 표현을 사용하세요.",
+      ...(contextLines.length > 0 ? ["", "[참고 맥락]", ...contextLines] : []),
+    ].join("\n");
+  }
+
+  return undefined;
+}
+
+function normalizePromptGoal(value: string): string {
+  return value
+    .replace(/프롬프트(를|을)?\s*(만들어|작성해|짜|생성해)(줘|주세요)?\.?/gu, "결과를 만들어 주세요.")
+    .trim();
 }

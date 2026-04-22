@@ -1,15 +1,16 @@
 :root {
   color-scheme: light;
-  --bg: #ffffff;
-  --surface: rgba(255, 255, 255, 0.82);
-  --surface-strong: #fffdf8;
-  --ink: #172018;
-  --muted: #5f6c61;
-  --line: rgba(23, 32, 24, 0.12);
-  --accent: #1d6b57;
-  --accent-strong: #124638;
-  --shadow: 0 18px 54px rgba(28, 33, 25, 0.1);
-  --radius: 18px;
+  --bg: #f7f8f8;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-strong: #ffffff;
+  --ink: #1d2420;
+  --muted: #66706a;
+  --line: rgba(29, 36, 32, 0.12);
+  --accent: #0f6a55;
+  --accent-strong: #07513f;
+  --accent-soft: rgba(15, 106, 85, 0.08);
+  --shadow: 0 16px 40px rgba(28, 33, 25, 0.08);
+  --radius: 8px;
 }
 
 * {
@@ -24,7 +25,8 @@ body,
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    linear-gradient(180deg, #ffffff 0%, var(--bg) 48%, #f4f7f5 100%);
   color: var(--ink);
   font-family: "Inter", "Segoe UI", sans-serif;
 }
@@ -35,9 +37,9 @@ textarea {
 }
 
 .app-shell {
-  width: min(980px, calc(100vw - 32px));
+  width: min(1080px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: 40px 0 72px;
+  padding: 54px 0 72px;
 }
 
 .start-panel,
@@ -51,11 +53,11 @@ textarea {
 }
 
 .start-panel {
-  min-height: calc(100vh - 112px);
+  min-height: calc(100vh - 126px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 48px 40px 72px;
+  justify-content: flex-start;
+  padding: 18px 24px 72px;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -91,14 +93,21 @@ textarea {
 
 .brandmark {
   margin: 0 auto;
-  font-size: clamp(2.6rem, 7vw, 5.6rem);
+  font-size: clamp(3rem, 7vw, 5.4rem);
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   line-height: 1;
-  background: linear-gradient(180deg, #2b7cff 0%, #d7dbe4 100%);
+  background: linear-gradient(180deg, #4f86f7 0%, #b7caee 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+.brand-subcopy {
+  margin: 12px auto 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
 }
 
 .subcopy,
@@ -111,19 +120,20 @@ textarea {
 }
 
 .provider-panel {
-  width: min(780px, 100%);
-  margin: 26px auto 0;
-  padding: 14px;
+  width: min(980px, 100%);
+  margin: 28px auto 0;
+  padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 28px rgba(28, 33, 25, 0.05);
 }
 
 .provider-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 12px;
+  gap: 14px;
 }
 
 .provider-row + .provider-row {
@@ -142,11 +152,11 @@ textarea {
 }
 
 .provider-field {
-  flex: 1 1 180px;
+  flex: 1 1 220px;
 }
 
 .provider-key-field {
-  flex: 2 1 280px;
+  flex: 2 1 320px;
 }
 
 .provider-model-field {
@@ -154,16 +164,16 @@ textarea {
 }
 
 .provider-label {
-  color: var(--muted);
-  font-size: 0.88rem;
-  font-weight: 600;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .provider-select,
 .provider-input {
   width: 100%;
-  min-height: 44px;
-  padding: 11px 14px;
+  min-height: 48px;
+  padding: 12px 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -183,8 +193,8 @@ textarea {
 
 .provider-action {
   margin: 0;
-  min-height: 44px;
-  padding-inline: 16px;
+  min-height: 48px;
+  padding-inline: 18px;
 }
 
 .provider-meta {
@@ -290,8 +300,17 @@ textarea {
 }
 
 .composer {
-  margin: 30px auto 0;
-  width: min(720px, 100%);
+  margin: 16px auto 0;
+  width: min(980px, 100%);
+  min-height: 206px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: 0;
+  border: 2px solid rgba(15, 106, 85, 0.75);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 18px 46px rgba(15, 106, 85, 0.08);
+  overflow: hidden;
 }
 
 .composer-helper {
@@ -302,16 +321,62 @@ textarea {
 
 .composer-input {
   width: 100%;
-  min-height: 72px;
-  height: 72px;
-  padding: 22px 26px;
+  min-height: 138px;
+  height: 138px;
+  padding: 24px 26px 12px;
   resize: none;
-  border: 1px solid rgba(15, 23, 42, 0.14);
-  border-radius: 999px;
-  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
-  line-height: 1.35;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  box-shadow: none;
+  outline: none;
+}
+
+.composer-input::placeholder {
+  color: #6d766f;
+}
+
+.composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 22px;
+}
+
+.composer-tools,
+.composer-submit-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.composer-tool,
+.composer-selected-hint {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.composer-selected-hint {
+  border-color: rgba(15, 106, 85, 0.2);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.composer-count {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .primary-action,
@@ -331,15 +396,15 @@ textarea {
 
 .primary-action {
   border: none;
-  background: #f1f3f4;
-  color: #334155;
-  font-weight: 600;
-  box-shadow: none;
+  background: var(--accent-strong);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 10px 22px rgba(7, 81, 63, 0.18);
 }
 
 .primary-action:hover:not(:disabled) {
-  background: #e7ebef;
-  color: #334155;
+  background: var(--accent);
+  color: #ffffff;
 }
 
 .primary-action:disabled {
@@ -353,29 +418,115 @@ textarea {
   color: var(--ink);
 }
 
-.examples,
+.composer-footer .primary-action {
+  min-height: 52px;
+  margin: 0;
+  padding-inline: 26px;
+}
+
+.examples-header,
+.hint-header {
+  width: min(980px, 100%);
+  margin: 28px auto 0;
+}
+
+.examples-header h2,
+.hint-header h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.examples-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.examples {
+  width: min(980px, 100%);
+  margin: 14px auto 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .hint-row {
-  width: min(760px, 100%);
-  margin: 20px auto 0;
+  width: min(980px, 100%);
+  margin: 14px auto 0;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 12px;
 }
 
 .example-chip,
 .hint-chip {
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.9);
   color: var(--muted);
   padding: 10px 12px;
   cursor: pointer;
 }
 
+.example-chip {
+  min-height: 132px;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-content: start;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  color: var(--ink);
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(28, 33, 25, 0.06);
+}
+
+.example-chip:hover,
+.hint-chip:hover {
+  border-color: rgba(29, 107, 87, 0.28);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.example-chip strong,
+.example-chip span {
+  display: block;
+}
+
+.example-chip strong {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.example-chip span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.example-chip em {
+  justify-self: end;
+  color: var(--accent-strong);
+  font-style: normal;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.hint-chip {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+}
+
 .hint-chip.is-selected {
   border-color: transparent;
-  background: var(--accent);
-  color: white;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px rgba(15, 106, 85, 0.16);
 }
 
 .clarify-inline {
@@ -950,10 +1101,37 @@ textarea {
     min-height: calc(100vh - 60px);
   }
 
+  .brandmark {
+    font-size: clamp(2.65rem, 13vw, 4rem);
+  }
+
+  .brand-subcopy {
+    font-size: 0.96rem;
+  }
+
+  .composer {
+    min-height: 178px;
+  }
+
   .composer-input {
-    min-height: 64px;
-    height: 64px;
-    padding: 18px 22px;
+    min-height: 112px;
+    height: 112px;
+    padding: 18px 18px 10px;
+  }
+
+  .composer-footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 14px 14px;
+  }
+
+  .composer-tools,
+  .composer-submit-group {
+    justify-content: space-between;
+  }
+
+  .composer-footer .primary-action {
+    min-width: 132px;
   }
 
   .start-panel.has-follow-up {
@@ -963,6 +1141,10 @@ textarea {
   .provider-panel {
     margin-top: 22px;
     padding: 12px;
+  }
+
+  .examples {
+    grid-template-columns: 1fr;
   }
 
   .provider-row-secondary {

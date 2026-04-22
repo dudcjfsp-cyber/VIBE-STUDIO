@@ -11,8 +11,10 @@ export type HintOption = {
 
 export type StartExample = {
   cardHint?: "idea-structuring" | "command-optimization" | "system-architecture" | "critical-review";
+  description: string;
   id: string;
   text: string;
+  title: string;
 };
 
 export type StageSnapshot = {

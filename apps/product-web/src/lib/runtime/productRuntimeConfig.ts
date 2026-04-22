@@ -1,6 +1,6 @@
 import type { ProviderId } from "../provider/types";
 
-const defaultProviderList = "local,openai,anthropic,gemini";
+const defaultProviderList = "local,gemini,openai";
 
 export const productBasePath = normalizeBasePath(
   import.meta.env.VITE_PRODUCT_BASE_PATH as string | undefined,
@@ -10,11 +10,13 @@ export const productEngineMode =
   (import.meta.env.VITE_PRODUCT_ENGINE_MODE as string | undefined)?.trim() ||
   "auto";
 
-export const isBrowserProviderMode = productEngineMode === "browser";
-
 export const productApiBaseUrl = normalizeApiBaseUrl(
   import.meta.env.VITE_PRODUCT_API_URL as string | undefined,
 );
+
+export const isBrowserProviderMode =
+  productEngineMode === "browser" ||
+  (productEngineMode === "auto" && !productApiBaseUrl);
 
 export const enabledProviders = readEnabledProviders(
   import.meta.env.VITE_AVAILABLE_PROVIDERS as string | undefined,

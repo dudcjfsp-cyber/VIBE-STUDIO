@@ -101,13 +101,14 @@ Note:
   - `product-server`의 API base URL
 - `VITE_PRODUCT_ENGINE_MODE`
   - 기본값: `auto`
+  - `auto`이면 `VITE_PRODUCT_API_URL`이 있을 때 서버 런타임을 쓰고, 없을 때 브라우저 데모 모드를 쓴다
   - `local`이면 브라우저 내 fallback engine을 우선 사용한다
   - `browser`이면 지원 provider를 브라우저에서 직접 호출한다
 - `VITE_PRODUCT_BASE_PATH`
   - 기본값: `/`
   - GitHub Pages 같은 서브패스 배포 시 base path를 맞춘다
 - `VITE_AVAILABLE_PROVIDERS`
-  - 기본값: `local,openai,anthropic,gemini`
+  - 기본값: `local,gemini,openai`
   - 쉼표 구분 provider allowlist
   - 현재 GitHub Pages 무료 데모 배포에서는 기본적으로 `local,gemini,openai`를 사용한다
 

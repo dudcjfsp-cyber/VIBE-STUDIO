@@ -96,6 +96,7 @@ export function StartPanel(props: StartPanelProps) {
     >
       <div className="brand-lockup">
         <h1 className="brandmark">VIBE STUDIO</h1>
+        <p className="brand-subcopy">생각을 구조화하고, 더 나은 결과를 만들어요.</p>
       </div>
 
       <ProviderSessionPanel
@@ -125,20 +126,34 @@ export function StartPanel(props: StartPanelProps) {
             value={input}
           />
 
-          <button
-            className="primary-action"
-            disabled={isBusy || input.trim().length === 0}
-            onClick={onSubmit}
-            type="button"
-          >
-            {isBusy
-              ? clarify
-                ? "다시 확인 중..."
-                : "정리 중..."
-              : clarify
-                ? "이 내용으로 계속"
-                : "시작하기"}
-          </button>
+          <div className="composer-footer">
+            <div className="composer-tools">
+              <span className="composer-tool">힌트</span>
+              {selectedHint ? (
+                <span className="composer-selected-hint">
+                  {readSelectedHintLabel(selectedHint)}
+                </span>
+              ) : null}
+            </div>
+
+            <div className="composer-submit-group">
+              <span className="composer-count">{input.length} / 4000</span>
+              <button
+                className="primary-action"
+                disabled={isBusy || input.trim().length === 0}
+                onClick={onSubmit}
+                type="button"
+              >
+                {isBusy
+                  ? clarify
+                    ? "다시 확인 중..."
+                    : "정리 중..."
+                  : clarify
+                    ? "이 내용으로 계속"
+                    : "시작하기"}
+              </button>
+            </div>
+          </div>
 
           {clarify ? (
             <p className="composer-helper">입력창에 한 줄만 덧붙여도 바로 이어서 정리할게요.</p>
@@ -230,6 +245,11 @@ export function StartPanel(props: StartPanelProps) {
         </section>
       ) : (
         <>
+          <div className="examples-header">
+            <h2>예시로 시작하기</h2>
+            <p>아래 예시는 참고용이에요. 자유롭게 수정해서 사용해 보세요.</p>
+          </div>
+
           <div className="examples">
             {startExamples.map((example) => (
               <button
@@ -238,9 +258,15 @@ export function StartPanel(props: StartPanelProps) {
                 onClick={() => onExampleClick(example)}
                 type="button"
               >
-                {example.text}
+                <strong>{example.title}</strong>
+                <span>{example.description}</span>
+                <em aria-hidden="true">→</em>
               </button>
             ))}
+          </div>
+
+          <div className="hint-header">
+            <h2>힌트 모아보기</h2>
           </div>
 
           <div className="hint-row" aria-label="보조 힌트">
@@ -259,4 +285,8 @@ export function StartPanel(props: StartPanelProps) {
       )}
     </section>
   );
+}
+
+function readSelectedHintLabel(hint: CardHint): string {
+  return hintOptions.find((option) => option.cardHint === hint)?.label ?? "힌트 선택";
 }
