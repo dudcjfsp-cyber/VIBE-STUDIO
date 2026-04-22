@@ -130,10 +130,10 @@ export function StartPanel(props: StartPanelProps) {
             <div className="composer-tools">
               {selectedHint ? (
                 <span className="composer-selected-hint">
-                  {readSelectedHintLabel(selectedHint)}
+                  결과 방향: {readSelectedHintLabel(selectedHint)}
                 </span>
               ) : (
-                <span className="composer-helper-inline">아래 힌트는 선택 사항이에요.</span>
+                <span className="composer-helper-inline">자유롭게 입력하거나 아래 예시로 시작해 보세요.</span>
               )}
             </div>
 
@@ -259,26 +259,10 @@ export function StartPanel(props: StartPanelProps) {
                 onClick={() => onExampleClick(example)}
                 type="button"
               >
+                <span className="example-direction">결과 방향: {example.directionLabel}</span>
                 <strong>{example.title}</strong>
                 <span>{example.description}</span>
                 <em aria-hidden="true">→</em>
-              </button>
-            ))}
-          </div>
-
-          <div className="hint-header">
-            <h2>힌트 모아보기</h2>
-          </div>
-
-          <div className="hint-row" aria-label="보조 힌트">
-            {hintOptions.map((option) => (
-              <button
-                className={`hint-chip${selectedHint === option.cardHint ? " is-selected" : ""}`}
-                key={option.id}
-                onClick={() => onHintSelect(option.cardHint, option.prompt)}
-                type="button"
-              >
-                {option.label}
               </button>
             ))}
           </div>

@@ -4,6 +4,7 @@ export const startExamples: StartExample[] = [
   {
     id: "prompt",
     title: "회의 전 질문 만들기",
+    directionLabel: "프롬프트",
     description: "막연한 요청을 확인 질문 프롬프트로 바꿔보기",
     cardHint: "command-optimization",
     text:
@@ -12,6 +13,7 @@ export const startExamples: StartExample[] = [
   {
     id: "plan",
     title: "MVP 기획 정리",
+    directionLabel: "기획 정리",
     description: "아이디어를 사용자, 흐름, 제외 범위로 구조화하기",
     cardHint: "idea-structuring",
     text:
@@ -20,6 +22,7 @@ export const startExamples: StartExample[] = [
   {
     id: "architecture",
     title: "서비스 구조 잡기",
+    directionLabel: "구조 설계",
     description: "화면, 백엔드, 알림 흐름의 경계를 먼저 보기",
     cardHint: "system-architecture",
     text:
@@ -28,6 +31,7 @@ export const startExamples: StartExample[] = [
   {
     id: "review",
     title: "소개 문구 검토",
+    directionLabel: "검토 리포트",
     description: "기존 초안의 과장, 대상 적합성, 빠진 점 보기",
     cardHint: "critical-review",
     text:
