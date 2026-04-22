@@ -128,12 +128,13 @@ export function StartPanel(props: StartPanelProps) {
 
           <div className="composer-footer">
             <div className="composer-tools">
-              <span className="composer-tool">힌트</span>
               {selectedHint ? (
                 <span className="composer-selected-hint">
                   {readSelectedHintLabel(selectedHint)}
                 </span>
-              ) : null}
+              ) : (
+                <span className="composer-helper-inline">아래 힌트는 선택 사항이에요.</span>
+              )}
             </div>
 
             <div className="composer-submit-group">

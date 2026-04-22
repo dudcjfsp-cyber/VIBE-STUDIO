@@ -354,20 +354,22 @@ textarea {
   gap: 10px;
 }
 
-.composer-tool,
+.composer-helper-inline,
 .composer-selected-hint {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #ffffff;
+  padding: 0;
+  border: none;
+  background: transparent;
   color: var(--muted);
   font-size: 0.9rem;
 }
 
 .composer-selected-hint {
+  padding: 0 14px;
+  border: 1px solid rgba(15, 106, 85, 0.2);
+  border-radius: 8px;
   border-color: rgba(15, 106, 85, 0.2);
   background: var(--accent-soft);
   color: var(--accent-strong);
