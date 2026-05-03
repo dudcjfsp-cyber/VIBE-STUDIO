@@ -20,8 +20,16 @@ import {
   trackProductEvent,
 } from "../../../lib/observability/browserTelemetry";
 import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
+import { buildArchitectureLearningPanel } from "../../../lib/ux/architectureLearning";
 import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMessage";
+import {
+  buildDecisionCardCopy,
+  buildInputImprovementHints,
+} from "../../../lib/ux/formatSignalCopy";
+import { buildPlanLearningPanel } from "../../../lib/ux/planLearning";
 import { buildPromptHelpLearningPanel } from "../../../lib/ux/promptHelpLearning";
+import { buildReviewReportLearningPanel } from "../../../lib/ux/reviewReportLearning";
+import { LearningPanel, LearningPointGrid } from "./LearningPanel";
 
 type ResultPanelProps = {
   onReset: () => void;
@@ -32,9 +40,23 @@ type ResultPanelProps = {
 
 export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProps) {
   const output = result.outputs[0];
+  const decisionCard = buildDecisionCardCopy(result);
+  const inputImprovementHints = buildInputImprovementHints(result);
   const promptLearningPanel =
     output?.renderer === "prompt"
       ? buildPromptHelpLearningPanel(result, output.output as PromptOutput)
+      : undefined;
+  const planLearningPanel =
+    output?.renderer === "plan"
+      ? buildPlanLearningPanel(result, output.output as PlanOutput)
+      : undefined;
+  const reviewLearningPanel =
+    output?.renderer === "review-report"
+      ? buildReviewReportLearningPanel(result, output.output as ReviewReportOutput)
+      : undefined;
+  const architectureLearningPanel =
+    output?.renderer === "architecture"
+      ? buildArchitectureLearningPanel(result, output.output as ArchitectureOutput)
       : undefined;
   const [copyLabel, setCopyLabel] = useState("복사");
   const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
@@ -233,6 +255,28 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       <h2>{readOutputTitle(output)}</h2>
       <p className="panel-copy">{renderSummary(output.renderer)}</p>
 
+      <section className="decision-card" aria-label="판단 근거">
+        <div className="decision-card-header">
+          <p className="panel-kicker">{decisionCard.title}</p>
+          <p>이 결과 방향은 현재 입력을 바탕으로 한 추천입니다.</p>
+        </div>
+
+        <dl className="decision-card-grid">
+          {decisionCard.items.map((item) => (
+            <div key={item.label}>
+              <dt>{item.label}</dt>
+              <dd>{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <ul className="decision-reasons">
+          {decisionCard.reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+      </section>
+
       <div className="result-body">
         {output.renderer === "prompt" ? (
           <>
@@ -253,84 +297,48 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
             </section>
 
             {promptLearningPanel ? (
-              <section className="result-section prompt-learning-panel">
-                <p className="panel-kicker">이번에 같이 볼 포인트</p>
-                <p className="prompt-learning-lead">
-                  이 프롬프트가 어떻게 더 안정적인 결과를 만들도록 정리됐는지,
-                  대표적인 방법만 짧게 보여드립니다.
-                </p>
-
-                {promptLearningPanel.summaryItems.length > 0 ? (
-                  <ul className="prompt-learning-summary">
-                    {promptLearningPanel.summaryItems.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                ) : null}
-
-                <div className="prompt-learning-grid">
-                  {promptLearningPanel.techniques.map((technique) => (
-                    <article className="prompt-learning-card" key={technique.label}>
-                      <div className="prompt-learning-card-header">
-                        <h3>{technique.label}</h3>
-                        <span
-                          className={`prompt-learning-badge${technique.applied ? " is-applied" : ""}`}
-                        >
-                          {technique.applied ? "이번 적용" : "이번 미적용"}
-                        </span>
-                      </div>
-                      <p>
-                        <strong>언제 쓰나</strong>
-                        <span>{technique.whenToUse}</span>
-                      </p>
-                      <p>
-                        <strong>왜 중요했나</strong>
-                        <span>{technique.reason}</span>
-                      </p>
-                    </article>
-                  ))}
-                </div>
-
+              <LearningPanel
+                inactiveLabel="이번 미적용"
+                lead="이 프롬프트가 어떻게 더 안정적인 결과를 만들도록 정리됐는지, 대표적인 방법만 짧게 보여드립니다."
+                points={promptLearningPanel.techniques}
+                summaryItems={promptLearningPanel.summaryItems}
+              >
                 {promptLearningPanel.conditionalTechniques.length > 0 ? (
-                  <div className="prompt-learning-conditional">
+                  <div className="learning-conditional">
                     <h3>이번 입력에서 더 중요했던 포인트</h3>
-                    <div className="prompt-learning-grid">
-                      {promptLearningPanel.conditionalTechniques.map((technique) => (
-                        <article className="prompt-learning-card" key={technique.label}>
-                          <div className="prompt-learning-card-header">
-                            <h4>{technique.label}</h4>
-                            <span className="prompt-learning-badge is-applied">이번 적용</span>
-                          </div>
-                          <p>
-                            <strong>언제 쓰나</strong>
-                            <span>{technique.whenToUse}</span>
-                          </p>
-                          <p>
-                            <strong>왜 중요했나</strong>
-                            <span>{technique.reason}</span>
-                          </p>
-                        </article>
-                      ))}
-                    </div>
+                    <LearningPointGrid
+                      inactiveLabel="이번 미적용"
+                      points={promptLearningPanel.conditionalTechniques}
+                    />
                   </div>
                 ) : null}
-              </section>
+              </LearningPanel>
             ) : null}
           </>
         ) : null}
 
-        {output.renderer === "plan"
-          ? (output.output as PlanOutput).sections.map((section) => (
-              <section className="result-section" key={section.title}>
-                <h3>{section.title}</h3>
-                <ul>
-                  {section.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-              </section>
-            ))
-          : null}
+        {output.renderer === "plan" ? (
+          <>
+            {(output.output as PlanOutput).sections.map((section) => (
+                <section className="result-section" key={section.title}>
+                  <h3>{section.title}</h3>
+                  <ul>
+                    {section.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+
+            {planLearningPanel ? (
+              <LearningPanel
+                lead="이 계획이 어떤 사고 순서로 정리됐는지, 다음에 직접 아이디어를 다듬을 때 써먹기 좋은 기준만 짧게 보여드립니다."
+                points={planLearningPanel.points}
+                summaryItems={planLearningPanel.summaryItems}
+              />
+            ) : null}
+          </>
+        ) : null}
 
         {output.renderer === "architecture" ? (
           <>
@@ -362,6 +370,14 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
                 </ol>
               </section>
             ))}
+
+            {architectureLearningPanel ? (
+              <LearningPanel
+                lead="이 구조 설계가 어떤 순서로 시스템을 나눠 봤는지, 다음에 직접 아이디어를 설계할 때 쓸 수 있는 관점만 짧게 보여드립니다."
+                points={architectureLearningPanel.points}
+                summaryItems={architectureLearningPanel.summaryItems}
+              />
+            ) : null}
           </>
         ) : null}
 
@@ -378,6 +394,14 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
                 <p>{finding.recommendation}</p>
               </section>
             ))}
+
+            {reviewLearningPanel ? (
+              <LearningPanel
+                lead="이 검토가 어떤 기준으로 문제를 나누고 다음 행동을 만든 것인지, 직접 초안을 점검할 때 쓸 수 있는 관점만 짧게 보여드립니다."
+                points={reviewLearningPanel.points}
+                summaryItems={reviewLearningPanel.summaryItems}
+              />
+            ) : null}
           </>
         ) : null}
       </div>
@@ -387,6 +411,22 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
           <li key={`${note}-${index}`}>{note}</li>
         ))}
       </ul>
+
+      <section className="input-hints-panel" aria-label="다음 입력 개선 힌트">
+        <div className="input-hints-header">
+          <p className="panel-kicker">{inputImprovementHints.title}</p>
+          <p>{inputImprovementHints.lead}</p>
+        </div>
+
+        <div className="input-hints-grid">
+          {inputImprovementHints.items.map((item) => (
+            <article className="input-hint-card" key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.example}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       {stage1Actions.length > 0 ? (
         <section className="follow-up-actions">

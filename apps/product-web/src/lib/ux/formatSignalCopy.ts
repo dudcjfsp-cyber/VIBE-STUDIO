@@ -4,6 +4,24 @@ import type {
   RendererId,
 } from "@vive-studio/engine-contracts";
 
+export type DecisionCardCopy = {
+  items: {
+    label: string;
+    value: string;
+  }[];
+  reasons: string[];
+  title: string;
+};
+
+export type InputImprovementHints = {
+  items: {
+    example: string;
+    title: string;
+  }[];
+  lead: string;
+  title: string;
+};
+
 export function formatApprovalCopy(
   approvalLevel: ApprovalLevel,
   renderer: RendererId,
@@ -17,6 +35,38 @@ export function formatApprovalCopy(
 
 export function formatClarifyLead(renderer: RendererId) {
   return `${formatRendererLabel(renderer)} 결과를 책임 있게 만들기 전에 이것만 더 알려주세요.`;
+}
+
+export function buildDecisionCardCopy(result: EngineResult): DecisionCardCopy {
+  return {
+    title: "이렇게 판단했어요",
+    items: [
+      {
+        label: "추천 결과 방향",
+        value: formatRendererLabel(result.provisional_renderer),
+      },
+      {
+        label: "작업 방식",
+        value: result.mode_guess === "review" ? "검토" : "생성",
+      },
+      {
+        label: "다음 단계",
+        value: formatNextStep(result),
+      },
+    ],
+    reasons: readDecisionReasons(result),
+  };
+}
+
+export function buildInputImprovementHints(
+  result: EngineResult,
+): InputImprovementHints {
+  return {
+    title: "다음 입력은 이렇게 더 좋아질 수 있어요",
+    lead:
+      "이번 결과가 틀렸다는 뜻이 아니라, 다음에 비슷한 요청을 할 때 덧붙이면 결과가 더 안정되는 정보입니다.",
+    items: readImprovementHintItems(result.provisional_renderer),
+  };
 }
 
 export type ApprovalReviseGuide = {
@@ -132,6 +182,164 @@ export function formatRendererLabel(renderer: RendererId) {
     case "prompt":
     default:
       return "프롬프트";
+  }
+}
+
+function formatNextStep(result: EngineResult): string {
+  if (result.next_step === "clarify_first") {
+    return "결과를 만들기 전에 핵심 정보를 먼저 확인합니다.";
+  }
+
+  if (result.next_step === "approval_pending") {
+    return result.approval_level === "required"
+      ? "진행 전 확인이 꼭 필요한 상태입니다."
+      : "확인하면 결과가 더 선명해지는 상태입니다.";
+  }
+
+  return "바로 결과를 만들 수 있는 상태입니다.";
+}
+
+function readDecisionReasons(result: EngineResult): string[] {
+  const reasons = [
+    readRendererReason(result),
+    ...result.reason_codes.map((code) => formatReasonCode(code)),
+  ].filter((reason): reason is string => Boolean(reason));
+
+  if (result.pivot_recommended) {
+    reasons.push(
+      result.pivot_reason
+        ? `선택한 힌트와 실제 요청 방향이 달라 보여 전환 확인이 필요합니다.`
+        : "선택한 힌트보다 다른 결과 방향이 더 어울려 보입니다.",
+    );
+  }
+
+  return dedupe(reasons).slice(0, 4);
+}
+
+function readRendererReason(result: EngineResult): string {
+  if (result.mode_guess === "review") {
+    return "기존 초안이나 결과를 평가하려는 요청으로 보여 검토 흐름을 우선했습니다.";
+  }
+
+  switch (result.provisional_renderer) {
+    case "architecture":
+      return "구성요소, 역할, 흐름을 먼저 나눠야 하는 구조 설계 요청으로 보았습니다.";
+    case "plan":
+      return "아이디어의 문제, 대상, 범위를 먼저 정리하는 편이 적합해 보았습니다.";
+    case "prompt":
+      return "다른 AI에 바로 넣어 쓸 실행형 입력을 만드는 요청으로 보았습니다.";
+    case "review-report":
+    default:
+      return "현재 입력은 검토 결과로 정리하는 편이 적합해 보았습니다.";
+  }
+}
+
+function formatReasonCode(code: string): string | undefined {
+  switch (code) {
+    case "review_intent":
+      return "현재 요청은 새로 만들기보다 기존 내용을 살펴보는 성격이 강합니다.";
+    case "critical_facts_missing":
+      return "책임 있게 결과를 만들기 위해 꼭 필요한 정보가 아직 부족합니다.";
+    case "high_risk_output":
+      return "외부에 영향을 줄 수 있는 내용이라 확인 단계를 두었습니다.";
+    case "high_ambiguity":
+      return "여러 방향으로 해석될 수 있어 먼저 방향을 확인해야 합니다.";
+    case "high_structure_request":
+      return "여러 요소의 관계를 다루는 요청이라 한 번 점검하면 좋습니다.";
+    case "multiple_medium_scores":
+      return "모호함, 구조, 영향도가 함께 있어 짧은 확인을 권합니다.";
+    case "strong_renderer_mismatch":
+      return "선택한 힌트와 실제 요청의 작업 성격이 다르게 보입니다.";
+    default:
+      return undefined;
+  }
+}
+
+function dedupe(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function readImprovementHintItems(
+  renderer: RendererId,
+): InputImprovementHints["items"] {
+  switch (renderer) {
+    case "architecture":
+      return [
+        {
+          title: "시스템 경계",
+          example: "이번 구조가 어디까지 다루고, 무엇은 제외하는지 적어보세요.",
+        },
+        {
+          title: "주요 사용자 역할",
+          example: "손님, 점주, 관리자처럼 역할별로 할 수 있는 일을 나눠보세요.",
+        },
+        {
+          title: "핵심 흐름",
+          example: "예약 생성부터 승인 알림까지처럼 가장 중요한 흐름 1개를 적어보세요.",
+        },
+        {
+          title: "나중에 넣을 기능",
+          example: "정산, 쿠폰, 통계처럼 이번 단계에서 뺄 기능을 함께 적어보세요.",
+        },
+      ];
+    case "plan":
+      return [
+        {
+          title: "핵심 사용자",
+          example: "누가 이 서비스를 가장 먼저 쓸 사람인지 한 문장으로 적어보세요.",
+        },
+        {
+          title: "해결하려는 문제",
+          example: "그 사람이 지금 어떤 불편을 겪는지 구체적으로 적어보세요.",
+        },
+        {
+          title: "MVP 범위",
+          example: "처음 버전에서 꼭 필요한 기능과 나중에 넣을 기능을 나눠보세요.",
+        },
+        {
+          title: "성공 기준",
+          example: "사용자가 어떤 행동을 하면 이 아이디어가 잘 작동한 것인지 적어보세요.",
+        },
+      ];
+    case "review-report":
+      return [
+        {
+          title: "검토 대상",
+          example: "초안 원문을 그대로 붙이고, 일부만 볼지 전체를 볼지 적어보세요.",
+        },
+        {
+          title: "사용 맥락",
+          example: "앱 첫 화면, 공지문, 제안서처럼 어디에 쓰일 글인지 알려주세요.",
+        },
+        {
+          title: "먼저 볼 기준",
+          example: "과장, 설득력, 빠진 정보, 초보자 이해도 중 먼저 보고 싶은 것을 적어보세요.",
+        },
+        {
+          title: "수정 목표",
+          example: "더 짧게, 더 안전하게, 더 구체적으로처럼 원하는 개선 방향을 적어보세요.",
+        },
+      ];
+    case "prompt":
+    default:
+      return [
+        {
+          title: "사용 상황",
+          example: "이 프롬프트를 회의 전, 글쓰기 전, 검토 전 중 언제 쓸지 적어보세요.",
+        },
+        {
+          title: "출력 형식",
+          example: "목록, 표, 체크리스트, 한 문단처럼 원하는 모양을 정해보세요.",
+        },
+        {
+          title: "대상",
+          example: "초보자, 고객, 팀원처럼 결과를 읽거나 쓸 사람을 적어보세요.",
+        },
+        {
+          title: "꼭 지킬 조건",
+          example: "길이, 톤, 포함할 내용, 제외할 내용을 한두 개만 덧붙여보세요.",
+        },
+      ];
   }
 }
 

@@ -695,6 +695,114 @@ textarea {
   word-break: keep-all;
 }
 
+.decision-card {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid rgba(15, 106, 85, 0.16);
+  border-radius: 8px;
+  background: rgba(248, 255, 252, 0.86);
+}
+
+.decision-card-header {
+  display: grid;
+  gap: 6px;
+}
+
+.decision-card-header p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.decision-card-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0 0;
+}
+
+.decision-card-grid div {
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.decision-card-grid dt {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.decision-card-grid dd {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.decision-reasons {
+  margin: 16px 0 0;
+  padding-left: 18px;
+}
+
+.decision-reasons li {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.decision-reasons li + li {
+  margin-top: 8px;
+}
+
+.input-hints-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.input-hints-header {
+  display: grid;
+  gap: 6px;
+}
+
+.input-hints-header p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.input-hints-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.input-hint-card {
+  min-height: 132px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(247, 248, 248, 0.8);
+}
+
+.input-hint-card h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.input-hint-card p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
 .action-row {
   margin-top: 24px;
   display: flex;
@@ -894,65 +1002,64 @@ textarea {
   white-space: pre-wrap;
 }
 
-.prompt-learning-panel {
+.learning-panel {
   display: grid;
   gap: 16px;
 }
 
-.prompt-learning-lead {
+.learning-lead {
   margin: 0;
 }
 
-.prompt-learning-summary {
+.learning-summary {
   margin: 0;
   padding-left: 18px;
 }
 
-.prompt-learning-summary li + li {
+.learning-summary li + li {
   margin-top: 8px;
 }
 
-.prompt-learning-grid {
+.learning-grid {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.prompt-learning-card {
+.learning-card {
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.84);
 }
 
-.prompt-learning-card-header {
+.learning-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
 
-.prompt-learning-card-header h3,
-.prompt-learning-card-header h4 {
+.learning-card-header h3 {
   margin: 0;
   font-size: 1rem;
   line-height: 1.45;
 }
 
-.prompt-learning-card p + p {
+.learning-card p + p {
   margin-top: 12px;
 }
 
-.prompt-learning-card strong,
-.prompt-learning-card span {
+.learning-card strong,
+.learning-card span {
   display: block;
 }
 
-.prompt-learning-card span {
+.learning-card span {
   margin-top: 6px;
 }
 
-.prompt-learning-badge {
+.learning-badge {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
@@ -964,18 +1071,18 @@ textarea {
   white-space: nowrap;
 }
 
-.prompt-learning-badge.is-applied {
+.learning-badge.is-applied {
   border-color: rgba(29, 107, 87, 0.16);
   background: rgba(29, 107, 87, 0.08);
   color: var(--accent-strong);
 }
 
-.prompt-learning-conditional {
+.learning-conditional {
   display: grid;
   gap: 12px;
 }
 
-.prompt-learning-conditional h3 {
+.learning-conditional h3 {
   margin: 0;
 }
 
@@ -1161,12 +1268,20 @@ textarea {
     min-height: 180px;
   }
 
+  .decision-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .input-hints-grid {
+    grid-template-columns: 1fr;
+  }
+
   .follow-up-actions-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .prompt-learning-grid {
+  .learning-grid {
     grid-template-columns: 1fr;
   }
 
