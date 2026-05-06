@@ -21,6 +21,7 @@ export function buildPromptHelpLearningPanel(
   const sourceText = result.source.text.trim();
   const fewShotApplied = isFewShotPrompt(output, sourceText);
   const zeroShotApplied = !fewShotApplied;
+  const formatLockApplied = hasFormatLock(output.prompt);
   const roleIssue = hasRoleConflict(sourceText);
   const scopeIssue = hasScopeDrift(result, sourceText);
   const duplicateIssue = hasDuplicateInstruction(sourceText);
@@ -28,9 +29,9 @@ export function buildPromptHelpLearningPanel(
 
   const techniques: PromptLearningTechnique[] = [
     {
-      applied: hasFormatLock(output.prompt),
+      applied: formatLockApplied,
       label: "출력 형식 고정하기",
-      reason: hasFormatLock(output.prompt)
+      reason: formatLockApplied
         ? "이번 프롬프트는 출력 형식과 작성 원칙을 먼저 고정해 결과 길이와 구조가 덜 흔들리게 만들었습니다."
         : "이번 입력은 먼저 방향을 넓게 탐색하는 편이 더 중요해 형식을 강하게 고정하지 않았습니다.",
       whenToUse: "결과 길이, 순서, 항목 구성을 일정하게 만들고 싶을 때 씁니다.",
@@ -64,7 +65,7 @@ export function buildPromptHelpLearningPanel(
       : undefined,
     scopeIssue
       ? {
-          applied: hasFormatLock(output.prompt),
+          applied: formatLockApplied,
           label: "범위를 좁혀서 요청하기",
           reason: "입력 범위가 넓거나 빠진 맥락이 있으면 결과가 퍼지기 쉬워, 무엇을 다루고 무엇을 덜어낼지 더 선명하게 만드는 것이 중요했습니다.",
           whenToUse: "모델이 너무 넓게 해석하지 않도록 다룰 범위를 좁혀야 할 때 씁니다.",
@@ -99,10 +100,17 @@ export function buildPromptHelpLearningPanel(
 }
 
 function hasFormatLock(prompt: string): boolean {
+  const normalized = prompt.replace(/\s+/g, " ").trim();
+
   return (
-    prompt.includes("[출력 형식]") ||
-    prompt.includes("[작성 원칙]") ||
-    /-\s/.test(prompt)
+    [
+      /\[출력 형식\]|\[작성 원칙\]/u,
+      /출력\s*형식|응답\s*형식|답변\s*형식/u,
+      /목록\s*형태|목록\s*형식|체크리스트\s*형식|표\s*형식|마크다운\s*형식/u,
+      /범주별로|항목별로|단계별로|섹션별로/u,
+      /json\s*(format|형식)|markdown\s*(format|형식)/iu,
+    ].some((pattern) => pattern.test(normalized)) ||
+    /^\s*[-*]\s+\S+/mu.test(prompt)
   );
 }
 
