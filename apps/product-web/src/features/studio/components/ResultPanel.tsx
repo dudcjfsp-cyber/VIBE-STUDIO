@@ -64,9 +64,6 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       ? buildBeforeBuildKnowledgePanel(result)
       : undefined;
   const [copyLabel, setCopyLabel] = useState("복사");
-  const [inputHintCopyStatus, setInputHintCopyStatus] = useState<
-    { state: "copied" | "failed"; title: string } | undefined
-  >();
   const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
   const [followUpError, setFollowUpError] = useState<string | undefined>();
   const [reviewRefinementAnswers, setReviewRefinementAnswers] = useState<string[]>(
@@ -83,7 +80,6 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
 
   useEffect(() => {
     setCopyLabel("복사");
-    setInputHintCopyStatus(undefined);
     setFollowUp(undefined);
     setFollowUpError(undefined);
     setReviewRefinementAnswers([]);
@@ -134,17 +130,6 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
     } catch {
       setCopyLabel("복사 실패");
       window.setTimeout(() => setCopyLabel("복사"), 1600);
-    }
-  }
-
-  async function handleCopyInputHint(title: string, example: string) {
-    try {
-      await copyTextToClipboard(example);
-      setInputHintCopyStatus({ state: "copied", title });
-      window.setTimeout(() => setInputHintCopyStatus(undefined), 3000);
-    } catch {
-      setInputHintCopyStatus({ state: "failed", title });
-      window.setTimeout(() => setInputHintCopyStatus(undefined), 3000);
     }
   }
 
@@ -452,18 +437,7 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
         <div className="input-hints-grid">
           {inputImprovementHints.items.map((item) => (
             <article className="input-hint-card" key={item.title}>
-              <div className="input-hint-card-header">
-                <h3>{item.title}</h3>
-                <button
-                  className="ghost-action input-hint-copy-action"
-                  onClick={() => {
-                    void handleCopyInputHint(item.title, item.example);
-                  }}
-                  type="button"
-                >
-                  {readInputHintCopyLabel(inputHintCopyStatus, item.title)}
-                </button>
-              </div>
+              <h3>{item.title}</h3>
               <p>{item.example}</p>
             </article>
           ))}
@@ -1038,17 +1012,6 @@ function splitArchitectureResponsibility(value: string): string[] {
     .filter(Boolean);
 
   return parts.length > 1 ? parts : [normalized];
-}
-
-function readInputHintCopyLabel(
-  status: { state: "copied" | "failed"; title: string } | undefined,
-  title: string,
-): string {
-  if (status?.title !== title) {
-    return "복사";
-  }
-
-  return status.state === "copied" ? "복사됨" : "실패";
 }
 
 function readOutputTitle(output: EngineResult["outputs"][number]) {
