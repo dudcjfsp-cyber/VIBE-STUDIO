@@ -489,9 +489,7 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
               : " 결과 기준"}
           </p>
 
-          <div className="follow-up-result-body">
-            <pre className="follow-up-body">{followUp.result_body}</pre>
-          </div>
+          <FollowUpBody followUp={followUp} />
 
           {followUp.change_summary.length > 0 ? (
             <section className="result-section follow-up-meta">
@@ -610,6 +608,344 @@ function BeforeBuildKnowledgePanel({ panel }: BeforeBuildKnowledgePanelProps) {
         </section>
       </div>
     </details>
+  );
+}
+
+type FollowUpBodyProps = {
+  followUp: Stage1FollowUpResult;
+};
+
+function FollowUpBody({ followUp }: FollowUpBodyProps) {
+  const [codingPromptCopyLabel, setCodingPromptCopyLabel] =
+    useState("설계 프롬프트 복사");
+
+  if (
+    followUp.action_id === "expand-architecture-detail" &&
+    followUp.result_kind === "expanded-architecture"
+  ) {
+    const codingPrompt = buildArchitectureCodingPrompt(followUp);
+
+    async function handleCopyCodingPrompt() {
+      try {
+        await copyTextToClipboard(codingPrompt);
+        setCodingPromptCopyLabel("복사됨");
+        window.setTimeout(
+          () => setCodingPromptCopyLabel("설계 프롬프트 복사"),
+          1600,
+        );
+      } catch {
+        setCodingPromptCopyLabel("복사 실패");
+        window.setTimeout(
+          () => setCodingPromptCopyLabel("설계 프롬프트 복사"),
+          1600,
+        );
+      }
+    }
+
+    return (
+      <div className="follow-up-result-body">
+        <ArchitectureFollowUpVisual resultBody={followUp.result_body} />
+
+        <section className="follow-up-coding-prompt">
+          <div>
+            <h4>바이브 코딩용 설계 프롬프트</h4>
+            <p>
+              세부 설계를 바로 코드로 밀어 넣기보다, 구현 계획과 파일 구조를 먼저
+              잡도록 정리한 복사용 프롬프트입니다.
+            </p>
+          </div>
+
+          <button
+            className="ghost-action follow-up-copy-action"
+            onClick={() => {
+              void handleCopyCodingPrompt();
+            }}
+            type="button"
+          >
+            {codingPromptCopyLabel}
+          </button>
+        </section>
+
+        <details className="follow-up-raw-detail">
+          <summary>세부 텍스트 전체 보기</summary>
+          <pre className="follow-up-body">{followUp.result_body}</pre>
+        </details>
+      </div>
+    );
+  }
+
+  return (
+    <div className="follow-up-result-body">
+      <pre className="follow-up-body">{followUp.result_body}</pre>
+    </div>
+  );
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Some local browser contexts block the async clipboard API.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  try {
+    const copied = document.execCommand("copy");
+
+    if (!copied) {
+      throw new Error("copy command failed");
+    }
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+type ParsedFollowUpFlow = {
+  name: string;
+  steps: string[];
+};
+
+type ParsedExceptionFlow = {
+  branches: string[];
+  name: string;
+  start: string;
+};
+
+function ArchitectureFollowUpVisual({ resultBody }: { resultBody: string }) {
+  const flows = parseDetailedFlows(resultBody);
+  const exceptionFlows = parseExceptionFlows(resultBody);
+
+  if (flows.length === 0 && exceptionFlows.length === 0) {
+    return <pre className="follow-up-body">{resultBody}</pre>;
+  }
+
+  return (
+    <section className="follow-up-visual" aria-label="세부 설계 흐름도">
+      <div className="follow-up-visual-header">
+        <h4>세부 설계 흐름도</h4>
+        <p>정상 처리 흐름과 예외 분기를 먼저 한눈에 보고, 필요한 경우 아래 세부 텍스트를 확인하세요.</p>
+      </div>
+
+      {flows.length > 0 ? (
+        <div className="follow-up-flow-map-list">
+          {flows.map((flow) => (
+            <article className="follow-up-flow-map" key={flow.name}>
+              <h5>{flow.name}</h5>
+              <ol>
+                {flow.steps.map((step, index) => (
+                  <li key={`${flow.name}-${step}`}>
+                    <span className="follow-up-flow-index">{index + 1}</span>
+                    <p>{step}</p>
+                  </li>
+                ))}
+              </ol>
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      {exceptionFlows.length > 0 ? (
+        <div className="follow-up-exception-map">
+          <h4>예외/엣지케이스 분기</h4>
+          <div className="follow-up-exception-grid">
+            {exceptionFlows.map((flow) => (
+              <article className="follow-up-exception-card" key={flow.name}>
+                <h5>{flow.name}</h5>
+                <p className="follow-up-exception-start">{flow.start}</p>
+                <ul>
+                  {flow.branches.map((branch) => (
+                    <li key={`${flow.name}-${branch}`}>{branch}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function buildArchitectureCodingPrompt(followUp: Stage1FollowUpResult): string {
+  const flows = parseDetailedFlows(followUp.result_body);
+  const exceptionFlows = parseExceptionFlows(followUp.result_body);
+  const boundary = extractArchitectureBoundary(followUp.result_body);
+  const priorityFlows = flows.flatMap((flow) => [
+    `- ${flow.name}`,
+    ...flow.steps.slice(0, 6).map((step) => `  - ${step}`),
+  ]);
+  const exceptionCases = exceptionFlows.flatMap((flow) => [
+    `- ${flow.name}: ${flow.start}`,
+    ...flow.branches.map((branch) => `  - ${branch}`),
+  ]);
+  const outOfScope =
+    followUp.remaining_questions.length > 0
+      ? followUp.remaining_questions.map((item) => `- ${item}`)
+      : ["- 상세 API 명세 자동 확정", "- 실제 외부 서비스 연동", "- 코드 대량 생성"];
+
+  return [
+    "다음 구조 설계를 바탕으로 MVP 수준의 구현 계획을 세워주세요.",
+    "",
+    "[목표]",
+    boundary
+      ? `- ${boundary}`
+      : "- 아래 흐름을 기준으로 구현 가능한 화면, 모듈, 데이터, API 단위를 나눕니다.",
+    "- 바로 코드를 많이 생성하기보다, 먼저 구현 계획과 작업 경계를 제안합니다.",
+    "",
+    "[우선 구현 흐름]",
+    ...(priorityFlows.length > 0
+      ? priorityFlows
+      : ["- 정상 흐름을 먼저 정리하고, 가장 작은 MVP 구현 순서를 제안합니다."]),
+    "",
+    "[예외/엣지케이스]",
+    ...(exceptionCases.length > 0
+      ? exceptionCases
+      : ["- 필수 입력 누락, 권한 문제, 외부 처리 실패, 중복 요청을 어떻게 막을지 정리합니다."]),
+    "",
+    "[이번 단계 제외 범위]",
+    ...outOfScope,
+    "",
+    "[먼저 해줄 일]",
+    "1. 필요한 화면과 모듈을 나눠주세요.",
+    "2. 데이터 모델 초안을 제안해주세요.",
+    "3. 주요 API 또는 함수 단위를 제안해주세요.",
+    "4. 정상 흐름과 예외 흐름을 분리해서 구현 순서를 잡아주세요.",
+    "5. 아직 결정이 필요한 질문을 마지막에 정리해주세요.",
+    "",
+    "[주의]",
+    "- 불명확한 부분은 임의로 확정하지 말고 질문으로 남겨주세요.",
+    "- 구현 범위가 커지면 MVP에 필요한 것과 나중에 할 것을 분리해주세요.",
+    "- 실제 코드 작성은 계획과 파일 구조를 확인한 다음 단계로 미뤄주세요.",
+  ].join("\n");
+}
+
+function extractArchitectureBoundary(resultBody: string): string | undefined {
+  const quotedMatch = resultBody.match(/이번 후속 결과는\s+"(.+?)"\s+구조/u);
+
+  if (quotedMatch?.[1]) {
+    return quotedMatch[1].trim();
+  }
+
+  const englishMatch = resultBody.match(
+    /keeps the existing boundary around\s+"(.+?)"\s+and/iu,
+  );
+
+  return englishMatch?.[1]?.trim() || undefined;
+}
+
+function parseDetailedFlows(resultBody: string): ParsedFollowUpFlow[] {
+  const lines = resultBody.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const exceptionIndex = lines.findIndex((line) =>
+    /예외\/엣지케이스 분기 흐름도|Exception and Edge-Case Branches/i.test(line),
+  );
+  const usableLines =
+    exceptionIndex >= 0 ? lines.slice(0, exceptionIndex) : lines;
+  const flows: ParsedFollowUpFlow[] = [];
+
+  for (let index = 0; index < usableLines.length; index += 1) {
+    const line = usableLines[index];
+    const nextLine = usableLines[index + 1] ?? "";
+
+    if (!isFollowUpFlowHeading(line, nextLine)) {
+      continue;
+    }
+
+    const steps: string[] = [];
+
+    for (let stepIndex = index + 1; stepIndex < usableLines.length; stepIndex += 1) {
+      const stepLine = usableLines[stepIndex];
+      const followingLine = usableLines[stepIndex + 1] ?? "";
+
+      if (stepIndex > index + 1 && isFollowUpFlowHeading(stepLine, followingLine)) {
+        break;
+      }
+
+      const match = stepLine.match(/^\d+\.\s+(.+)$/);
+
+      if (match?.[1]) {
+        steps.push(match[1].trim());
+      }
+    }
+
+    if (steps.length > 0) {
+      flows.push({
+        name: line,
+        steps,
+      });
+    }
+  }
+
+  return flows.slice(0, 3);
+}
+
+function parseExceptionFlows(resultBody: string): ParsedExceptionFlow[] {
+  const lines = resultBody.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const exceptionIndex = lines.findIndex((line) =>
+    /예외\/엣지케이스 분기 흐름도|Exception and Edge-Case Branches/i.test(line),
+  );
+
+  if (exceptionIndex === -1) {
+    return [];
+  }
+
+  const exceptionLines = lines.slice(exceptionIndex + 1);
+  const flows: ParsedExceptionFlow[] = [];
+
+  for (let index = 0; index < exceptionLines.length; index += 1) {
+    const name = exceptionLines[index];
+    const startLine = exceptionLines[index + 1] ?? "";
+
+    if (!name || !/^\[.+\]$/.test(startLine)) {
+      continue;
+    }
+
+    const branches: string[] = [];
+
+    for (let branchIndex = index + 2; branchIndex < exceptionLines.length; branchIndex += 1) {
+      const branchLine = exceptionLines[branchIndex];
+      const nextLine = exceptionLines[branchIndex + 1] ?? "";
+
+      if (/^\[.+\]$/.test(nextLine) && !branchLine.startsWith("->")) {
+        break;
+      }
+
+      if (branchLine.startsWith("->")) {
+        branches.push(branchLine.replace(/^->\s*/, "").trim());
+      }
+    }
+
+    if (branches.length > 0) {
+      flows.push({
+        branches,
+        name,
+        start: startLine.replace(/^\[|\]$/g, ""),
+      });
+    }
+  }
+
+  return flows.slice(0, 3);
+}
+
+function isFollowUpFlowHeading(line: string, nextLine: string): boolean {
+  return (
+    Boolean(line) &&
+    /^\d+\.\s+/.test(nextLine) &&
+    !line.includes(":") &&
+    !line.startsWith("[") &&
+    !line.startsWith("-") &&
+    !/세부 설계 확장|Detailed Flow Expansion|확장 초점|Expansion focus/i.test(line)
   );
 }
 
