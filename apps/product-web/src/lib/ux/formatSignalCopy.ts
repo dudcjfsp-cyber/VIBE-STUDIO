@@ -65,7 +65,7 @@ export function buildInputImprovementHints(
     title: "다음 입력은 이렇게 더 좋아질 수 있어요",
     lead:
       "이번 결과가 틀렸다는 뜻이 아니라, 다음에 비슷한 요청을 할 때 덧붙이면 결과가 더 안정되는 정보입니다.",
-    items: readImprovementHintItems(result.provisional_renderer),
+    items: readImprovementHintItems(result),
   };
 }
 
@@ -259,10 +259,8 @@ function dedupe(values: string[]): string[] {
   return [...new Set(values)];
 }
 
-function readImprovementHintItems(
-  renderer: RendererId,
-): InputImprovementHints["items"] {
-  switch (renderer) {
+function readImprovementHintItems(result: EngineResult): InputImprovementHints["items"] {
+  switch (result.provisional_renderer) {
     case "architecture":
       return [
         {
@@ -322,7 +320,23 @@ function readImprovementHintItems(
       ];
     case "prompt":
     default:
-      return [
+      return buildPromptImprovementHintItems(result);
+  }
+}
+
+function buildPromptImprovementHintItems(
+  result: EngineResult,
+): InputImprovementHints["items"] {
+  const combined = [
+    result.source.text,
+    result.intent_ir.intent.audience,
+    result.intent_ir.intent.context,
+    result.intent_ir.intent.tone,
+    ...result.intent_ir.output_contract.constraints,
+  ]
+    .join(" ")
+    .toLowerCase();
+  const candidates: InputImprovementHints["items"] = [
         {
           title: "사용 상황",
           example: "이 프롬프트를 회의 전, 글쓰기 전, 검토 전 중 언제 쓸지 적어보세요.",
@@ -340,7 +354,68 @@ function readImprovementHintItems(
           example: "길이, 톤, 포함할 내용, 제외할 내용을 한두 개만 덧붙여보세요.",
         },
       ];
-  }
+  const filtered = candidates.filter((item) => {
+    switch (item.title) {
+      case "사용 상황":
+        return !hasAnyToken(combined, [
+          "사용 상황",
+          "언제",
+          "회의 전",
+          "글쓰기 전",
+          "검토 전",
+          "공지문",
+          "출시",
+        ]);
+      case "출력 형식":
+        return !hasAnyToken(combined, [
+          "출력 형식",
+          "목록",
+          "표",
+          "체크리스트",
+          "문단",
+          "짧은",
+          "공지문",
+        ]);
+      case "대상":
+        return !hasAnyToken(combined, [
+          "대상",
+          "사용자",
+          "고객",
+          "팀원",
+          "초보자",
+          "기존 사용자",
+        ]);
+      case "꼭 지킬 조건":
+        return !hasAnyToken(combined, [
+          "톤",
+          "친절",
+          "과장",
+          "길이",
+          "포함",
+          "제외",
+          "조건",
+        ]);
+      default:
+        return true;
+    }
+  });
+
+  return filtered.length > 0
+    ? filtered
+    : [
+        {
+          title: "검토 기준",
+          example: "결과를 받은 뒤 무엇을 기준으로 좋고 나쁨을 판단할지 적어보세요.",
+        },
+        {
+          title: "재사용 범위",
+          example: "이번 한 번만 쓸지, 비슷한 공지에도 반복해서 쓸지 적어보세요.",
+        },
+      ];
+}
+
+function hasAnyToken(value: string, tokens: string[]): boolean {
+  return tokens.some((token) => value.includes(token.toLowerCase()));
 }
 
 function readMissingItems(result: EngineResult): string[] {

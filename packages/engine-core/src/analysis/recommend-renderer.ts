@@ -53,6 +53,28 @@ const ARCHITECTURE_PATTERNS = [
   /system/i,
 ];
 
+const PRODUCT_TARGET_PATTERNS = [
+  /\uc6f9\uc571/u,
+  /\uc571/u,
+  /\uc11c\ube44\uc2a4/u,
+  /\ud50c\ub7ab\ud3fc/u,
+  /web\s*app/i,
+  /app/i,
+  /service/i,
+  /platform/i,
+];
+
+const PRODUCT_BUILD_VERB_PATTERNS = [
+  /\ub9cc\ub4e4\uace0\s*\uc2f6/u,
+  /\ub9cc\ub4e4\uc5b4/u,
+  /\uad6c\ud604/u,
+  /\uac1c\ubc1c/u,
+  /\uad6c\ucd95/u,
+  /\ub9cc\ub4e4/u,
+  /build/i,
+  /create/i,
+];
+
 const STRONG_PROMPT_TERMS = [
   "\ud504\ub86c\ud504\ud2b8",
   "\uacf5\uc9c0\ubb38",
@@ -111,9 +133,24 @@ export function recommendRenderer(
     text,
     STRONG_ARCHITECTURE_TERMS,
   );
+  const productBuildIntentIsExplicit =
+    includesAnyPattern(text, PRODUCT_TARGET_PATTERNS) &&
+    includesAnyPattern(text, PRODUCT_BUILD_VERB_PATTERNS);
 
   if (bestScore === 0) {
     return fallbackRenderer;
+  }
+
+  if (productBuildIntentIsExplicit && !architectureIntentIsExplicit) {
+    if (scores.architecture >= 2 && scores.architecture > scores.prompt) {
+      return "architecture";
+    }
+
+    return cardIntent?.renderer === "architecture" ? "architecture" : "plan";
+  }
+
+  if (productBuildIntentIsExplicit && architectureIntentIsExplicit) {
+    return "architecture";
   }
 
   if (promptIntentIsExplicit && scores.architecture === 0) {
@@ -133,4 +170,8 @@ export function recommendRenderer(
 
 function includesAnyTerm(text: string, terms: string[]): boolean {
   return terms.some((term) => text.includes(term));
+}
+
+function includesAnyPattern(text: string, patterns: RegExp[]): boolean {
+  return patterns.some((pattern) => pattern.test(text));
 }

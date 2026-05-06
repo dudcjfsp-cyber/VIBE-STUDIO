@@ -59,7 +59,7 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
 
   const openQuestionBullets =
     intentIr.analysis.missing_information.length > 0
-      ? intentIr.analysis.missing_information
+      ? intentIr.analysis.missing_information.map(formatMissingInformation)
       : intentIr.analysis.clarification_questions.map(
           (question) => question.question,
         );
@@ -86,6 +86,23 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
   }
 
   return sections;
+}
+
+function formatMissingInformation(value: string): string {
+  switch (value) {
+    case "architecture.boundary":
+      return "시스템 경계와 포함할 기능 범위를 더 정하면 좋습니다.";
+    case "architecture.focus":
+      return "구조 설계에서 먼저 볼 초점이 더 필요합니다.";
+    case "plan.problem_or_scope":
+      return "해결하려는 문제와 처음 버전의 범위를 더 정하면 좋습니다.";
+    case "prompt.goal":
+      return "프롬프트가 달성해야 할 목표와 사용 상황을 더 정하면 좋습니다.";
+    case "review.artifact":
+      return "검토할 원문이나 초안이 더 필요합니다.";
+    default:
+      return value;
+  }
 }
 
 export function renderPlan(handoff: RendererHandoff): PlanOutput {

@@ -12,14 +12,14 @@ import { truncateText } from "./text-utils.js";
 function describeDesiredOutput(renderer: RendererId): string {
   switch (renderer) {
     case "architecture":
-      return "service or system structure";
+      return "서비스 또는 시스템 구조";
     case "review-report":
-      return "evaluation and improvement report";
+      return "평가와 개선 리포트";
     case "plan":
-      return "structured planning summary";
+      return "구조화된 기획 정리";
     case "prompt":
     default:
-      return "directly usable prompt or wording";
+      return "바로 쓸 수 있는 프롬프트 또는 문구";
   }
 }
 
@@ -29,11 +29,11 @@ function summarizeIntent(
 ): string {
   switch (renderer) {
     case "architecture":
-      return "Define the system structure before implementation.";
+      return "구현 전에 시스템 구조를 먼저 정리합니다.";
     case "review-report":
-      return "Review an existing artifact and surface issues or missing points.";
+      return "기존 초안을 검토하고 문제나 빠진 부분을 드러냅니다.";
     case "plan":
-      return "Structure the idea into a clearer product plan.";
+      return "아이디어를 더 선명한 제품 기획으로 구조화합니다.";
     case "prompt":
     default:
       return truncateText(sourceText);
@@ -79,10 +79,10 @@ export function buildAnalysisDraft(args: {
     success_criteria: [],
     risks:
       gateSignals.risk_score === 2
-        ? ["High-impact output should be confirmed before final rendering."]
+        ? ["영향도가 큰 결과는 최종 생성 전에 확인이 필요합니다."]
         : [],
     assumptions: request.card_hint
-      ? [`Selected card hint: ${request.card_hint}`]
+      ? [`선택된 카드 힌트: ${request.card_hint}`]
       : [],
     missing_information: missingItems,
     candidate_questions: clarificationQuestions,

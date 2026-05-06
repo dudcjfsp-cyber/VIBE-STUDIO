@@ -563,6 +563,52 @@ textarea {
   line-height: 1.6;
 }
 
+.clarify-answer-card {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(248, 255, 252, 0.86);
+}
+
+.clarify-answer-card label {
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.clarify-answer-input {
+  width: 100%;
+  min-height: 112px;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 106, 85, 0.22);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.clarify-answer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.clarify-answer-footer p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.clarify-answer-submit {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 .approval-revise-inline .clarify-question {
   max-width: 760px;
 }
@@ -660,9 +706,22 @@ textarea {
   padding: 28px;
 }
 
-.detail-list,
-.note-list {
+.detail-list {
   margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-note-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.result-note-panel .note-list {
+  margin: 12px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -1086,6 +1145,45 @@ textarea {
   margin: 0;
 }
 
+.before-build-panel {
+  background: rgba(248, 255, 252, 0.72);
+}
+
+.before-build-panel summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.before-build-panel summary::marker {
+  color: var(--accent);
+}
+
+.before-build-grid {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.before-build-grid section {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.before-build-grid h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.before-build-grid ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
 .follow-up-actions,
 .follow-up-result {
   margin-top: 24px;
@@ -1260,6 +1358,11 @@ textarea {
     font-size: 1.16rem;
   }
 
+  .clarify-answer-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .approval-revise-grid {
     grid-template-columns: 1fr;
   }
@@ -1282,6 +1385,10 @@ textarea {
   }
 
   .learning-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .before-build-grid {
     grid-template-columns: 1fr;
   }
 

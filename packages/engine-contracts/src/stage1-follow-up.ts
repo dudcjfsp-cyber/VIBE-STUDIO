@@ -447,6 +447,9 @@ function buildArchitectureFollowUp(
   const flowDetails = context.interaction_flows.map((flow) =>
     renderDetailedFlow(flow, context.components, korean),
   );
+  const exceptionDiagrams = context.interaction_flows.map((flow) =>
+    renderExceptionBranchDiagram(flow, korean),
+  );
   const outOfScope = korean
     ? [
         "API 명세 확장은 이번 단계에 포함하지 않았습니다.",
@@ -463,7 +466,7 @@ function buildArchitectureFollowUp(
     action_id: request.selected_action,
     change_summary: [
       korean
-        ? "기본 확장 축을 flow-detail로 고정했습니다."
+        ? "기본 확장 축을 flow-detail로 고정하고 단계별 입력 조건, 상태 변화, 전달 대상을 보강했습니다."
         : "Kept the expansion anchored to flow-detail.",
       ...context.interaction_flows.slice(0, 2).map((flow) =>
         korean
@@ -483,6 +486,10 @@ function buildArchitectureFollowUp(
         ? ["확장 초점: flow-detail", ""]
         : ["Expansion focus: flow-detail", ""]),
       ...flowDetails,
+      "",
+      korean ? "예외/엣지케이스 분기 흐름도" : "Exception and Edge-Case Branches",
+      "",
+      ...exceptionDiagrams,
     ].join("\n"),
     result_kind: "expanded-architecture",
     result_title: korean ? "세부 설계 확장안" : "Detailed Architecture Expansion",
@@ -675,23 +682,241 @@ function renderDetailedFlow(
   korean: boolean,
 ): string {
   const lines = [flow.name];
-  const relatedComponents = components.slice(0, 3).map((component) => component.name);
 
   flow.steps.forEach((step, index) => {
+    const relatedComponents = pickRelatedComponents(step, components);
+    const componentNames = relatedComponents.map((component) => component.name);
+
     lines.push(`${index + 1}. ${step}`);
     lines.push(
       korean
-        ? `   - 관여 컴포넌트: ${relatedComponents.join(", ")}`
-        : `   - Involved components: ${relatedComponents.join(", ")}`,
+        ? `   - 관여 컴포넌트: ${componentNames.join(", ")}`
+        : `   - Involved components: ${componentNames.join(", ")}`,
     );
     lines.push(
       korean
-        ? "   - 세부 설명: 입력 조건, 상태 변화, 다음 전달 대상을 짧게 적습니다."
-        : "   - Detail: capture the entry condition, state change, and next handoff.",
+        ? `   - 입력 조건: ${inferEntryCondition(step, index, flow.name, korean)}`
+        : `   - Entry condition: ${inferEntryCondition(step, index, flow.name, korean)}`,
+    );
+    lines.push(
+      korean
+        ? `   - 상태 변화: ${inferStateChange(step, relatedComponents, korean)}`
+        : `   - State change: ${inferStateChange(step, relatedComponents, korean)}`,
+    );
+    lines.push(
+      korean
+        ? `   - 다음 전달 대상: ${inferNextHandoff(flow.steps, index, components, korean)}`
+        : `   - Next handoff: ${inferNextHandoff(flow.steps, index, components, korean)}`,
+    );
+    lines.push(
+      korean
+        ? `   - 확인 포인트: ${inferArchitectureCheck(step, korean)}`
+        : `   - Checkpoint: ${inferArchitectureCheck(step, korean)}`,
     );
   });
 
   return lines.join("\n");
+}
+
+function renderExceptionBranchDiagram(
+  flow: Stage1ArchitectureFlow,
+  korean: boolean,
+): string {
+  const firstStep = shortenSentence(flow.steps[0] ?? flow.name);
+  const successStep = shortenSentence(flow.steps[1] ?? flow.steps[0] ?? flow.name);
+  const hasPayment = hasKeyword(`${flow.name} ${flow.steps.join(" ")}`, [
+    "결제",
+    "승인",
+    "payment",
+  ]);
+  const hasNotification = hasKeyword(`${flow.name} ${flow.steps.join(" ")}`, [
+    "알림",
+    "발송",
+    "notification",
+  ]);
+
+  if (!korean) {
+    return [
+      `${flow.name}`,
+      `[${firstStep}]`,
+      "  -> {Required input and permission valid?}",
+      `     -> Yes: [${successStep}]`,
+      "     -> No: [Stop and ask for correction]",
+      hasPayment
+        ? "  -> {Payment approved?} -> Failed: [Keep prior state and show retry/refund path]"
+        : "  -> {Business rule conflict?} -> Yes: [Block request and explain why]",
+      hasNotification
+        ? "  -> {Notification delivered?} -> Failed: [Queue retry and expose current state]"
+        : "  -> {Downstream step failed?} -> Yes: [Rollback or keep recoverable pending state]",
+    ].join("\n");
+  }
+
+  return [
+    flow.name,
+    `[${firstStep}]`,
+    "  -> {필수 입력과 권한이 맞는가?}",
+    `     -> 예: [${successStep}]`,
+    "     -> 아니오: [중단하고 사용자에게 수정 요청]",
+    hasPayment
+      ? "  -> {결제가 승인됐는가?} -> 실패: [이전 상태 유지 후 재시도/환불 경로 안내]"
+      : "  -> {업무 규칙 충돌이 있는가?} -> 예: [요청을 막고 이유 안내]",
+    hasNotification
+      ? "  -> {알림 발송이 성공했는가?} -> 실패: [재시도 큐에 넣고 현재 상태 표시]"
+      : "  -> {다음 단계 처리가 실패했는가?} -> 예: [되돌리거나 복구 가능한 대기 상태 유지]",
+  ].join("\n");
+}
+
+function pickRelatedComponents(
+  step: string,
+  components: Stage1ArchitectureComponent[],
+): Stage1ArchitectureComponent[] {
+  const normalizedStep = step.toLowerCase();
+  const matched = components.filter((component) => {
+    const name = component.name.toLowerCase();
+
+    return normalizedStep.includes(name);
+  });
+
+  return matched.length > 0 ? matched.slice(0, 3) : components.slice(0, 2);
+}
+
+function inferEntryCondition(
+  step: string,
+  index: number,
+  flowName: string,
+  korean: boolean,
+): string {
+  if (index === 0) {
+    return korean
+      ? `${flowName}이 시작되고 사용자의 첫 요청이나 이벤트가 들어온 상태입니다.`
+      : `${flowName} starts when the first user request or system event arrives.`;
+  }
+
+  if (hasKeyword(step, ["결제", "승인", "결제 승인"])) {
+    return korean
+      ? "이전 단계에서 결제에 필요한 주문 정보와 금액 정보가 준비된 상태입니다."
+      : "The prior step has prepared the order and amount information needed for payment.";
+  }
+
+  if (hasKeyword(step, ["알림", "전달", "발송"])) {
+    return korean
+      ? "상태 변경 이벤트와 알림을 받을 대상이 정해진 상태입니다."
+      : "A state-change event exists and the notification recipient is known.";
+  }
+
+  if (hasKeyword(step, ["상태", "변경", "갱신"])) {
+    return korean
+      ? "처리 결과가 확정되어 현재 상태를 갱신해야 하는 시점입니다."
+      : "The processing result is decided and the current state needs to be updated.";
+  }
+
+  return korean
+    ? "이전 단계의 처리 결과가 다음 구성요소로 전달된 상태입니다."
+    : "The previous step has handed its result to the next component.";
+}
+
+function inferStateChange(
+  step: string,
+  components: Stage1ArchitectureComponent[],
+  korean: boolean,
+): string {
+  const primaryComponent = components[0]?.name ?? (korean ? "담당 구성요소" : "the owning component");
+  const primaryLabel = korean
+    ? withKoreanSubjectParticle(primaryComponent)
+    : primaryComponent;
+
+  if (hasKeyword(step, ["결제", "승인"])) {
+    return korean
+      ? `${primaryLabel} 결제 요청을 승인 대기, 승인 완료, 실패 중 하나로 정리합니다.`
+      : `${primaryComponent} moves the payment request into pending, approved, or failed state.`;
+  }
+
+  if (hasKeyword(step, ["알림", "발송", "전달"])) {
+    return korean
+      ? `${primaryLabel} 상태 변경 이벤트를 알림 발송 요청으로 바꿉니다.`
+      : `${primaryComponent} turns the state-change event into a notification request.`;
+  }
+
+  if (hasKeyword(step, ["주문", "예약", "요청"])) {
+    return korean
+      ? `${primaryLabel} 사용자 요청을 검증된 업무 요청으로 바꿉니다.`
+      : `${primaryComponent} turns the user request into a validated business request.`;
+  }
+
+  if (hasKeyword(step, ["상태", "변경", "갱신"])) {
+    return korean
+      ? `${primaryLabel} 최신 처리 결과를 기준 상태로 기록합니다.`
+      : `${primaryComponent} records the latest processing result as the canonical state.`;
+  }
+
+  return korean
+    ? `${primaryLabel} 입력을 확인하고 다음 단계에서 처리 가능한 결과로 정리합니다.`
+    : `${primaryComponent} validates the input and prepares an output the next step can handle.`;
+}
+
+function inferNextHandoff(
+  steps: string[],
+  index: number,
+  components: Stage1ArchitectureComponent[],
+  korean: boolean,
+): string {
+  const nextStep = steps[index + 1];
+
+  if (!nextStep) {
+    return korean
+      ? "최종 상태와 사용자에게 보여줄 결과 또는 알림으로 마무리합니다."
+      : "Finish with the final state plus the user-facing result or notification.";
+  }
+
+  const nextComponent = pickRelatedComponents(nextStep, components)[0]?.name;
+
+  if (nextComponent) {
+    return korean
+      ? `${withKoreanSubjectParticle(nextComponent)} 다음 단계인 "${shortenSentence(nextStep)}" 처리를 이어받습니다.`
+      : `${nextComponent} continues with the next step, "${shortenSentence(nextStep)}".`;
+  }
+
+  return korean
+    ? `다음 단계인 "${shortenSentence(nextStep)}"로 처리 결과를 넘깁니다.`
+    : `Pass the result to the next step, "${shortenSentence(nextStep)}".`;
+}
+
+function inferArchitectureCheck(step: string, korean: boolean): string {
+  if (hasKeyword(step, ["결제", "승인"])) {
+    return korean
+      ? "결제 실패, 중복 승인, 취소 요청이 들어왔을 때 상태가 꼬이지 않는지 확인합니다."
+      : "Check that failed, duplicate, or cancelled payment attempts do not corrupt state.";
+  }
+
+  if (hasKeyword(step, ["알림", "발송", "전달"])) {
+    return korean
+      ? "알림 대상, 발송 실패, 중복 발송을 어떻게 처리할지 확인합니다."
+      : "Check recipient selection, delivery failure handling, and duplicate notifications.";
+  }
+
+  if (hasKeyword(step, ["주문", "예약", "요청"])) {
+    return korean
+      ? "필수 입력 누락, 중복 요청, 권한 없는 요청을 어디에서 막을지 확인합니다."
+      : "Check where missing fields, duplicate requests, and unauthorized requests are blocked.";
+  }
+
+  return korean
+    ? "실패했을 때 되돌릴 상태와 사용자에게 보여줄 메시지를 확인합니다."
+    : "Check the rollback state and user-facing message for failure cases.";
+}
+
+function withKoreanSubjectParticle(value: string): string {
+  const lastChar = value.trim().at(-1);
+
+  if (!lastChar) {
+    return value;
+  }
+
+  const code = lastChar.charCodeAt(0);
+  const hasFinalConsonant =
+    code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
+
+  return `${value}${hasFinalConsonant ? "이" : "가"}`;
 }
 
 function buildSourceResultRef(

@@ -103,8 +103,8 @@ export function StudioScreen() {
         }}
         onInputChange={flow.setInput}
         onReset={flow.reset}
-        onSubmit={() => {
-          void flow.submit();
+        onSubmit={(nextInput) => {
+          void flow.submit(nextInput ? { text: nextInput } : undefined);
         }}
         providerApiKey={providerSession.apiKey}
         providerErrorMessage={providerSession.errorMessage}

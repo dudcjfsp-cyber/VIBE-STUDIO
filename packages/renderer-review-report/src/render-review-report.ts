@@ -94,7 +94,7 @@ export function renderReviewReport(
   const { findings, insight } = analyzeReviewArtifact(artifactText);
 
   return {
-    title: "Review Report",
+    title: "검토 리포트",
     verdict: deriveVerdict(findings),
     findings,
     notes: [

@@ -224,98 +224,98 @@ const TAXONOMY_RULES: ReviewTaxonomyRule[] = [
   {
     id: "too_thin",
     severity: "high",
-    title: "Review target is too thin",
+    title: "검토 대상이 너무 짧습니다",
     when: (signals) =>
       signals.normalizedText.length < 20 || signals.tokenCount <= 4,
     buildDetail: (signals) =>
-      `The current draft is only ${signals.tokenCount} tokens (${quoteExcerpt(
+      `현재 초안은 ${signals.tokenCount}개 토큰 정도로 매우 짧습니다. ${quoteExcerpt(
         signals.excerpt,
-      )}), so the review would have to guess the intended message, scope, and quality bar.`,
+      )}만으로는 의도한 메시지, 범위, 품질 기준을 추측해야 합니다.`,
     buildRecommendation: () =>
-      "Expand the draft itself with the core subject, who it is for, where it will be used, and at least one non-negotiable expectation for the final result.",
+      "초안에 핵심 주제, 대상, 사용 위치, 최종 결과에서 꼭 지켜야 할 조건을 함께 적어 주세요.",
   },
   {
     id: "missing_audience",
     severity: "medium",
-    title: "Audience is not identified",
+    title: "대상이 명확하지 않습니다",
     when: (signals) => !signals.hasAudience,
     buildDetail: (signals) =>
       `${buildPresentAnchorSummary(signals)} ${quoteExcerpt(
         signals.excerpt,
-      )} does not clearly say who should read or use the result, so audience fit and emphasis are hard to judge.`,
+      )}에는 누가 읽거나 사용할 결과인지가 분명하지 않아, 대상 적합성과 강조점을 판단하기 어렵습니다.`,
     buildRecommendation: (signals) =>
-      `Name the primary reader or user directly in the draft, for example "${buildAudienceExample(
+      `초안에 주 독자나 사용자를 직접 적어 주세요. 예: "${buildAudienceExample(
         signals.artifactKind,
       )}".`,
   },
   {
     id: "underspecified_subject",
     severity: "medium",
-    title: "Subject is still underspecified",
+    title: "주제가 아직 구체적이지 않습니다",
     when: (signals) => !signals.hasSubject,
     buildDetail: (signals) =>
-      `${buildPresentAnchorSummary(signals)} The current draft ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} 현재 초안 ${quoteExcerpt(
         signals.excerpt,
-      )} does not anchor itself to a concrete product, topic, or object strongly enough to judge relevance and completeness.`,
+      )}은 구체적인 제품, 주제, 대상물에 충분히 고정되어 있지 않아 관련성과 완성도를 판단하기 어렵습니다.`,
     buildRecommendation: () =>
-      "State exactly what the text is about so the review can check whether the claims, wording, and missing points actually match that subject.",
+      "무엇에 대한 글인지 정확히 적어 주세요. 그래야 주장, 표현, 빠진 내용이 주제와 맞는지 검토할 수 있습니다.",
   },
   {
     id: "missing_context",
     severity: "medium",
-    title: "Usage context is missing",
+    title: "사용 맥락이 빠져 있습니다",
     when: (signals) => !signals.hasContext,
     buildDetail: (signals) =>
       `${buildPresentAnchorSummary(signals)} ${quoteExcerpt(
         signals.excerpt,
-      )} does not explain where this text will be used, which makes it difficult to judge the right level of detail, framing, and call-to-action.`,
+      )}에는 이 글이 어디에서 쓰이는지가 드러나지 않아, 적절한 상세도와 프레이밍, 행동 유도를 판단하기 어렵습니다.`,
     buildRecommendation: (signals) =>
-      `Add the delivery context, such as ${buildContextExample(
+      `전달 맥락을 추가해 주세요. 예: ${buildContextExample(
         signals.artifactKind,
       )}.`,
   },
   {
     id: "missing_value_signal",
     severity: "medium",
-    title: "User value is still implicit",
+    title: "사용자 가치가 아직 암시적입니다",
     when: (signals) =>
       signals.tokenCount > 6 && signals.hasSubject && !signals.hasValueSignal,
     buildDetail: (signals) =>
-      `${buildPresentAnchorSummary(signals)} The draft identifies the subject, but ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} 초안에 주제는 보이지만 ${quoteExcerpt(
         signals.excerpt,
-      )} still does not make the user benefit or outcome explicit enough to judge whether the message is meaningful.`,
+      )}만으로는 사용자에게 생기는 변화나 이점이 충분히 드러나지 않아 메시지의 의미를 판단하기 어렵습니다.`,
     buildRecommendation: (signals) =>
       signals.artifactKind === "architecture"
-        ? "Add the concrete design value or tradeoff outcome, such as what this structure makes safer, simpler, faster, or easier to operate."
-        : "Add the concrete benefit or change for the user, such as what becomes easier, faster, safer, or clearer because of this product or message.",
+        ? "이 구조가 무엇을 더 안전하게, 단순하게, 빠르게, 운영하기 쉽게 만드는지 같은 설계 가치를 적어 주세요."
+        : "이 제품이나 메시지 때문에 사용자가 무엇을 더 쉽게, 빠르게, 안전하게, 명확하게 할 수 있는지 적어 주세요.",
   },
   {
     id: "implicit_quality_bar",
     severity: "low",
-    title: "Quality bar is mostly implicit",
+    title: "품질 기준이 대부분 암시적입니다",
     when: (signals) => !signals.hasConstraints,
     buildDetail: (signals) =>
-      `${buildPresentAnchorSummary(signals)} Tone, structure, or non-negotiable constraints are still mostly implicit in ${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} ${quoteExcerpt(
         signals.excerpt,
-      )}, so the draft can drift toward a generic result even if the direction is roughly right.`,
+      )}에는 톤, 구조, 꼭 지켜야 할 조건이 대부분 암시되어 있어 방향이 맞더라도 결과가 일반적으로 흐를 수 있습니다.`,
     buildRecommendation: (signals) =>
-      `Add one or two explicit constraints, such as ${buildConstraintExample(
+      `명시적인 제약을 한두 개 추가해 주세요. 예: ${buildConstraintExample(
         signals.artifactKind,
       )}.`,
   },
   {
     id: "tighten_viable_draft",
     severity: "low",
-    title: "Draft is usable but still worth tightening",
+    title: "사용 가능한 초안이지만 더 다듬을 수 있습니다",
     when: () => true,
     buildDetail: (signals) =>
-      `${buildPresentAnchorSummary(signals)} The artifact already covers the main direction (${quoteExcerpt(
+      `${buildPresentAnchorSummary(signals)} 이 초안은 핵심 방향을 어느 정도 담고 있습니다. ${quoteExcerpt(
         signals.excerpt,
-      )}), but a final pass can still improve precision, reader fit, and consistency.`,
+      )} 다만 마지막 정리를 통해 정확성, 대상 적합성, 일관성을 더 높일 수 있습니다.`,
     buildRecommendation: (signals) =>
-      `Tighten the main claim for this ${describeArtifactKind(
+      `${describeArtifactKind(
         signals.artifactKind,
-      )}, keep the reader fit explicit, and make the final constraints concrete enough to prevent a generic rewrite.`,
+      )}의 핵심 주장을 더 선명하게 만들고, 독자 적합성과 최종 제약을 구체화해 일반적인 수정으로 흐르지 않게 해 주세요.`,
   },
 ];
 
@@ -388,60 +388,60 @@ function classifyArtifactKind(text: string): ReviewArtifactKind {
 function describeArtifactKind(kind: ReviewArtifactKind): string {
   switch (kind) {
     case "prompt":
-      return "prompt-like draft";
+      return "프롬프트형 초안";
     case "product-copy":
-      return "product copy draft";
+      return "제품 문구 초안";
     case "plan":
-      return "planning draft";
+      return "기획 초안";
     case "architecture":
-      return "structure or architecture draft";
+      return "구조 설계 초안";
     default:
-      return "general draft";
+      return "일반 초안";
   }
 }
 
 function buildAudienceExample(kind: ReviewArtifactKind): string {
   switch (kind) {
     case "product-copy":
-      return "for first-time app store visitors";
+      return "앱스토어를 처음 방문하는 사용자";
     case "plan":
-      return "for founders, operators, or the internal team using this plan";
+      return "이 기획을 사용할 창업자, 운영자, 내부 팀";
     case "architecture":
-      return "for the engineer or team reviewing this structure";
+      return "이 구조를 검토할 개발자나 팀";
     case "prompt":
-      return "for the model or user role this prompt is written around";
+      return "이 프롬프트가 전제하는 모델 역할이나 사용자 역할";
     default:
-      return "for the primary reader or user of this draft";
+      return "이 초안의 주 독자나 사용자";
   }
 }
 
 function buildContextExample(kind: ReviewArtifactKind): string {
   switch (kind) {
     case "product-copy":
-      return "app store copy, landing page hero text, or a first-screen intro";
+      return "앱스토어 문구, 랜딩 페이지 첫 화면 문구, 첫 소개 문구";
     case "plan":
-      return "kickoff note, proposal summary, or scope alignment document";
+      return "킥오프 노트, 제안 요약, 범위 정렬 문서";
     case "architecture":
-      return "system design review, implementation planning, or handoff note";
+      return "시스템 설계 검토, 구현 계획, 인수인계 노트";
     case "prompt":
-      return "chat prompt, system prompt, or template prompt";
+      return "채팅 프롬프트, 시스템 프롬프트, 템플릿 프롬프트";
     default:
-      return "public announcement, internal note, summary, or presentation context";
+      return "공개 공지, 내부 노트, 요약문, 발표 자료 맥락";
   }
 }
 
 function buildConstraintExample(kind: ReviewArtifactKind): string {
   switch (kind) {
     case "product-copy":
-      return "tone, length, overclaim limits, or must-mention value points";
+      return "톤, 길이, 과장 금지, 꼭 언급할 가치";
     case "plan":
-      return "scope boundary, success criteria, or non-goals";
+      return "범위 경계, 성공 기준, 제외할 것";
     case "architecture":
-      return "system boundary, design focus, or constraints that must shape the structure";
+      return "시스템 경계, 설계 초점, 구조에 영향을 주는 제약";
     case "prompt":
-      return "output format, tone, must-include context, or excluded assumptions";
+      return "출력 형식, 톤, 꼭 포함할 맥락, 제외할 가정";
     default:
-      return "tone, length, structure, or must-include points";
+      return "톤, 길이, 구조, 꼭 포함할 항목";
   }
 }
 
@@ -455,43 +455,43 @@ function formatLabelList(items: string[]): string {
   }
 
   if (items.length === 2) {
-    return `${items[0]} and ${items[1]}`;
+    return `${items[0]}와 ${items[1]}`;
   }
 
-  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+  return `${items.slice(0, -1).join(", ")}, ${items[items.length - 1]}`;
 }
 
 function buildPresentAnchorSummary(signals: ReviewSignalSnapshot): string {
   const strengths = buildStrengths(signals);
 
   if (strengths.length === 0) {
-    return "The draft does not yet establish strong review anchors.";
+    return "이 초안은 아직 강한 검토 기준점을 충분히 만들지 못했습니다.";
   }
 
-  return `The draft already establishes ${formatLabelList(strengths)}.`;
+  return `이 초안은 이미 ${formatLabelList(strengths)} 항목을 어느 정도 보여줍니다.`;
 }
 
 function buildStrengths(signals: ReviewSignalSnapshot): string[] {
   const strengths: string[] = [];
 
   if (signals.hasAudience) {
-    strengths.push("audience");
+    strengths.push("대상");
   }
 
   if (signals.hasSubject) {
-    strengths.push("subject");
+    strengths.push("주제");
   }
 
   if (signals.hasContext) {
-    strengths.push("usage context");
+    strengths.push("사용 맥락");
   }
 
   if (signals.hasValueSignal) {
-    strengths.push("user value");
+    strengths.push("사용자 가치");
   }
 
   if (signals.hasConstraints) {
-    strengths.push("constraints");
+    strengths.push("제약");
   }
 
   return strengths;
@@ -501,23 +501,23 @@ function buildMissingAreas(signals: ReviewSignalSnapshot): string[] {
   const missingAreas: string[] = [];
 
   if (!signals.hasAudience) {
-    missingAreas.push("audience");
+    missingAreas.push("대상");
   }
 
   if (!signals.hasSubject) {
-    missingAreas.push("subject");
+    missingAreas.push("주제");
   }
 
   if (!signals.hasContext) {
-    missingAreas.push("usage context");
+    missingAreas.push("사용 맥락");
   }
 
   if (!signals.hasValueSignal && signals.hasSubject) {
-    missingAreas.push("user value");
+    missingAreas.push("사용자 가치");
   }
 
   if (!signals.hasConstraints) {
-    missingAreas.push("constraints");
+    missingAreas.push("제약");
   }
 
   return missingAreas;

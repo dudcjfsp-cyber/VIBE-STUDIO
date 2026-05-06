@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CardHint, EngineResult } from "@vive-studio/engine-contracts";
 
 import type { ProviderId, ProviderModel } from "../../../lib/provider/types";
@@ -28,7 +28,7 @@ type StartPanelProps = {
   onHintSelect: (hint?: CardHint, prompt?: string) => void;
   onInputChange: (value: string) => void;
   onReset: () => void;
-  onSubmit: () => void;
+  onSubmit: (nextInput?: string) => void;
   providerApiKey: string;
   providerErrorMessage: string | undefined;
   providerHasActiveSession: boolean;
@@ -68,6 +68,8 @@ export function StartPanel(props: StartPanelProps) {
     selectedHint,
   } = props;
   const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const clarifyAnswerInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [clarifyAnswer, setClarifyAnswer] = useState("");
   const approvalReviseGuide = useMemo(
     () =>
       approvalRevise ? formatApprovalReviseGuide(approvalRevise) : undefined,
@@ -89,6 +91,34 @@ export function StartPanel(props: StartPanelProps) {
       block: "center",
     });
   }, [approvalRevise]);
+
+  useEffect(() => {
+    setClarifyAnswer("");
+
+    if (!clarify || !clarifyAnswerInputRef.current) {
+      return;
+    }
+
+    clarifyAnswerInputRef.current.focus();
+  }, [clarify?.question]);
+
+  function submitClarifyAnswer() {
+    const trimmedAnswer = clarifyAnswer.trim();
+
+    if (!trimmedAnswer) {
+      return;
+    }
+
+    const nextInput = [
+      input.trim(),
+      `추가 답변: ${trimmedAnswer}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    onInputChange(nextInput);
+    onSubmit(nextInput);
+  }
 
   return (
     <section
@@ -142,7 +172,7 @@ export function StartPanel(props: StartPanelProps) {
               <button
                 className="primary-action"
                 disabled={isBusy || input.trim().length === 0}
-                onClick={onSubmit}
+                onClick={() => onSubmit()}
                 type="button"
               >
                 {isBusy
@@ -181,6 +211,28 @@ export function StartPanel(props: StartPanelProps) {
               필요하면 이어서 {clarify.remainingQuestions}가지만 더 확인할게요.
             </p>
           ) : null}
+          <section className="clarify-answer-card">
+            <label htmlFor="clarify-answer-input">답변만 짧게 덧붙이기</label>
+            <textarea
+              id="clarify-answer-input"
+              ref={clarifyAnswerInputRef}
+              className="clarify-answer-input"
+              onChange={(event) => setClarifyAnswer(event.target.value)}
+              placeholder="예: 이번 구조는 사용자 앱, 관리자 페이지, 결제, 알림까지만 다뤄줘."
+              value={clarifyAnswer}
+            />
+            <div className="clarify-answer-footer">
+              <p>입력한 답변은 기존 원문 뒤에 붙여 다시 정리합니다.</p>
+              <button
+                className="primary-action clarify-answer-submit"
+                disabled={isBusy || clarifyAnswer.trim().length === 0}
+                onClick={submitClarifyAnswer}
+                type="button"
+              >
+                {isBusy ? "다시 확인 중..." : "답변 반영해서 계속"}
+              </button>
+            </div>
+          </section>
         </section>
       ) : approvalReviseGuide ? (
         <section className="clarify-inline approval-revise-inline" aria-live="polite">
@@ -235,7 +287,7 @@ export function StartPanel(props: StartPanelProps) {
             <button
               className="primary-action approval-revise-submit"
               disabled={isBusy || input.trim().length === 0}
-              onClick={onSubmit}
+              onClick={() => onSubmit()}
               type="button"
             >
               {isBusy ? "다시 정리 중..." : "보완해서 다시 정리"}

@@ -21,6 +21,7 @@ import {
 } from "../../../lib/observability/browserTelemetry";
 import type { ProviderRuntimeConfig } from "../../../lib/provider/types";
 import { buildArchitectureLearningPanel } from "../../../lib/ux/architectureLearning";
+import { buildBeforeBuildKnowledgePanel } from "../../../lib/ux/beforeBuildKnowledge";
 import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMessage";
 import {
   buildDecisionCardCopy,
@@ -57,6 +58,10 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
   const architectureLearningPanel =
     output?.renderer === "architecture"
       ? buildArchitectureLearningPanel(result, output.output as ArchitectureOutput)
+      : undefined;
+  const beforeBuildKnowledgePanel =
+    output?.renderer === "plan" || output?.renderer === "architecture"
+      ? buildBeforeBuildKnowledgePanel(result)
       : undefined;
   const [copyLabel, setCopyLabel] = useState("복사");
   const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
@@ -337,6 +342,10 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
                 summaryItems={planLearningPanel.summaryItems}
               />
             ) : null}
+
+            {beforeBuildKnowledgePanel ? (
+              <BeforeBuildKnowledgePanel panel={beforeBuildKnowledgePanel} />
+            ) : null}
           </>
         ) : null}
 
@@ -378,6 +387,10 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
                 summaryItems={architectureLearningPanel.summaryItems}
               />
             ) : null}
+
+            {beforeBuildKnowledgePanel ? (
+              <BeforeBuildKnowledgePanel panel={beforeBuildKnowledgePanel} />
+            ) : null}
           </>
         ) : null}
 
@@ -385,11 +398,11 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
           <>
             <section className="result-section">
               <h3>판단</h3>
-              <p>{(output.output as ReviewReportOutput).verdict}</p>
+              <p>{formatReviewVerdict((output.output as ReviewReportOutput).verdict)}</p>
             </section>
             {(output.output as ReviewReportOutput).findings.map((finding) => (
               <section className="result-section" key={`${finding.severity}-${finding.title}`}>
-                <h3>{`[${finding.severity}] ${finding.title}`}</h3>
+                <h3>{`[${formatReviewSeverity(finding.severity)}] ${finding.title}`}</h3>
                 <p>{finding.detail}</p>
                 <p>{finding.recommendation}</p>
               </section>
@@ -406,11 +419,14 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
         ) : null}
       </div>
 
-      <ul className="note-list">
-        {readOutputNotes(output).map((note, index) => (
-          <li key={`${note}-${index}`}>{note}</li>
-        ))}
-      </ul>
+      <section className="result-note-panel" aria-label="결과 상태">
+        <p className="panel-kicker">결과 상태</p>
+        <ul className="note-list">
+          {readOutputNotes(output).map((note, index) => (
+            <li key={`${note}-${index}`}>{note}</li>
+          ))}
+        </ul>
+      </section>
 
       <section className="input-hints-panel" aria-label="다음 입력 개선 힌트">
         <div className="input-hints-header">
@@ -472,15 +488,6 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
               ? ` 결과 "${followUp.source_result_ref.title}" 기준`
               : " 결과 기준"}
           </p>
-
-          {followUp.result_kind === "expanded-architecture" &&
-          output.renderer === "architecture" ? (
-            <ArchitectureDiagram
-              architecture={output.output as ArchitectureOutput}
-              intro="원본 구조를 기준으로 후속 결과가 더 자세히 풀어쓴 흐름입니다."
-              title="후속 흐름도"
-            />
-          ) : null}
 
           <div className="follow-up-result-body">
             <pre className="follow-up-body">{followUp.result_body}</pre>
@@ -562,6 +569,47 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
         새로 시작
       </button>
     </section>
+  );
+}
+
+type BeforeBuildKnowledgePanelProps = {
+  panel: ReturnType<typeof buildBeforeBuildKnowledgePanel>;
+};
+
+function BeforeBuildKnowledgePanel({ panel }: BeforeBuildKnowledgePanelProps) {
+  return (
+    <details className="result-section before-build-panel">
+      <summary>만들기 전에 알아두면 좋은 것</summary>
+
+      <div className="before-build-grid">
+        <section>
+          <h3>필요한 개념</h3>
+          <ul>
+            {panel.concepts.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section>
+          <h3>알아두면 좋은 용어</h3>
+          <ul>
+            {panel.terms.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section>
+          <h3>먼저 추천하는 생각</h3>
+          <ul>
+            {panel.recommendations.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </details>
   );
 }
 
@@ -673,11 +721,11 @@ function formatVisibleNote(note: string): string | undefined {
 
   switch (rawLabel.trim()) {
     case "Mode":
-      return `작업 방식: ${formatMode(value)}`;
+      return `요청 유형: ${formatMode(value)}`;
     case "Confidence":
-      return `판단 신뢰도: ${formatConfidence(value)}`;
+      return `확실도: ${formatConfidence(value)}`;
     case "Summary":
-      return `요청 이해: ${formatSummary(value)}`;
+      return `AI가 이해한 방향: ${formatSummary(value)}`;
     case "Recommended renderer":
       return `추천 결과 유형: ${formatOutputKind(value)}`;
     case "Technique":
@@ -710,9 +758,9 @@ function formatVisibleNote(note: string): string | undefined {
 function formatMode(value: string): string {
   switch (value) {
     case "create":
-      return "생성";
+      return "새 결과를 만드는 요청으로 봤습니다.";
     case "review":
-      return "검토";
+      return "기존 내용을 점검하는 요청으로 봤습니다.";
     default:
       return value || "알 수 없음";
   }
@@ -721,11 +769,11 @@ function formatMode(value: string): string {
 function formatConfidence(value: string): string {
   switch (value) {
     case "low":
-      return "낮음";
+      return "아직 확인할 정보가 더 있으면 좋습니다.";
     case "medium":
-      return "보통";
+      return "대체 방향은 잡혔지만 더 다듬을 여지가 있습니다.";
     case "high":
-      return "높음";
+      return "요청 방향이 비교적 분명합니다.";
     default:
       return value || "알 수 없음";
   }
@@ -786,6 +834,32 @@ function formatArtifactKind(value: string): string {
       return "구조 설계";
     default:
       return value || "초안";
+  }
+}
+
+function formatReviewVerdict(
+  value: ReviewReportOutput["verdict"],
+): string {
+  switch (value) {
+    case "needs-revision":
+      return "수정이 필요합니다.";
+    case "usable-with-fixes":
+      return "보완하면 사용할 수 있습니다.";
+    default:
+      return value;
+  }
+}
+
+function formatReviewSeverity(value: string): string {
+  switch (value) {
+    case "high":
+      return "높음";
+    case "medium":
+      return "보통";
+    case "low":
+      return "낮음";
+    default:
+      return value;
   }
 }
 
