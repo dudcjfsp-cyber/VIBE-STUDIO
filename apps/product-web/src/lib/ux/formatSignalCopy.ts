@@ -62,9 +62,9 @@ export function buildInputImprovementHints(
   result: EngineResult,
 ): InputImprovementHints {
   return {
-    title: "다음 입력은 이렇게 더 좋아질 수 있어요",
+    title: "다음에는 이렇게 덧붙여 보세요",
     lead:
-      "이번 결과가 틀렸다는 뜻이 아니라, 다음에 비슷한 요청을 할 때 덧붙이면 결과가 더 안정되는 정보입니다.",
+      "이번 결과가 틀렸다는 뜻이 아니라, 다음에 비슷한 요청을 할 때 그대로 응용할 수 있는 한 줄 예시입니다.",
     items: readImprovementHintItems(result),
   };
 }
@@ -265,57 +265,69 @@ function readImprovementHintItems(result: EngineResult): InputImprovementHints["
       return [
         {
           title: "시스템 경계",
-          example: "이번 구조가 어디까지 다루고, 무엇은 제외하는지 적어보세요.",
+          example:
+            "이번 구조는 사용자 앱, 관리자 화면, 알림까지만 다루고 정산 기능은 제외해줘.",
         },
         {
           title: "주요 사용자 역할",
-          example: "손님, 점주, 관리자처럼 역할별로 할 수 있는 일을 나눠보세요.",
+          example:
+            "손님, 점주, 관리자 역할을 나누고 각 역할이 해야 하는 일을 따로 정리해줘.",
         },
         {
           title: "핵심 흐름",
-          example: "예약 생성부터 승인 알림까지처럼 가장 중요한 흐름 1개를 적어보세요.",
+          example:
+            "예약 생성부터 승인 알림까지의 흐름을 가장 먼저 자세히 잡아줘.",
         },
         {
           title: "나중에 넣을 기능",
-          example: "정산, 쿠폰, 통계처럼 이번 단계에서 뺄 기능을 함께 적어보세요.",
+          example:
+            "쿠폰, 통계, 자동 정산은 나중 기능으로 빼고 MVP 흐름만 정리해줘.",
         },
       ];
     case "plan":
       return [
         {
           title: "핵심 사용자",
-          example: "누가 이 서비스를 가장 먼저 쓸 사람인지 한 문장으로 적어보세요.",
+          example:
+            "가장 먼저 쓸 사람은 혼자 시작하는 초보 사용자라고 보고 기획을 잡아줘.",
         },
         {
           title: "해결하려는 문제",
-          example: "그 사람이 지금 어떤 불편을 겪는지 구체적으로 적어보세요.",
+          example:
+            "이 사용자가 지금 겪는 불편과 그 불편을 해결하는 순간을 먼저 정리해줘.",
         },
         {
           title: "MVP 범위",
-          example: "처음 버전에서 꼭 필요한 기능과 나중에 넣을 기능을 나눠보세요.",
+          example:
+            "처음 버전에 꼭 필요한 기능 3개와 나중에 넣을 기능을 나눠줘.",
         },
         {
           title: "성공 기준",
-          example: "사용자가 어떤 행동을 하면 이 아이디어가 잘 작동한 것인지 적어보세요.",
+          example:
+            "사용자가 어떤 행동을 하면 이 MVP가 잘 작동한 것인지 성공 기준을 적어줘.",
         },
       ];
     case "review-report":
       return [
         {
           title: "검토 대상",
-          example: "초안 원문을 그대로 붙이고, 일부만 볼지 전체를 볼지 적어보세요.",
+          example:
+            "아래 초안 전체를 대상으로 보고, 빠진 정보와 과장된 표현을 먼저 찾아줘.",
         },
         {
           title: "사용 맥락",
-          example: "앱 첫 화면, 공지문, 제안서처럼 어디에 쓰일 글인지 알려주세요.",
+          example:
+            "이 문구는 앱 첫 화면에 들어갈 소개문이라고 보고 초보 사용자 기준으로 봐줘.",
         },
         {
           title: "먼저 볼 기준",
-          example: "과장, 설득력, 빠진 정보, 초보자 이해도 중 먼저 보고 싶은 것을 적어보세요.",
+          example:
+            "과장 여부, 설득력, 빠진 정보 순서로 문제를 나눠서 검토해줘.",
         },
         {
           title: "수정 목표",
-          example: "더 짧게, 더 안전하게, 더 구체적으로처럼 원하는 개선 방향을 적어보세요.",
+          example:
+            "수정 방향은 더 짧고 안전하게, 그리고 대상 사용자가 바로 이해하게 잡아줘.",
         },
       ];
     case "prompt":
@@ -339,19 +351,23 @@ function buildPromptImprovementHintItems(
   const candidates: InputImprovementHints["items"] = [
         {
           title: "사용 상황",
-          example: "이 프롬프트를 회의 전, 글쓰기 전, 검토 전 중 언제 쓸지 적어보세요.",
+          example:
+            "이 프롬프트는 회의 전에 질문 목록을 준비하는 상황에서 쓸 거야.",
         },
         {
           title: "출력 형식",
-          example: "목록, 표, 체크리스트, 한 문단처럼 원하는 모양을 정해보세요.",
+          example:
+            "결과는 회의에서 바로 볼 수 있게 체크리스트 형식으로 정리해줘.",
         },
         {
           title: "대상",
-          example: "초보자, 고객, 팀원처럼 결과를 읽거나 쓸 사람을 적어보세요.",
+          example:
+            "이 결과는 신입 PM이 읽고 바로 따라 할 수 있는 수준으로 써줘.",
         },
         {
           title: "꼭 지킬 조건",
-          example: "길이, 톤, 포함할 내용, 제외할 내용을 한두 개만 덧붙여보세요.",
+          example:
+            "너무 길게 쓰지 말고, 꼭 물어봐야 할 질문 5개만 골라줘.",
         },
       ];
   const filtered = candidates.filter((item) => {
@@ -405,11 +421,13 @@ function buildPromptImprovementHintItems(
     : [
         {
           title: "검토 기준",
-          example: "결과를 받은 뒤 무엇을 기준으로 좋고 나쁨을 판단할지 적어보세요.",
+          example:
+            "결과를 받은 뒤 명확성, 실행 가능성, 빠진 조건 순서로 다시 점검해줘.",
         },
         {
           title: "재사용 범위",
-          example: "이번 한 번만 쓸지, 비슷한 공지에도 반복해서 쓸지 적어보세요.",
+          example:
+            "이번 한 번만 쓰는 문장이 아니라 비슷한 상황에도 재사용할 수 있게 만들어줘.",
         },
       ];
 }
