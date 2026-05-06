@@ -107,7 +107,8 @@ function hasFormatLock(prompt: string): boolean {
       /\[출력 형식\]|\[작성 원칙\]/u,
       /출력\s*형식|응답\s*형식|답변\s*형식/u,
       /목록\s*형태|목록\s*형식|체크리스트\s*형식|표\s*형식|마크다운\s*형식/u,
-      /범주별로|항목별로|단계별로|섹션별로/u,
+      /범주별로|카테고리별(?:로)?|항목별로|단계별로|섹션별로/u,
+      /각\s*(?:범주|카테고리|항목|단계|섹션)(?:별)?(?:로)?\s*\d+\s*[~\-–]\s*\d+\s*개/u,
       /json\s*(format|형식)|markdown\s*(format|형식)/iu,
     ].some((pattern) => pattern.test(normalized)) ||
     /^\s*[-*]\s+\S+/mu.test(prompt)
