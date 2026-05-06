@@ -7,10 +7,10 @@ import {
 import type { ProviderRuntimeConfig } from "../provider/types";
 import { runBrowserGeminiFollowUp } from "../provider/browserGeminiClient";
 import { runBrowserOpenAiFollowUp } from "../provider/browserOpenAiClient";
+import { runProductRuntimeFollowUp } from "../runtime/productRuntimeApiClient";
 import {
   isBrowserProviderMode,
   productEngineMode,
-  requireProductApiBaseUrl,
 } from "../runtime/productRuntimeConfig";
 
 export async function runStage1FollowUp(
@@ -46,10 +46,7 @@ export async function runStage1FollowUp(
   }
 
   try {
-    return await postJson<Stage1FollowUpResult>(`${requireProductApiBaseUrl()}/follow-up`, {
-      request,
-      ...(runtime ? { runtime } : {}),
-    });
+    return await runProductRuntimeFollowUp(request, runtime);
   } catch (error) {
     if (
       !runtime ||
@@ -63,40 +60,6 @@ export async function runStage1FollowUp(
       ? error
       : new Error("후속 결과를 만드는 중 문제가 생겼어요.");
   }
-}
-
-async function postJson<T>(url: string, payload: object): Promise<T> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const error = new Error(await readErrorMessage(response)) as Error & {
-      status?: number;
-    };
-    error.status = response.status;
-    throw error;
-  }
-
-  return (await response.json()) as T;
-}
-
-async function readErrorMessage(response: Response): Promise<string> {
-  try {
-    const payload = (await response.json()) as { error?: string };
-
-    if (payload.error) {
-      return payload.error;
-    }
-  } catch {
-    return `Product runtime request failed with status ${response.status}.`;
-  }
-
-  return `Product runtime request failed with status ${response.status}.`;
 }
 
 function isMissingFollowUpEndpoint(error: unknown): boolean {

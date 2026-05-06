@@ -1,26 +1,22 @@
 import type {
   EngineRequest,
   EngineResult,
-  RendererId,
 } from "@vive-studio/engine-contracts";
 
-import { runRemoteProductEngine } from "../provider/providerRuntimeClient";
 import type { ProviderRuntimeConfig } from "../provider/types";
 import { productEngine } from "./createProductEngine";
 import { runBrowserGeminiEngine } from "../provider/browserGeminiClient";
 import { runBrowserOpenAiEngine } from "../provider/browserOpenAiClient";
 import {
+  runProductRuntimeEngine,
+  type ProductEngineRunOptions,
+} from "../runtime/productRuntimeApiClient";
+import {
   isBrowserProviderMode,
   productEngineMode,
 } from "../runtime/productRuntimeConfig";
 
-export type ProductEngineRunOptions = {
-  targets?: RendererId[];
-  approval?: {
-    recommended?: boolean;
-    required?: boolean;
-  };
-};
+export type { ProductEngineRunOptions } from "../runtime/productRuntimeApiClient";
 
 export async function runProductEngine(
   request: EngineRequest,
@@ -48,7 +44,7 @@ export async function runProductEngine(
   }
 
   try {
-    return await runRemoteProductEngine(request, options, runtime);
+    return await runProductRuntimeEngine(request, options, runtime);
   } catch (error) {
     if (!runtime || runtime.provider === "local") {
       return productEngine.run(request, options);

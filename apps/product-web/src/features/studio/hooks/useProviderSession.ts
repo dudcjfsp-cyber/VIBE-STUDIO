@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { trackProductEvent } from "../../../lib/observability/browserTelemetry";
 import { listProviderModels } from "../../../lib/provider/providerRuntimeClient";
+import {
+  clearProviderSessionRecord,
+  createProviderSessionExpiresAt,
+  readProviderSessionRecord,
+  writeProviderSessionRecord,
+} from "../../../lib/provider/providerSessionStorage";
 import type {
   ProviderId,
   ProviderModel,
@@ -14,8 +20,6 @@ import {
 } from "../../../lib/runtime/productRuntimeConfig";
 import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMessage";
 
-const SESSION_KEY = "vive-studio.provider-session.v1";
-const SESSION_TTL_MS = 30 * 60 * 1000;
 const preferredDefaultModels: Partial<Record<ProviderId, string[]>> = {
   openai: ["gpt-5-nano", "gpt5-nano"],
   gemini: ["gemini-2.5-flash"],
@@ -44,7 +48,7 @@ function createInitialState(): ProviderSessionState {
     };
   }
 
-  const stored = readStoredSession();
+  const stored = readProviderSessionRecord();
 
   if (!stored) {
     return {
@@ -97,7 +101,7 @@ export function useProviderSession() {
       model: state.model || undefined,
       provider: state.provider,
     });
-    clearStoredSession();
+    clearProviderSessionRecord();
     setState((current) => ({
       apiKey: "",
       errorMessage:
@@ -161,7 +165,7 @@ export function useProviderSession() {
         model: "",
         models: [],
       }));
-      clearStoredSession();
+      clearProviderSessionRecord();
       return;
     }
 
@@ -192,7 +196,7 @@ export function useProviderSession() {
       }
 
       const nextModel = selectDefaultModel(state.provider, models);
-      const expiresAt = Date.now() + SESSION_TTL_MS;
+      const expiresAt = createProviderSessionExpiresAt();
       const record: ProviderSessionRecord = {
         provider: state.provider,
         apiKey,
@@ -201,7 +205,7 @@ export function useProviderSession() {
         expiresAt,
       };
 
-      writeStoredSession(record);
+      writeProviderSessionRecord(record);
       trackProductEvent("provider_session_connected", "provider-session", {
         has_active_session: true,
         model: nextModel,
@@ -240,7 +244,7 @@ export function useProviderSession() {
       model: state.model || undefined,
       provider: state.provider,
     });
-    clearStoredSession();
+    clearProviderSessionRecord();
     setState((current) => ({
       apiKey: "",
       errorMessage: undefined,
@@ -265,7 +269,7 @@ export function useProviderSession() {
     }));
 
     if (state.provider !== "local") {
-      clearStoredSession();
+      clearProviderSessionRecord();
     }
   }
 
@@ -287,7 +291,7 @@ export function useProviderSession() {
         current.expiresAt &&
         current.expiresAt > Date.now()
       ) {
-        writeStoredSession({
+        writeProviderSessionRecord({
           provider: current.provider,
           apiKey: current.apiKey,
           model,
@@ -306,7 +310,7 @@ export function useProviderSession() {
     }
 
     if (provider === "local") {
-      clearStoredSession();
+      clearProviderSessionRecord();
       setState({
         apiKey: "",
         errorMessage: undefined,
@@ -319,7 +323,7 @@ export function useProviderSession() {
       return;
     }
 
-    const stored = readStoredSession();
+    const stored = readProviderSessionRecord();
 
     if (stored?.provider === provider) {
       setState({
@@ -363,48 +367,6 @@ export function useProviderSession() {
     setProvider,
     apiKey: state.apiKey,
   };
-}
-
-function readStoredSession(): ProviderSessionRecord | undefined {
-  if (typeof window === "undefined") {
-    return undefined;
-  }
-
-  try {
-    const raw = window.sessionStorage.getItem(SESSION_KEY);
-
-    if (!raw) {
-      return undefined;
-    }
-
-    const parsed = JSON.parse(raw) as ProviderSessionRecord;
-
-    if (!parsed.expiresAt || parsed.expiresAt <= Date.now()) {
-      clearStoredSession();
-      return undefined;
-    }
-
-    return parsed;
-  } catch {
-    clearStoredSession();
-    return undefined;
-  }
-}
-
-function writeStoredSession(record: ProviderSessionRecord) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(record));
-}
-
-function clearStoredSession() {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.sessionStorage.removeItem(SESSION_KEY);
 }
 
 function selectDefaultModel(provider: ProviderId, models: ProviderModel[]): string {
