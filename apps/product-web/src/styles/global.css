@@ -849,10 +849,25 @@ textarea {
   background: rgba(247, 248, 248, 0.8);
 }
 
+.input-hint-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .input-hint-card h3 {
   margin: 0;
   font-size: 0.98rem;
   line-height: 1.45;
+}
+
+.input-hint-copy-action {
+  flex: 0 0 auto;
+  min-width: 62px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  line-height: 1.1;
 }
 
 .input-hint-card p {
