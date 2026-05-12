@@ -13,8 +13,11 @@ import type {
 } from "../provider/types";
 import { requireProductApiBaseUrl } from "./productRuntimeConfig";
 
+const PRODUCT_RUNTIME_TIMEOUT_MS = 20_000;
+
 export type ProductEngineRunOptions = {
   targets?: RendererId[];
+  forceRender?: boolean;
   approval?: {
     recommended?: boolean;
     required?: boolean;
@@ -62,27 +65,41 @@ async function postProductRuntimeJson<T>(
   path: string,
   payload: object,
 ): Promise<T> {
-  const response = await fetch(`${requireProductApiBaseUrl()}${path}`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), PRODUCT_RUNTIME_TIMEOUT_MS);
 
-  if (!response.ok) {
-    const error = new Error(await readErrorMessage(response)) as Error & {
-      status?: number;
-    };
-    error.status = response.status;
+  try {
+    const response = await fetch(`${requireProductApiBaseUrl()}${path}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = new Error(await readErrorMessage(response)) as Error & {
+        status?: number;
+      };
+      error.status = response.status;
+      throw error;
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("API 서버 응답이 지연되어 요청을 중단했습니다. 잠시 뒤 다시 시도해 주세요.");
+    }
+
     throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-
-  return (await response.json()) as T;
 }
 
 function hasRunOptions(options: ProductEngineRunOptions): boolean {
-  return Boolean(options.approval) || Boolean(options.targets?.length);
+  return Boolean(options.forceRender) || Boolean(options.approval) || Boolean(options.targets?.length);
 }
 
 async function readErrorMessage(response: Response): Promise<string> {

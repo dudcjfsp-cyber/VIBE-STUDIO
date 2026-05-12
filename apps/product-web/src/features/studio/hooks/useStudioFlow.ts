@@ -12,6 +12,11 @@ import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMes
 import type { StageSnapshot } from "../types";
 
 type SubmitOptions = {
+  appliedInputHint?: {
+    baseText: string;
+    text: string;
+    title: string;
+  };
   cardHint?: CardHint;
   sourceKind?: "example" | "free-input";
   text: string;
@@ -27,15 +32,13 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [selectedHint, setSelectedHint] = useState<CardHint | undefined>();
   const [activeRunId, setActiveRunId] = useState<string | undefined>();
-  const [approvalReviseResult, setApprovalReviseResult] = useState<
-    EngineResult | undefined
-  >();
   const [snapshot, setSnapshot] = useState<StageSnapshot>({
     stage: "start",
     nextStep: "direct_render",
     approvalLevel: "none",
   });
   const [isBusy, setIsBusy] = useState(false);
+  const inFlightRef = useRef(false);
   const stageSignatureRef = useRef<string | undefined>();
 
   const canSubmit = input.trim().length > 0 && !isBusy;
@@ -65,28 +68,6 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
 
     stageSignatureRef.current = signature;
 
-    if (snapshot.stage === "clarify") {
-      const question = result.intent_ir.analysis.clarification_questions[0];
-
-      trackProductEvent("clarify_shown", "clarify", {
-        question_id: question?.id,
-        remaining_question_count: result.intent_ir.analysis.clarification_questions.length,
-        renderer: result.provisional_renderer,
-        run_id: snapshot.runId,
-      });
-      return;
-    }
-
-    if (snapshot.stage === "approval") {
-      trackProductEvent("approval_shown", "approval", {
-        approval_level: result.approval_level,
-        reason_code_count: result.reason_codes.length,
-        renderer: result.provisional_renderer,
-        run_id: snapshot.runId,
-      });
-      return;
-    }
-
     if (snapshot.stage === "result") {
       trackProductEvent("result_rendered", "result", {
         note_count: readPrimaryNoteCount(result),
@@ -111,30 +92,32 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
     };
   }, [input, selectedHint]);
 
-  async function advance(
-    nextRequest: EngineRequest,
-    approval?: { recommended?: boolean; required?: boolean },
-    runId?: string,
-  ) {
+  async function advance(nextRequest: EngineRequest, runId?: string) {
+    if (inFlightRef.current) {
+      return;
+    }
+
+    inFlightRef.current = true;
+
     if (options.blockReason) {
       setErrorMessage(options.blockReason);
+      inFlightRef.current = false;
       return;
     }
 
     setErrorMessage(undefined);
-    setApprovalReviseResult(undefined);
     setIsBusy(true);
 
     try {
       const result = await runProductEngine(
         nextRequest,
-        approval ? { approval } : undefined,
+        { forceRender: true },
         options.runtime,
       );
       setSnapshot(mapResultToStage(result, runId));
     } catch (error) {
       trackProductEvent("api_request_failed", "error", {
-        error_stage: approval ? "approval" : "start",
+        error_stage: "start",
         message_preview:
           error instanceof Error ? error.message.slice(0, 180) : "Unknown error",
         run_id: runId,
@@ -146,17 +129,32 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
         ),
       );
     } finally {
+      inFlightRef.current = false;
       setIsBusy(false);
     }
   }
 
   async function submit(options?: SubmitOptions) {
+    if (inFlightRef.current) {
+      return;
+    }
+
     const nextText = options?.text ?? input;
     const nextHint = options?.cardHint ?? selectedHint;
     const sourceKind = options?.sourceKind ?? "free-input";
     const nextRunId = createTelemetryRunId();
     const nextRequest: EngineRequest = {
       source: {
+        ...(options?.appliedInputHint
+          ? {
+              metadata: {
+                applied_input_hint_base_length:
+                  options.appliedInputHint.baseText.trim().length,
+                applied_input_hint_text: options.appliedInputHint.text.trim(),
+                applied_input_hint_title: options.appliedInputHint.title.trim(),
+              },
+            }
+          : {}),
         text: nextText.trim(),
       },
       ...(nextHint ? { card_hint: nextHint } : {}),
@@ -169,14 +167,10 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
     trackProductEvent(
       sourceKind === "free-input" && snapshot.stage === "clarify"
         ? "clarify_submitted"
-        : snapshot.stage === "start" && approvalReviseResult
-          ? "approval_revise_resubmitted"
-          : "input_submitted",
+        : "input_submitted",
       snapshot.stage === "clarify"
         ? "clarify"
-        : approvalReviseResult
-          ? "approval"
-          : "start",
+        : "start",
       {
         card_hint: nextHint,
         input_length: nextText.trim().length,
@@ -185,46 +179,7 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
       },
     );
 
-    await advance(nextRequest, undefined, nextRunId);
-  }
-
-  async function continueAfterApproval(level: "recommended" | "required") {
-    if (!request) {
-      return;
-    }
-
-    trackProductEvent("approval_continue_clicked", "approval", {
-      approval_level: level,
-      renderer: snapshot.result?.provisional_renderer,
-      run_id: activeRunId,
-    });
-
-    await advance(
-      request,
-      level === "required" ? { required: true } : { recommended: true },
-      activeRunId,
-    );
-  }
-
-  function reviseFromApproval() {
-    if (snapshot.stage === "approval" && snapshot.result) {
-      trackProductEvent("approval_revise_clicked", "approval", {
-        approval_level: snapshot.result.approval_level,
-        renderer: snapshot.result.provisional_renderer,
-        run_id: activeRunId,
-      });
-      trackProductEvent("approval_revise_mode_opened", "approval", {
-        approval_level: snapshot.result.approval_level,
-        renderer: snapshot.result.provisional_renderer,
-        run_id: activeRunId,
-      });
-      setApprovalReviseResult(snapshot.result);
-    }
-
-    setSnapshot((current) => ({
-      ...current,
-      stage: "start",
-    }));
+    await advance(nextRequest, nextRunId);
   }
 
   function reset() {
@@ -233,9 +188,9 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
     });
     setInput("");
     setErrorMessage(undefined);
-    setApprovalReviseResult(undefined);
     setActiveRunId(undefined);
     setSelectedHint(undefined);
+    inFlightRef.current = false;
     setSnapshot({
       stage: "start",
       nextStep: "direct_render",
@@ -245,14 +200,11 @@ export function useStudioFlow(options: UseStudioFlowOptions) {
 
   return {
     canSubmit,
-    continueAfterApproval,
     errorMessage,
     input,
     isBusy,
-    approvalReviseResult,
     request,
     reset,
-    reviseFromApproval,
     selectedHint,
     setInput(value: string) {
       setErrorMessage(undefined);

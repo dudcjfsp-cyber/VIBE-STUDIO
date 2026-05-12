@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   buildStage1FollowUpRequest,
@@ -32,17 +32,31 @@ import { buildPromptHelpLearningPanel } from "../../../lib/ux/promptHelpLearning
 import { buildReviewReportLearningPanel } from "../../../lib/ux/reviewReportLearning";
 import { LearningPanel, LearningPointGrid } from "./LearningPanel";
 
+const CODING_TOOL_COPY_REVIEW_STORAGE_KEY =
+  "vibe-studio:coding-tool-copy-review-seen";
+
 type ResultPanelProps = {
+  isBusy: boolean;
   onReset: () => void;
+  onUseInputHint: (hint: { text: string; title: string }) => void;
   result: EngineResult;
   runId?: string;
   runtime: ProviderRuntimeConfig | undefined;
 };
 
-export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProps) {
+export function ResultPanel({
+  isBusy,
+  onReset,
+  onUseInputHint,
+  result,
+  runId,
+  runtime,
+}: ResultPanelProps) {
   const output = result.outputs[0];
+  const inputHintsPanelRef = useRef<HTMLElement | null>(null);
   const decisionCard = buildDecisionCardCopy(result);
   const inputImprovementHints = buildInputImprovementHints(result);
+  const appliedInputHint = readAppliedInputHint(result);
   const promptLearningPanel =
     output?.renderer === "prompt"
       ? buildPromptHelpLearningPanel(result, output.output as PromptOutput)
@@ -64,6 +78,13 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       ? buildBeforeBuildKnowledgePanel(result)
       : undefined;
   const [copyLabel, setCopyLabel] = useState("복사");
+  const [codingToolCopyLabel, setCodingToolCopyLabel] = useState(
+    "AI 코딩툴에 넣을 내용 복사",
+  );
+  const [copyReviewPromptVisible, setCopyReviewPromptVisible] = useState(false);
+  const [hasSeenCopyReviewPrompt, setHasSeenCopyReviewPrompt] = useState(
+    () => window.sessionStorage.getItem(CODING_TOOL_COPY_REVIEW_STORAGE_KEY) === "true",
+  );
   const [followUp, setFollowUp] = useState<Stage1FollowUpResult | undefined>();
   const [followUpError, setFollowUpError] = useState<string | undefined>();
   const [reviewRefinementAnswers, setReviewRefinementAnswers] = useState<string[]>(
@@ -74,12 +95,18 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
     Stage1ActionId | undefined
   >();
   const stage1Actions = useMemo(
-    () => (followUp ? [] : listVisibleStage1Actions(result)),
+    () =>
+      followUp
+        ? []
+        : listVisibleStage1Actions(result).filter(
+            (action) => action.action_id !== "expand-plan-detail",
+          ),
     [followUp, result],
   );
 
   useEffect(() => {
     setCopyLabel("복사");
+    setCodingToolCopyLabel("AI 코딩툴에 넣을 내용 복사");
     setFollowUp(undefined);
     setFollowUpError(undefined);
     setReviewRefinementAnswers([]);
@@ -131,6 +158,72 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       setCopyLabel("복사 실패");
       window.setTimeout(() => setCopyLabel("복사"), 1600);
     }
+  }
+
+  async function handleCopyCodingToolPayload() {
+    if (output.renderer !== "plan") {
+      return;
+    }
+
+    if (!hasSeenCopyReviewPrompt) {
+      setCopyReviewPromptVisible(true);
+      return;
+    }
+
+    await copyCodingToolPayload();
+  }
+
+  async function copyCodingToolPayload() {
+    if (output.renderer !== "plan") {
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(
+        buildCodingToolPayloadText(
+          result,
+          output.output as PlanOutput,
+          appliedInputHint,
+        ),
+      );
+      trackProductEvent("coding_tool_payload_copy_clicked", "result", {
+        renderer: "plan",
+        run_id: runId,
+      });
+      setCodingToolCopyLabel("복사됨");
+      window.setTimeout(
+        () => setCodingToolCopyLabel("AI 코딩툴에 넣을 내용 복사"),
+        1600,
+      );
+    } catch {
+      setCodingToolCopyLabel("복사 실패");
+      window.setTimeout(
+        () => setCodingToolCopyLabel("AI 코딩툴에 넣을 내용 복사"),
+        1600,
+      );
+    }
+  }
+
+  function markCopyReviewPromptSeen() {
+    setHasSeenCopyReviewPrompt(true);
+    window.sessionStorage.setItem(CODING_TOOL_COPY_REVIEW_STORAGE_KEY, "true");
+  }
+
+  function handleReviewBeforeCopy() {
+    markCopyReviewPromptSeen();
+    setCopyReviewPromptVisible(false);
+    window.setTimeout(() => {
+      inputHintsPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+  }
+
+  async function handleCopyWithoutReview() {
+    markCopyReviewPromptSeen();
+    setCopyReviewPromptVisible(false);
+    await copyCodingToolPayload();
   }
 
   async function handleFollowUpAction(actionId: Stage1ActionId) {
@@ -260,6 +353,22 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       <h2>{readOutputTitle(output)}</h2>
       <p className="panel-copy">{renderSummary(output.renderer)}</p>
 
+      {appliedInputHint ? (
+        <section className="applied-hint-panel" aria-label="힌트 적용 후 바뀐 점">
+          <div className="applied-hint-header">
+            <p className="panel-kicker">힌트 적용 후 바뀐 점</p>
+            <h3>{appliedInputHint.title}</h3>
+          </div>
+          <p>이번 결과는 이전 입력에 아래 문장을 덧붙여 다시 정리한 버전입니다.</p>
+          <blockquote>{appliedInputHint.text}</blockquote>
+          <ul className="applied-hint-list">
+            {buildAppliedHintEffects(appliedInputHint.title).map((effect) => (
+              <li key={effect}>{effect}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="decision-card" aria-label="판단 근거">
         <div className="decision-card-header">
           <p className="panel-kicker">{decisionCard.title}</p>
@@ -324,6 +433,30 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
 
         {output.renderer === "plan" ? (
           <>
+            <section className="coding-tool-panel" aria-label="AI 코딩툴 복사용 내용">
+              <div className="coding-tool-header">
+                <div>
+                  <p className="panel-kicker">다음 단계</p>
+                  <h3>AI 코딩툴에 넣을 내용</h3>
+                </div>
+                <button
+                  className="ghost-action copy-action"
+                  disabled={isBusy}
+                  onClick={() => {
+                    void handleCopyCodingToolPayload();
+                  }}
+                  type="button"
+                >
+                  {isBusy ? "정리 중..." : codingToolCopyLabel}
+                </button>
+              </div>
+              <p>
+                현재 기획 결과를 기준으로 목표, 범위, 제외할 것, 확인 기준을
+                정해진 JSON 구조로 묶어 복사합니다. 힌트로 다시 정리하면 이
+                내용도 최신 결과 기준으로 바뀝니다.
+              </p>
+            </section>
+
             {(output.output as PlanOutput).sections.map((section) => (
                 <section className="result-section" key={section.title}>
                   <h3>{section.title}</h3>
@@ -428,7 +561,11 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
         </ul>
       </section>
 
-      <section className="input-hints-panel" aria-label="다음 입력 개선 힌트">
+      <section
+        className="input-hints-panel"
+        ref={inputHintsPanelRef}
+        aria-label="다음 입력 개선 힌트"
+      >
         <div className="input-hints-header">
           <p className="panel-kicker">{inputImprovementHints.title}</p>
           <p>{inputImprovementHints.lead}</p>
@@ -439,6 +576,19 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
             <article className="input-hint-card" key={item.title}>
               <h3>{item.title}</h3>
               <p>{item.example}</p>
+              <button
+                className="text-action input-hint-action"
+                disabled={isBusy}
+                onClick={() =>
+                  onUseInputHint({
+                    text: item.example,
+                    title: item.title,
+                  })
+                }
+                type="button"
+              >
+                {isBusy ? "정리 중..." : "이 문장 덧붙여 다시 정리"}
+              </button>
             </article>
           ))}
         </div>
@@ -566,6 +716,42 @@ export function ResultPanel({ onReset, result, runId, runtime }: ResultPanelProp
       >
         새로 시작
       </button>
+
+      {copyReviewPromptVisible ? (
+        <div className="copy-review-overlay" role="presentation">
+          <section
+            aria-labelledby="copy-review-title"
+            aria-modal="true"
+            className="copy-review-dialog"
+            role="dialog"
+          >
+            <p className="panel-kicker">복사하기 전 확인</p>
+            <h3 id="copy-review-title">AI 코딩툴에 넣기 전에 잠깐만 확인해볼까요?</h3>
+            <p>
+              이 내용은 바로 붙여넣을 수 있지만, 아래 결과와 힌트를 한 번 훑어보면
+              코딩 에이전트가 무엇을 만들지 더 잘 이해할 수 있습니다.
+            </p>
+            <div className="copy-review-actions">
+              <button
+                className="primary-action"
+                onClick={handleReviewBeforeCopy}
+                type="button"
+              >
+                내용 보고 복사하기
+              </button>
+              <button
+                className="ghost-action"
+                onClick={() => {
+                  void handleCopyWithoutReview();
+                }}
+                type="button"
+              >
+                바로 복사하기
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -682,15 +868,6 @@ function FollowUpBody({ followUp }: FollowUpBodyProps) {
 }
 
 async function copyTextToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return;
-    } catch {
-      // Some local browser contexts block the async clipboard API.
-    }
-  }
-
   const textarea = document.createElement("textarea");
   textarea.value = text;
   textarea.setAttribute("readonly", "true");
@@ -704,12 +881,226 @@ async function copyTextToClipboard(text: string): Promise<void> {
   try {
     const copied = document.execCommand("copy");
 
-    if (!copied) {
-      throw new Error("copy command failed");
+    if (copied) {
+      return;
     }
   } finally {
     document.body.removeChild(textarea);
   }
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Some local browser contexts block the async clipboard API.
+    }
+  }
+
+  throw new Error("copy command failed");
+}
+
+function buildCodingToolPayloadText(
+  result: EngineResult,
+  plan: PlanOutput,
+  appliedInputHint:
+    | {
+        text: string;
+        title: string;
+      }
+    | undefined,
+): string {
+  const sections = mapPlanSections(plan);
+  const payload = {
+    schema_version: "vibe_studio.plan_to_coding_tool.v1",
+    goal: readFirstSectionText(sections, ["아이디어 요약"], result.source.text),
+    target_user: readSectionState(sections, ["핵심 사용자"]),
+    problem: readSectionState(sections, ["해결하려는 문제"]),
+    context: readSectionState(sections, ["맥락"]),
+    mvp_scope: readSectionItems(sections, ["초기 방향"]),
+    excluded_scope: [
+      "요청에 없는 로그인, 결제, 배포, 관리자 기능, 복잡한 백엔드 저장소를 임의로 추가하지 않는다.",
+      "실제 금융 거래, 자동매매, 투자 자문처럼 위험하거나 규제 검토가 필요한 기능은 첫 버전에서 제외한다.",
+      "수익률 보장, 투자 추천 확정 표현, 실시간 주문 실행은 포함하지 않는다.",
+    ],
+    screens_or_flows: inferCodingFlows(sections),
+    data_needed: inferDataNeeded(sections),
+    implementation_tasks: buildImplementationTasks(sections),
+    acceptance_criteria: buildAcceptanceCriteria(sections),
+    constraints: [
+      "먼저 로컬에서 동작하는 작은 MVP를 만든다.",
+      "작업을 마치면 로컬 실행 방법과 사용자가 직접 확인할 수 있는 수동 테스트 절차를 제공한다.",
+      "입력, 목록 확인, 수정 가능한 기본 흐름을 우선한다.",
+      "단일 index 또는 app 파일에 모든 로직을 몰아넣지 말고, 화면, 상태, 데이터, 유틸 로직을 최소한의 파일로 분리한다.",
+      "불확실한 요구사항은 임의로 확장하지 말고 TODO 또는 질문으로 남긴다.",
+      "사용자가 'ㅇㅇ', 'ㄱㄱ', '좋아', '그걸로', '진행'처럼 짧게 승인하면 범위를 넓히지 말고 안전한 최소 버전으로 진행한다.",
+      "비어 있거나 미확정인 항목은 먼저 안전한 구현 제안을 보여주고, 이어서 사용자가 생각해둔 내용이 있는지 질문한다.",
+      "전문 용어만 쓰지 말고, 비전공자와 비개발자도 이해하기 쉬운 일상의 비유를 들어 다음 구현 흐름을 설명한다.",
+      "금융, 의료, 법률처럼 위험도가 높은 주제가 포함되면 실제 조언, 자동 실행, 의사결정 대행, 결과 보장 기능은 만들지 않는다.",
+    ],
+    open_questions: readSectionItems(sections, ["열린 질문"]),
+    needs_user_decision: buildNeedsUserDecision(sections),
+    source_input: result.source.text,
+    applied_hint: appliedInputHint
+      ? {
+          text: appliedInputHint.text,
+          title: appliedInputHint.title,
+        }
+      : null,
+    coding_agent_instruction:
+      "이 JSON을 기준으로 MVP를 구현하세요. 범위를 벗어나는 기능은 만들지 말고, 먼저 실행 가능한 작은 프로토타입과 확인 방법을 제공하세요.",
+    final_instruction:
+      "에이전트는 사용자에게 이 JSON을 바이브 코딩 툴에서 어떻게 활용하면 되는지 비전공자도 이해할 수 있는 일상의 비유를 들어 먼저 짧게 설명하세요. needs_user_decision 항목이 있으면 각 항목마다 1. 안전하게 구현되도록 하는 기본 제안, 2. 혹시 사용자가 생각해둔 내용이 있는지 묻는 질문을 함께 제시하세요. 사용자가 짧게 동의하면 안전한 최소 범위 MVP로 해석하고, 범위를 임의로 넓히지 않은 채 구현을 진행해주기를 바랍니다.",
+  };
+
+  return JSON.stringify(payload, null, 2);
+}
+
+function mapPlanSections(plan: PlanOutput): Record<string, string[]> {
+  return Object.fromEntries(
+    plan.sections.map((section) => [
+      section.title,
+      section.bullets.map((bullet) => bullet.trim()).filter(Boolean),
+    ]),
+  );
+}
+
+function readFirstSectionText(
+  sections: Record<string, string[]>,
+  titles: string[],
+  fallback: string,
+): string {
+  return readSectionItems(sections, titles)[0] ?? fallback.trim();
+}
+
+function readSectionState(
+  sections: Record<string, string[]>,
+  titles: string[],
+): {
+  items: string[];
+  status: "ready" | "needs_detail";
+} {
+  const items = readSectionItems(sections, titles);
+  const needsDetail = items.length === 0 || items.some(isNeedsDetailText);
+
+  return {
+    items,
+    status: needsDetail ? "needs_detail" : "ready",
+  };
+}
+
+function readSectionItems(
+  sections: Record<string, string[]>,
+  titles: string[],
+): string[] {
+  return titles.flatMap((title) => sections[title] ?? []);
+}
+
+function inferCodingFlows(sections: Record<string, string[]>): string[] {
+  const problemItems = readActionableItems(sections, ["해결하려는 문제"]);
+  const userItems = readActionableItems(sections, ["핵심 사용자"]);
+  const scopeItems = readActionableItems(sections, ["초기 방향"]);
+
+  return [
+    "사용자가 아이디어나 항목을 입력한다.",
+    ...problemItems.slice(0, 1).map((item) => `입력한 내용에서 해결하려는 문제를 확인한다: ${item}`),
+    ...userItems.slice(0, 1).map((item) => `핵심 사용자를 기준으로 화면 문구와 흐름을 맞춘다: ${item}`),
+    ...scopeItems.slice(0, 2).map((item) => `첫 버전에 필요한 기능으로 나눈다: ${item}`),
+    "결과를 목록 또는 요약 화면에서 다시 확인한다.",
+  ];
+}
+
+function inferDataNeeded(sections: Record<string, string[]>): string[] {
+  return [
+    "사용자가 입력한 아이디어 또는 항목 설명",
+    ...readActionableItems(sections, ["핵심 사용자"]).slice(0, 1),
+    ...readActionableItems(sections, ["초기 방향"]).slice(0, 2),
+  ];
+}
+
+function buildImplementationTasks(sections: Record<string, string[]>): Array<{
+  description: string;
+  title: string;
+}> {
+  const scopeItems = readActionableItems(sections, ["초기 방향"]);
+  const tasks = scopeItems.length > 0 ? scopeItems : ["기본 입력과 결과 확인 흐름 만들기"];
+
+  return tasks.slice(0, 5).map((item, index) => ({
+    description: item,
+    title: `작업 ${index + 1}`,
+  }));
+}
+
+function buildAcceptanceCriteria(sections: Record<string, string[]>): string[] {
+  const scopeItems = readActionableItems(sections, ["초기 방향"]);
+
+  return [
+    "사용자는 핵심 아이디어를 입력할 수 있다.",
+    "입력한 내용은 화면에서 다시 확인할 수 있다.",
+    "사용자는 로컬에서 앱을 실행하고 핵심 흐름을 직접 확인할 수 있다.",
+    ...scopeItems.slice(0, 3).map((item) => `첫 버전 범위가 화면 또는 동작으로 확인된다: ${item}`),
+  ];
+}
+
+function buildNeedsUserDecision(sections: Record<string, string[]>): Array<{
+  agent_guidance: string;
+  field: string;
+  reason: string;
+}> {
+  return [
+    ...buildDecisionItems(
+      "target_user",
+      readSectionItems(sections, ["핵심 사용자"]),
+      "1. 안전한 기본 제안: 핵심 사용자를 가장 보수적인 초기 사용자 1명으로 가정하고 구현 범위를 작게 잡으세요. 2. 사용자에게 할 질문: 이 대상으로 진행할까요, 아니면 생각해둔 핵심 사용자가 있나요?",
+    ),
+    ...buildDecisionItems(
+      "mvp_scope",
+      readSectionItems(sections, ["초기 방향"]),
+      "1. 안전한 기본 제안: 첫 버전은 입력, 저장 또는 표시, 다시 확인 흐름까지만 구현하세요. 2. 사용자에게 할 질문: 이 최소 범위로 진행할까요, 아니면 꼭 넣고 싶은 기능이 1개 있나요?",
+    ),
+    ...readSectionItems(sections, ["열린 질문"]).map((question) => ({
+      agent_guidance:
+        "1. 안전한 기본 제안: 이 항목은 TODO로 남기고 최소 구현을 먼저 진행하세요. 2. 사용자에게 할 질문: 지금 답을 정하고 갈까요, 아니면 일단 비워두고 MVP부터 만들까요?",
+      field: "open_questions",
+      reason: question,
+    })),
+  ].filter((item) => isNeedsDetailText(item.reason));
+}
+
+function buildDecisionItems(
+  field: string,
+  items: string[],
+  agentGuidance: string,
+): Array<{
+  agent_guidance: string;
+  field: string;
+  reason: string;
+}> {
+  return items
+    .filter(isNeedsDetailText)
+    .map((item) => ({
+      agent_guidance: agentGuidance,
+      field,
+      reason: item,
+    }));
+}
+
+function readActionableItems(
+  sections: Record<string, string[]>,
+  titles: string[],
+): string[] {
+  return readSectionItems(sections, titles).filter((item) => !isNeedsDetailText(item));
+}
+
+function isNeedsDetailText(value: string): boolean {
+  return (
+    value.includes("아직 구체화되지 않았습니다") ||
+    value.includes("추가 확인") ||
+    value.includes("열린 질문") ||
+    value.includes("명확하지") ||
+    value.includes("다듬을 여지") ||
+    value.includes("더 정하면 좋습니다")
+  );
 }
 
 type ParsedFollowUpFlow = {
@@ -1230,6 +1621,70 @@ function formatNextBestMove(value: string): string {
   }
 
   return value.replace(/^address\s+/i, "먼저 보완: ").replace(/\.$/, "");
+}
+
+function readAppliedInputHint(result: EngineResult):
+  | {
+      text: string;
+      title: string;
+    }
+  | undefined {
+  const metadata = result.source.metadata;
+
+  if (!metadata) {
+    return undefined;
+  }
+
+  const title = metadata.applied_input_hint_title;
+  const text = metadata.applied_input_hint_text;
+
+  if (typeof title !== "string" || typeof text !== "string") {
+    return undefined;
+  }
+
+  if (!title.trim() || !text.trim()) {
+    return undefined;
+  }
+
+  return {
+    text: text.trim(),
+    title: title.trim(),
+  };
+}
+
+function buildAppliedHintEffects(title: string): string[] {
+  if (title.includes("핵심 사용자")) {
+    return [
+      "결과에서 누가 가장 먼저 쓸 사람인지 더 먼저 보도록 요청이 바뀌었습니다.",
+      "확인할 곳: 핵심 사용자, 맥락 섹션",
+    ];
+  }
+
+  if (title.includes("해결하려는 문제") || title.includes("문제")) {
+    return [
+      "결과에서 사용자가 겪는 불편과 해결 순간을 더 먼저 보도록 요청이 바뀌었습니다.",
+      "확인할 곳: 해결하려는 문제, 핵심 사용자 섹션",
+    ];
+  }
+
+  if (title.includes("MVP") || title.includes("범위")) {
+    return [
+      "결과에서 처음 버전에 넣을 것과 나중으로 미룰 것을 더 구분하도록 요청이 바뀌었습니다.",
+      "확인할 곳: 초기 방향, 열린 질문 섹션",
+    ];
+  }
+
+  if (title.includes("성공") || title.includes("질문")) {
+    return [
+      "결과에서 다음 판단 기준과 아직 남은 질문을 더 드러내도록 요청이 바뀌었습니다.",
+      "확인할 곳: 초기 방향, 열린 질문 섹션",
+    ];
+  }
+
+  return [
+    "결과가 새 내용을 발명한 것이 아니라, 입력에 덧붙인 관점을 기준으로 다시 정리됐습니다.",
+    "확인할 곳: 방금 누른 힌트 제목과 같은 결과 섹션",
+  ];
 }
 
 function formatReviewFocus(value: string): string {

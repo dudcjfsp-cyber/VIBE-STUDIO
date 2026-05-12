@@ -186,6 +186,14 @@ export function formatRendererLabel(renderer: RendererId) {
 }
 
 function formatNextStep(result: EngineResult): string {
+  if (result.outputs.length > 0 && result.next_step === "clarify_first") {
+    return "먼저 결과를 만들고, 부족한 정보는 결과 안에 함께 남겼습니다.";
+  }
+
+  if (result.outputs.length > 0 && result.next_step === "approval_pending") {
+    return "확인할 지점은 있지만, 지금 입력을 바탕으로 먼저 정리했습니다.";
+  }
+
   if (result.next_step === "clarify_first") {
     return "결과를 만들기 전에 핵심 정보를 먼저 확인합니다.";
   }

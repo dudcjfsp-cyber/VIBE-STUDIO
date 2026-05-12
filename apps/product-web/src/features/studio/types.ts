@@ -1,21 +1,36 @@
-import type { ApprovalLevel, EngineResult, NextStep, RendererId } from "@vive-studio/engine-contracts";
+import type {
+  ApprovalLevel,
+  CardHint,
+  EngineResult,
+  NextStep,
+  RendererId,
+} from "@vive-studio/engine-contracts";
 
 export type FlowStage = "start" | "clarify" | "approval" | "result";
 
-export type HintOption = {
-  cardHint?: "idea-structuring" | "command-optimization" | "system-architecture" | "critical-review";
+export type StartTemplateId =
+  | "free"
+  | "prompt"
+  | "plan"
+  | "architecture"
+  | "review";
+
+export type StartTemplateField = {
+  helper?: string;
   id: string;
   label: string;
-  prompt: string;
+  optional?: boolean;
+  placeholder: string;
 };
 
-export type StartExample = {
-  cardHint?: "idea-structuring" | "command-optimization" | "system-architecture" | "critical-review";
+export type StartTemplate = {
+  cardHint?: CardHint;
   description: string;
-  directionLabel: string;
-  id: string;
-  text: string;
+  fields: StartTemplateField[];
+  id: StartTemplateId;
+  label: string;
   title: string;
+  buildInput(values: Record<string, string>): string;
 };
 
 export type StageSnapshot = {

@@ -29,8 +29,8 @@ Rule:
 Responsibilities:
 - show entry cards
 - collect input
-- show approval dialogs
 - show warnings and coaching feedback
+- decide whether approval and clarification signals become pre-result friction or post-result explanation
 
 ### Workflow Policy
 Responsibilities:
@@ -82,12 +82,12 @@ Rule:
 ## Engine Flow
 1. Analyze source input.
 2. Return mode guess, provisional renderer, validation, questions, and target recommendation.
-3. Let the app collect clarification, approval, revision, or more information.
+3. Let the app decide whether to collect clarification/approval or continue with a best-effort render.
 4. Render one or more requested targets.
 5. Return per-renderer validation.
 
 Rule:
-- the app owns waiting for user approval
+- the app owns whether to wait for user approval or render first with visible caveats
 - the engine exposes results and stages, not UI states
 
 ## Carry / Rebuild / Discard

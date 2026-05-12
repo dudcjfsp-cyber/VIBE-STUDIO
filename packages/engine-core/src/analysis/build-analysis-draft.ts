@@ -81,9 +81,7 @@ export function buildAnalysisDraft(args: {
       gateSignals.risk_score === 2
         ? ["영향도가 큰 결과는 최종 생성 전에 확인이 필요합니다."]
         : [],
-    assumptions: request.card_hint
-      ? [`선택된 카드 힌트: ${request.card_hint}`]
-      : [],
+    assumptions: [],
     missing_information: missingItems,
     candidate_questions: clarificationQuestions,
   };

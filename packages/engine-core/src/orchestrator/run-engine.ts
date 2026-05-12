@@ -13,6 +13,7 @@ export type RendererRegistry = Partial<Record<RendererId, Renderer>>;
 export type RunEngineOptions = AnalyzeRequestOptions & {
   renderers: RendererRegistry;
   targets?: RendererId[];
+  forceRender?: boolean;
   approval?: {
     recommended?: boolean;
     required?: boolean;
@@ -43,8 +44,12 @@ function resolveTargets(
 
 function shouldRender(
   result: Pick<EngineResult, "next_step" | "approval_level">,
-  approval: RunEngineOptions["approval"],
+  options: Pick<RunEngineOptions, "approval" | "forceRender">,
 ): boolean {
+  if (options.forceRender) {
+    return true;
+  }
+
   if (result.next_step === "clarify_first") {
     return false;
   }
@@ -54,11 +59,11 @@ function shouldRender(
   }
 
   if (result.approval_level === "required") {
-    return approval?.required === true;
+    return options.approval?.required === true;
   }
 
   if (result.approval_level === "recommended") {
-    return approval?.recommended === true;
+    return options.approval?.recommended === true;
   }
 
   return true;
@@ -90,7 +95,7 @@ export async function runEngine(
       : {}),
   };
 
-  if (!shouldRender(engineResult, options.approval)) {
+  if (!shouldRender(engineResult, options)) {
     return engineResult;
   }
 

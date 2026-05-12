@@ -48,7 +48,7 @@ Rule:
 시스템은 네 층의 책임으로 나눈다.
 
 - `App Layer`
-  입력, 질문, 승인, 결과 표시를 담당한다
+  입력, 결과 표시, 부족한 정보의 사용자-facing 설명을 담당한다
 - `Product Runtime Layer`
   provider credential, model runtime, app-facing API를 담당한다
 - `Workflow Policy Layer`
@@ -111,18 +111,17 @@ Rule:
 2. engine이 `mode_guess`를 계산한다
 3. engine이 provisional renderer를 추천한다
 4. engine이 critical facts 여부를 판단한다
-5. 부족하면 `clarify_first`를 반환한다
+5. 부족하면 `clarify_first` 신호를 반환한다
 6. 충분하면 approval gate를 적용한다
-7. app이 approval policy를 사용자에게 보여준다
-8. 승인 또는 계속 진행이 확정되면 renderer를 실행한다
-9. app이 결과와 이유를 함께 보여준다
+7. 입문자 기본 화면은 pre-result 질문/승인 관문 없이 renderer를 실행할 수 있다
+8. app이 결과와 이유, 부족한 지점, 주의할 가정을 함께 보여준다
 
 ### Flow B. Review
 1. app이 기존 초안 또는 산출물을 수집한다
 2. engine이 `review` mode를 우선 판단한다
-3. artifact가 없으면 `clarify_first`
-4. artifact가 있으면 `review-report` renderer를 실행한다
-5. app이 검토 결과를 보여준다
+3. artifact가 약하거나 없으면 `clarify_first` 신호를 유지하되 가능한 범위와 한계를 결과에 남긴다
+4. `review-report` renderer를 실행한다
+5. app이 검토 결과와 검토 한계를 보여준다
 
 ### Flow C. Pivot
 1. engine이 selected card와 inferred path를 비교한다
@@ -178,10 +177,11 @@ Renderer non-responsibilities:
 ### App responsibilities
 - 입력 수집
 - 카드 선택 UI
-- 질문 표시
-- 승인/진행 선택 UI
+- 부족한 정보와 확인 지점 표시
+- 승인/진행 신호의 사용자-facing 표현 결정
 - 결과 렌더링
 - pivot 제안 UI
+- 입문자 기본 화면에서 질문/승인 신호를 pre-result 관문으로 노출할지, post-result 설명으로 낮출지 결정
 
 ### Product runtime responsibilities
 - provider API 호출 경계와 per-request runtime 조합 소유
@@ -226,8 +226,9 @@ Rule:
 현재 브라우저 기준 제품 프론트와 수동 검증 기준면은 `apps/product-web`다.
 
 `apps/product-web`의 역할:
-- 제품형 입력 / 질문 / 승인 / 결과 UX를 소유한다
-- 비개발자 관점에서 create, review, clarify, approval, follow-up 흐름을 수동 점검할 수 있게 한다
+- 제품형 입력 / 결과 / 부족한 정보 설명 UX를 소유한다
+- 비개발자 관점에서 create, review, direct result, follow-up 흐름을 수동 점검할 수 있게 한다
+- `clarify_first`와 `approval_pending` 신호가 있어도 입문자 기본 화면에서는 먼저 결과를 보여줄 수 있다
 - golden case와 renderer verify만으로 보기 어려운 제품 연결 구간을 눈으로 검증한다
 
 비역할:

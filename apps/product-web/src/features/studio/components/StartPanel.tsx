@@ -1,34 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { CardHint, EngineResult } from "@vive-studio/engine-contracts";
+import { useMemo, useRef, useState } from "react";
+import type { CardHint } from "@vive-studio/engine-contracts";
 
 import type { ProviderId, ProviderModel } from "../../../lib/provider/types";
-import { formatApprovalReviseGuide } from "../../../lib/ux/formatSignalCopy";
-import type { StartExample } from "../types";
+import { startTemplates } from "../data/startTemplates";
+import type { StartTemplate, StartTemplateId } from "../types";
 import { ProviderSessionPanel } from "./ProviderSessionPanel";
-import { hintOptions, startExamples } from "../data/startExamples";
-
-type ClarifyState = {
-  question: string;
-  reason?: string;
-  remainingQuestions: number;
-};
 
 type StartPanelProps = {
-  approvalRevise: EngineResult | undefined;
-  clarify: ClarifyState | undefined;
   flowErrorMessage: string | undefined;
   input: string;
   isBusy: boolean;
-  onExampleClick: (example: StartExample) => void;
   onProviderApiKeyChange: (value: string) => void;
   onProviderClear: () => void;
   onProviderConnect: () => void;
   onProviderModelChange: (value: string) => void;
   onProviderSelect: (value: ProviderId) => void;
-  onHintSelect: (hint?: CardHint, prompt?: string) => void;
   onInputChange: (value: string) => void;
-  onReset: () => void;
-  onSubmit: (nextInput?: string) => void;
+  onSubmit: (nextInput?: string, cardHint?: CardHint) => void;
   providerApiKey: string;
   providerErrorMessage: string | undefined;
   providerHasActiveSession: boolean;
@@ -37,25 +25,19 @@ type StartPanelProps = {
   providerModels: ProviderModel[];
   providerSelection: ProviderId;
   providerSessionLabel: string | undefined;
-  selectedHint: CardHint | undefined;
 };
 
 export function StartPanel(props: StartPanelProps) {
   const {
-    approvalRevise,
-    clarify,
     flowErrorMessage,
     input,
     isBusy,
-    onExampleClick,
     onProviderApiKeyChange,
     onProviderClear,
     onProviderConnect,
     onProviderModelChange,
     onProviderSelect,
-    onHintSelect,
     onInputChange,
-    onReset,
     onSubmit,
     providerApiKey,
     providerErrorMessage,
@@ -65,68 +47,47 @@ export function StartPanel(props: StartPanelProps) {
     providerModels,
     providerSelection,
     providerSessionLabel,
-    selectedHint,
   } = props;
   const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const clarifyAnswerInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const [clarifyAnswer, setClarifyAnswer] = useState("");
-  const approvalReviseGuide = useMemo(
-    () =>
-      approvalRevise ? formatApprovalReviseGuide(approvalRevise) : undefined,
-    [approvalRevise],
+  const [selectedTemplateId, setSelectedTemplateId] = useState<StartTemplateId | undefined>();
+  const [templateValues, setTemplateValues] = useState<Record<string, string>>({});
+  const selectedTemplate = useMemo(
+    () => startTemplates.find((template) => template.id === selectedTemplateId),
+    [selectedTemplateId],
   );
+  const isFreeInput = selectedTemplate?.id === "free";
 
-  useEffect(() => {
-    if (!approvalReviseGuide || !composerInputRef.current) {
-      return;
+  function selectTemplate(template: StartTemplate) {
+    setSelectedTemplateId(template.id);
+    setTemplateValues({});
+    onInputChange("");
+
+    if (template.id === "free") {
+      window.setTimeout(() => composerInputRef.current?.focus(), 0);
     }
+  }
 
-    const inputElement = composerInputRef.current;
-    const inputLength = inputElement.value.length;
+  function updateTemplateValue(template: StartTemplate, fieldId: string, value: string) {
+    const nextValues = {
+      ...templateValues,
+      [fieldId]: value,
+    };
 
-    inputElement.focus();
-    inputElement.setSelectionRange(inputLength, inputLength);
-    inputElement.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }, [approvalRevise]);
+    setTemplateValues(nextValues);
+    onInputChange(template.buildInput(nextValues));
+  }
 
-  useEffect(() => {
-    setClarifyAnswer("");
-
-    if (!clarify || !clarifyAnswerInputRef.current) {
-      return;
-    }
-
-    clarifyAnswerInputRef.current.focus();
-  }, [clarify?.question]);
-
-  function submitClarifyAnswer() {
-    const trimmedAnswer = clarifyAnswer.trim();
-
-    if (!trimmedAnswer) {
-      return;
-    }
-
-    const nextInput = [
-      input.trim(),
-      `추가 답변: ${trimmedAnswer}`,
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-
-    onInputChange(nextInput);
-    onSubmit(nextInput);
+  function resetTemplateChoice() {
+    setSelectedTemplateId(undefined);
+    setTemplateValues({});
+    onInputChange("");
   }
 
   return (
-    <section
-      className={`start-panel${clarify || approvalReviseGuide ? " has-follow-up" : ""}`}
-    >
+    <section className="start-panel">
       <div className="brand-lockup">
         <h1 className="brandmark">VIBE STUDIO</h1>
-        <p className="brand-subcopy">생각을 구조화하고, 더 나은 결과를 만들어요.</p>
+        <p className="brand-subcopy">어디서 시작할지만 고르면, 먼저 정리해드릴게요.</p>
       </div>
 
       <ProviderSessionPanel
@@ -145,26 +106,70 @@ export function StartPanel(props: StartPanelProps) {
         sessionLabel={providerSessionLabel}
       />
 
-      {approvalReviseGuide ? null : (
-        <div className="composer">
-          <textarea
-            aria-label="요청 입력"
-            className="composer-input"
-            ref={composerInputRef}
-            onChange={(event) => onInputChange(event.target.value)}
-            placeholder="무엇을 만들고 싶은지, 혹은 지금 가진 초안을 적어보세요."
-            value={input}
-          />
+      <div className="template-picker" aria-label="시작 방식 선택">
+        {startTemplates.map((template) => (
+          <button
+            className={`template-card${template.id === selectedTemplateId ? " is-selected" : ""}`}
+            key={template.id}
+            onClick={() => selectTemplate(template)}
+            type="button"
+          >
+            <span>{template.title}</span>
+            <strong>{template.label}</strong>
+            <em>{template.description}</em>
+          </button>
+        ))}
+      </div>
+
+      {selectedTemplate ? (
+        <div className={`composer${isFreeInput ? " is-direct" : ""}`}>
+          <div className="template-composer-header">
+            <div>
+              <p className="starter-kicker">{selectedTemplate.title}</p>
+              <h2>{selectedTemplate.label}</h2>
+            </div>
+            <button className="text-action" onClick={resetTemplateChoice} type="button">
+              다른 시작 선택
+            </button>
+          </div>
+
+          {isFreeInput ? (
+            <textarea
+              aria-label="요청 입력"
+              className="composer-input"
+              ref={composerInputRef}
+              onChange={(event) => onInputChange(event.target.value)}
+              placeholder="무엇을 만들고 싶은지, 혹은 지금 가진 초안을 적어보세요."
+              value={input}
+            />
+          ) : (
+            <div className="starter-composer" aria-label={`${selectedTemplate.title} 템플릿`}>
+              {selectedTemplate.fields.map((field) => (
+                <label className="template-field" key={field.id}>
+                  <span>
+                    {field.label}
+                    {field.optional ? <em>선택</em> : null}
+                  </span>
+                  <input
+                    aria-label={field.label}
+                    className="starter-input"
+                    onChange={(event) =>
+                      updateTemplateValue(selectedTemplate, field.id, event.target.value)
+                    }
+                    placeholder={field.placeholder}
+                    value={templateValues[field.id] ?? ""}
+                  />
+                  {field.helper ? <small>{field.helper}</small> : null}
+                </label>
+              ))}
+            </div>
+          )}
 
           <div className="composer-footer">
             <div className="composer-tools">
-              {selectedHint ? (
-                <span className="composer-selected-hint">
-                  결과 방향: {readSelectedHintLabel(selectedHint)}
-                </span>
-              ) : (
-                <span className="composer-helper-inline">자유롭게 입력하거나 아래 예시로 시작해 보세요.</span>
-              )}
+              <span className="composer-helper-inline">
+                짧게 적어도 괜찮아요. 부족한 부분은 결과 안에서 조심스럽게 짚어드립니다.
+              </span>
             </div>
 
             <div className="composer-submit-group">
@@ -172,158 +177,17 @@ export function StartPanel(props: StartPanelProps) {
               <button
                 className="primary-action"
                 disabled={isBusy || input.trim().length === 0}
-                onClick={() => onSubmit()}
+                onClick={() => onSubmit(undefined, selectedTemplate.cardHint)}
                 type="button"
               >
-                {isBusy
-                  ? clarify
-                    ? "다시 확인 중..."
-                    : "정리 중..."
-                  : clarify
-                    ? "이 내용으로 계속"
-                    : "시작하기"}
+                {isBusy ? "정리 중..." : "정리하기"}
               </button>
             </div>
           </div>
-
-          {clarify ? (
-            <p className="composer-helper">입력창에 한 줄만 덧붙여도 바로 이어서 정리할게요.</p>
-          ) : null}
 
           {flowErrorMessage ? <p className="flow-error">{flowErrorMessage}</p> : null}
         </div>
-      )}
-
-      {clarify ? (
-        <section className="clarify-inline" aria-live="polite">
-          <div className="clarify-inline-header">
-            <p className="clarify-badge">더 알려주세요</p>
-            <button className="ghost-action ghost-action-inline" onClick={onReset} type="button">
-              처음부터 다시
-            </button>
-          </div>
-
-          <p className="clarify-inline-lead">이것만 짧게 알려주면 바로 이어서 정리할게요.</p>
-          <p className="clarify-question">{clarify.question}</p>
-          {clarify.reason ? <p className="clarify-reason">{clarify.reason}</p> : null}
-          {clarify.remainingQuestions > 0 ? (
-            <p className="clarify-note">
-              필요하면 이어서 {clarify.remainingQuestions}가지만 더 확인할게요.
-            </p>
-          ) : null}
-          <section className="clarify-answer-card">
-            <label htmlFor="clarify-answer-input">답변만 짧게 덧붙이기</label>
-            <textarea
-              id="clarify-answer-input"
-              ref={clarifyAnswerInputRef}
-              className="clarify-answer-input"
-              onChange={(event) => setClarifyAnswer(event.target.value)}
-              placeholder="예: 이번 구조는 사용자 앱, 관리자 페이지, 결제, 알림까지만 다뤄줘."
-              value={clarifyAnswer}
-            />
-            <div className="clarify-answer-footer">
-              <p>입력한 답변은 기존 원문 뒤에 붙여 다시 정리합니다.</p>
-              <button
-                className="primary-action clarify-answer-submit"
-                disabled={isBusy || clarifyAnswer.trim().length === 0}
-                onClick={submitClarifyAnswer}
-                type="button"
-              >
-                {isBusy ? "다시 확인 중..." : "답변 반영해서 계속"}
-              </button>
-            </div>
-          </section>
-        </section>
-      ) : approvalReviseGuide ? (
-        <section className="clarify-inline approval-revise-inline" aria-live="polite">
-          <div className="clarify-inline-header">
-            <p className="clarify-badge">입력 보완 가이드</p>
-            <button className="ghost-action ghost-action-inline" onClick={onReset} type="button">
-              처음부터 다시
-            </button>
-          </div>
-
-          <p className="clarify-inline-lead">{approvalReviseGuide.lead}</p>
-          <p className="clarify-question">{approvalReviseGuide.title}</p>
-
-          <section className="approval-revise-current">
-            <h3>현재 입력</h3>
-            <p>{input}</p>
-          </section>
-
-          <div className="approval-revise-grid approval-revise-grid-issues">
-            {approvalReviseGuide.issueItems.map((item) => (
-              <section className="approval-revise-block" key={item.title}>
-                <h3>{item.title}</h3>
-                <p className="approval-revise-label">왜 보완이 필요한가</p>
-                <p>{item.reason}</p>
-                <p className="approval-revise-label">보완하면 무엇이 더 나아지나</p>
-                <p>{item.improvement}</p>
-                <p className="approval-revise-label">입력에 이렇게 덧붙여보세요</p>
-                <p>{item.prompt}</p>
-              </section>
-            ))}
-          </div>
-
-          <section className="approval-revise-editor">
-            <div className="approval-revise-editor-header">
-              <h3>여기서 바로 수정하기</h3>
-              <p>지금 입력을 그대로 가져왔습니다. 아래에서 바로 고쳐 다시 정리해보세요.</p>
-            </div>
-
-            <textarea
-              aria-label="보완 요청 입력"
-              className="approval-revise-textarea"
-              ref={composerInputRef}
-              onChange={(event) => onInputChange(event.target.value)}
-              placeholder="안내를 참고해 입력을 더 구체적으로 적어보세요."
-              value={input}
-            />
-
-            <p className="approval-revise-example">
-              보완 예시: {approvalReviseGuide.examplePrompt}
-            </p>
-
-            <button
-              className="primary-action approval-revise-submit"
-              disabled={isBusy || input.trim().length === 0}
-              onClick={() => onSubmit()}
-              type="button"
-            >
-              {isBusy ? "다시 정리 중..." : "보완해서 다시 정리"}
-            </button>
-          </section>
-
-          {flowErrorMessage ? <p className="flow-error">{flowErrorMessage}</p> : null}
-        </section>
-      ) : (
-        <>
-          <div className="examples-header">
-            <h2>예시로 시작하기</h2>
-            <p>아래 예시는 참고용이에요. 자유롭게 수정해서 사용해 보세요.</p>
-          </div>
-
-          <div className="examples">
-            {startExamples.map((example) => (
-              <button
-                className="example-chip"
-                key={example.id}
-                onClick={() => onExampleClick(example)}
-                type="button"
-              >
-                <span className="example-direction">결과 방향: {example.directionLabel}</span>
-                <strong>{example.title}</strong>
-                <span>{example.description}</span>
-                <em aria-hidden="true">→</em>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+      ) : null}
     </section>
   );
-}
-
-function readSelectedHintLabel(hint: CardHint): string {
-  return hintOptions.find((option) => option.cardHint === hint)?.label ?? "힌트 선택";
 }

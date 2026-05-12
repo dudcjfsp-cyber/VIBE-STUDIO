@@ -34,7 +34,7 @@ Rule:
 ## 4. 이 문서가 판정하는 대상
 이 문서는 아래를 판정한다.
 - MVP가 AI 입문자 기준으로 충분히 이해 가능한가
-- 시스템의 라우팅, 질문, 승인 흐름이 일관되게 작동하는가
+- 시스템의 라우팅과 부족한 정보 설명 흐름이 일관되게 작동하는가
 - 제품이 범용 생성기가 아니라 사고 구조화 학습 환경으로 느껴지는가
 - 핵심 문서 기준과 실제 동작이 크게 어긋나지 않는가
 
@@ -55,7 +55,7 @@ MVP는 아래 기준이 모두 충족되면 성공으로 본다.
 
 ### 5.2 Gate Regression Cases
 - `docs/golden-cases.md`의 모든 Gate Regression Case가 기대 `next_step`을 맞춰야 한다
-- Gate Regression Case에서 기대 `approval_level`이 필요한 경우, 실제 경험에서도 그 강도가 구분되어야 한다
+- Gate Regression Case에서 기대 `approval_level`은 내부 신호로 유지되어야 한다
 - mismatch case에서는 `pivot_recommended`가 빠지면 안 된다
 - 어떤 regression case에서도 silent switch가 발생하면 안 된다
 - architecture follow-up regression case에서는 critical facts가 채워진 뒤에도 `clarify_first`에 머물면 안 된다
@@ -70,7 +70,7 @@ MVP는 아래 기준이 모두 충족되면 성공으로 본다.
 ### 5.4 Beginner Experience
 - 초보 사용자가 카드 없이도 시작할 수 있어야 한다
 - 카드는 보조 장치로 느껴져야 하며, 필수 입장 절차처럼 느껴지면 안 된다
-- 사용자는 왜 질문을 받는지, 왜 바로 생성되지 않는지를 한 문장 수준으로 설명할 수 있어야 한다
+- 사용자는 결과를 본 뒤 자기 입력에서 무엇이 부족했는지 한 문장 수준으로 설명할 수 있어야 한다
 - 마찰은 처벌보다 도움으로 느껴져야 한다
 - 제품은 사용자의 생각을 대신 덮어쓰는 느낌보다 함께 정리해주는 느낌을 줘야 한다
 
@@ -86,8 +86,8 @@ MVP는 아래 기준이 모두 충족되면 성공으로 본다.
 - Gate Regression Case 하나라도 기대 `next_step`이나 `approval_level`을 만족하지 못한다
 - 어떤 mismatch case에서든 silent switch가 발생한다
 - review 관련 Product Core Case에서 create로 잘못 라우팅된다
-- `recommended`와 `required`의 차이가 실제 경험에서 구분되지 않는다
-- 초보 사용자가 왜 질문을 받는지, 왜 바로 생성되지 않는지를 설명하지 못한다
+- `recommended`와 `required`의 내부 신호 차이가 사라진다
+- 초보 사용자가 결과를 본 뒤 자기 입력에서 무엇이 부족했는지 설명하지 못한다
 - 결과가 대부분 비슷한 생성기처럼 느껴져 구조화 학습 경험이 사라진다
 
 ## 7. 허용 가능한 미완성
@@ -110,9 +110,9 @@ MVP는 아래 기준으로 검증한다.
 - 비개발자 기준 설명 가능성 확인
 
 검증 질문 예시:
-- 왜 이 질문이 나왔는지 설명 가능한가
+- 무엇이 부족한 상태에서 먼저 정리됐는지 설명 가능한가
 - 왜 이 방향이 추천됐는지 이해 가능한가
-- 왜 이 경우는 바로 생성되지 않았는가
+- 왜 이 결과에 주의점이나 열린 지점이 남았는가
 - review와 create의 차이가 실제로 느껴지는가
 
 ## 9. 후속 단계로 넘길 것

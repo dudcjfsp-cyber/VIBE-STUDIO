@@ -10,6 +10,7 @@ export type Engine = {
     request: EngineRequest,
     options?: {
       targets?: import("@vive-studio/engine-contracts").RendererId[];
+      forceRender?: boolean;
       approval?: {
         recommended?: boolean;
         required?: boolean;

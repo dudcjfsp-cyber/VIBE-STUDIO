@@ -26,6 +26,7 @@ export type ProviderRuntimeSession =
 
 export type ProductEngineRunOptions = {
   targets?: RendererId[];
+  forceRender?: boolean;
   approval?: {
     recommended?: boolean;
     required?: boolean;
