@@ -30,7 +30,7 @@ import {
 import { buildPlanLearningPanel } from "../../../lib/ux/planLearning";
 import { buildPromptHelpLearningPanel } from "../../../lib/ux/promptHelpLearning";
 import { buildReviewReportLearningPanel } from "../../../lib/ux/reviewReportLearning";
-import { LearningPanel, LearningPointGrid } from "./LearningPanel";
+import { LearningPanel } from "./LearningPanel";
 
 const CODING_TOOL_COPY_REVIEW_STORAGE_KEY =
   "vibe-studio:coding-tool-copy-review-seen";
@@ -410,24 +410,10 @@ export function ResultPanel({
               <pre className="prompt-block">{(output.output as PromptOutput).prompt}</pre>
             </section>
 
-            {promptLearningPanel ? (
-              <LearningPanel
-                inactiveLabel="이번 미적용"
-                lead="이 프롬프트가 어떻게 더 안정적인 결과를 만들도록 정리됐는지, 대표적인 방법만 짧게 보여드립니다."
-                points={promptLearningPanel.techniques}
-                summaryItems={promptLearningPanel.summaryItems}
-              >
-                {promptLearningPanel.conditionalTechniques.length > 0 ? (
-                  <div className="learning-conditional">
-                    <h3>이번 입력에서 더 중요했던 포인트</h3>
-                    <LearningPointGrid
-                      inactiveLabel="이번 미적용"
-                      points={promptLearningPanel.conditionalTechniques}
-                    />
-                  </div>
-                ) : null}
-              </LearningPanel>
-            ) : null}
+            <PromptTransformationPanel
+              output={output.output as PromptOutput}
+              result={result}
+            />
           </>
         ) : null}
 
@@ -561,38 +547,40 @@ export function ResultPanel({
         </ul>
       </section>
 
-      <section
-        className="input-hints-panel"
-        ref={inputHintsPanelRef}
-        aria-label="다음 입력 개선 힌트"
-      >
-        <div className="input-hints-header">
-          <p className="panel-kicker">{inputImprovementHints.title}</p>
-          <p>{inputImprovementHints.lead}</p>
-        </div>
+      {output.renderer !== "prompt" ? (
+        <section
+          className="input-hints-panel"
+          ref={inputHintsPanelRef}
+          aria-label="다음 입력 개선 힌트"
+        >
+          <div className="input-hints-header">
+            <p className="panel-kicker">{inputImprovementHints.title}</p>
+            <p>{inputImprovementHints.lead}</p>
+          </div>
 
-        <div className="input-hints-grid">
-          {inputImprovementHints.items.map((item) => (
-            <article className="input-hint-card" key={item.title}>
-              <h3>{item.title}</h3>
-              <p>{item.example}</p>
-              <button
-                className="text-action input-hint-action"
-                disabled={isBusy}
-                onClick={() =>
-                  onUseInputHint({
-                    text: item.example,
-                    title: item.title,
-                  })
-                }
-                type="button"
-              >
-                {isBusy ? "정리 중..." : "이 문장 덧붙여 다시 정리"}
-              </button>
-            </article>
-          ))}
-        </div>
-      </section>
+          <div className="input-hints-grid">
+            {inputImprovementHints.items.map((item) => (
+              <article className="input-hint-card" key={item.title}>
+                <h3>{item.title}</h3>
+                <p>{item.example}</p>
+                <button
+                  className="text-action input-hint-action"
+                  disabled={isBusy}
+                  onClick={() =>
+                    onUseInputHint({
+                      text: item.example,
+                      title: item.title,
+                    })
+                  }
+                  type="button"
+                >
+                  {isBusy ? "정리 중..." : "이 문장 덧붙여 다시 정리"}
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {stage1Actions.length > 0 ? (
         <section className="follow-up-actions">
@@ -760,6 +748,60 @@ type BeforeBuildKnowledgePanelProps = {
   panel: ReturnType<typeof buildBeforeBuildKnowledgePanel>;
 };
 
+type PromptTransformationPanelProps = {
+  output: PromptOutput;
+  result: EngineResult;
+};
+
+function PromptTransformationPanel({
+  output,
+  result,
+}: PromptTransformationPanelProps) {
+  const sourceText = result.source.text.trim();
+  const sections = readPromptSections(output.prompt);
+  const addedParts = buildPromptAddedParts(sections);
+  const reusablePhrases = buildReusablePromptPhrases(result, output);
+  const editableParts = buildEditablePromptParts(sections);
+
+  return (
+    <section className="result-section prompt-transform-panel">
+      <p className="panel-kicker">내 말이 이렇게 바뀌었어요</p>
+      <div className="prompt-transform-grid">
+        <article>
+          <h3>처음 입력</h3>
+          <p>{sourceText}</p>
+        </article>
+        <article>
+          <h3>프롬프트에 추가된 것</h3>
+          <ul>
+            {addedParts.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
+      </div>
+
+      <div className="prompt-transform-section">
+        <h3>다음에 직접 붙여볼 문장</h3>
+        <ul className="prompt-phrase-list">
+          {reusablePhrases.map((phrase) => (
+            <li key={phrase}>{phrase}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="prompt-transform-section">
+        <h3>바꿔도 되는 부분</h3>
+        <ul>
+          {editableParts.map((part) => (
+            <li key={part}>{part}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
 function BeforeBuildKnowledgePanel({ panel }: BeforeBuildKnowledgePanelProps) {
   return (
     <details className="result-section before-build-panel">
@@ -898,6 +940,164 @@ async function copyTextToClipboard(text: string): Promise<void> {
   }
 
   throw new Error("copy command failed");
+}
+
+function readPromptSections(prompt: string): Record<string, string> {
+  const sections: Record<string, string> = {};
+  const pattern = /^\[(.+?)\]\s*$/gm;
+  const matches = [...prompt.matchAll(pattern)];
+
+  matches.forEach((match, index) => {
+    const title = match[1]?.trim();
+    const start = (match.index ?? 0) + match[0].length;
+    const end =
+      index + 1 < matches.length
+        ? matches[index + 1].index ?? prompt.length
+        : prompt.length;
+
+    if (title) {
+      sections[title] = prompt.slice(start, end).trim();
+    }
+  });
+
+  return sections;
+}
+
+function buildPromptAddedParts(sections: Record<string, string>): string[] {
+  const items = [
+    sections["목표"] ? "목표: 무엇을 만들어야 하는지 한 줄로 분리했습니다." : undefined,
+    sections["참고 맥락"] ? "맥락: 대상, 상황, 피하고 싶은 조건을 따로 묶었습니다." : undefined,
+    sections["작업"] ? "작업: AI가 해야 할 일을 단계와 원칙으로 나눴습니다." : undefined,
+    sections["출력 형식"] ? "형식: 결과가 흔들리지 않도록 보여줄 모양을 정했습니다." : undefined,
+  ].filter(Boolean) as string[];
+
+  return items.length > 0
+    ? items
+    : ["AI가 바로 실행할 수 있도록 목표, 맥락, 작업, 출력 형식으로 나눴습니다."];
+}
+
+function buildReusablePromptPhrases(
+  result: EngineResult,
+  output: PromptOutput,
+): string[] {
+  const sourceText = result.source.text.trim();
+  const audience = inferPromptAudience(sourceText);
+  const avoidStyle = inferAvoidStyle(sourceText);
+  const resultCount = inferResultCount(sourceText);
+  const outputShape = inferOutputShape(sourceText) ?? (resultCount ? "목록" : undefined);
+  const phrases = [
+    audience ? `대상은 ${appendParticle(audience, "으로", "로")} 잡아줘.` : "대상은 ... 로 잡아줘.",
+    avoidStyle ? `${appendParticle(avoidStyle, "은", "는")} 피하고 싶어.` : "피하고 싶은 스타일은 ... 이야.",
+    resultCount ? `결과는 ${resultCount}개로 보여줘.` : "결과는 ...개로 보여줘.",
+    outputShape ? `출력 형식은 ${outputShape} 형태로 해줘.` : "출력 형식은 목록/표/단계 중 ... 로 해줘.",
+  ];
+
+  if (result.ambiguity_score > 0 || output.prompt.includes("확인해야 할 정보")) {
+    phrases.push("부족한 정보가 있으면 먼저 질문으로 분리해줘.");
+  }
+
+  return phrases;
+}
+
+function inferPromptAudience(sourceText: string): string | undefined {
+  const patterns = [
+    /(?:상황|맥락|대상)\s*[:：]?\s*([가-힣A-Za-z0-9\s]{1,24}?)(?:을|를)\s*대상으로/u,
+    /([가-힣A-Za-z0-9\s]{1,24}?)(?:을|를)\s*대상으로/u,
+    /대상(?:은|:)?\s*([가-힣A-Za-z0-9\s]+?)(?:이고|이야|입니다|,|\.|$)/u,
+    /(초보자|입문자|신입\s*[가-힣A-Za-z]*|학생|고객|사용자)/u,
+  ];
+
+  return readFirstMatch(sourceText, patterns);
+}
+
+function inferAvoidStyle(sourceText: string): string | undefined {
+  const patterns = [
+    /너무\s*([가-힣A-Za-z0-9\s]+?)(?:은|는)?\s*피하고 싶어/u,
+    /([가-힣A-Za-z0-9\s]{1,24}?)(?:은|는)?\s*(?:피하고 싶어|피하고 싶다|피해줘|피하기)/u,
+    /(?:피하고 싶은 스타일|피할 것)\s*[:：]?\s*([가-힣A-Za-z0-9\s]+?)(?:\.|,|$)/u,
+  ];
+
+  return readFirstMatch(sourceText, patterns);
+}
+
+function inferResultCount(sourceText: string): string | undefined {
+  return sourceText.match(/(\d+)\s*개/u)?.[1];
+}
+
+function inferOutputShape(sourceText: string): string | undefined {
+  if (/표|비교/u.test(sourceText)) {
+    return "비교표";
+  }
+
+  if (/체크리스트/u.test(sourceText)) {
+    return "체크리스트";
+  }
+
+  if (/계획|단계|순서/u.test(sourceText)) {
+    return "단계별 목록";
+  }
+
+  if (/요약|줄/u.test(sourceText)) {
+    return "짧은 목록";
+  }
+
+  return undefined;
+}
+
+function readFirstMatch(sourceText: string, patterns: RegExp[]): string | undefined {
+  for (const pattern of patterns) {
+    const matched = sourceText.match(pattern)?.[1]?.trim();
+
+    if (matched) {
+      return matched.replace(/\s+/g, " ");
+    }
+  }
+
+  return undefined;
+}
+
+function appendParticle(value: string, consonantParticle: string, vowelParticle: string): string {
+  const trimmed = value.trim();
+  const lastChar = trimmed.at(-1);
+
+  if (!lastChar) {
+    return trimmed;
+  }
+
+  const code = lastChar.charCodeAt(0);
+  const hangulStart = 0xac00;
+  const hangulEnd = 0xd7a3;
+
+  if (code < hangulStart || code > hangulEnd) {
+    return `${trimmed}${vowelParticle}`;
+  }
+
+  const finalConsonantIndex = (code - hangulStart) % 28;
+
+  if (consonantParticle === "으로" && finalConsonantIndex === 8) {
+    return `${trimmed}${vowelParticle}`;
+  }
+
+  return `${trimmed}${finalConsonantIndex > 0 ? consonantParticle : vowelParticle}`;
+}
+
+function buildEditablePromptParts(sections: Record<string, string>): string[] {
+  return [
+    sections["목표"] ? "목표 문장의 숫자, 주제, 결과 개수는 바꿔도 됩니다." : undefined,
+    sections["참고 맥락"] ? "참고 맥락의 대상, 상황, 금지하고 싶은 스타일은 내 상황에 맞게 바꿔도 됩니다." : undefined,
+    sections["출력 형식"] ? "출력 형식은 목록, 표, 단계처럼 원하는 모양으로 바꿔도 됩니다." : undefined,
+    "역할 문장은 원하는 AI의 태도나 전문성에 맞게 바꿔도 됩니다.",
+  ].filter(Boolean) as string[];
+}
+
+function cleanPromptSection(value: string): string {
+  return value
+    .split(/\n+/)
+    .map((line) => line.replace(/^[-*]\s*/, "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
 }
 
 function buildCodingToolPayloadText(

@@ -1190,6 +1190,61 @@ textarea {
   padding: 18px;
 }
 
+.prompt-transform-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.prompt-transform-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+}
+
+.prompt-transform-grid article,
+.prompt-transform-section {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(247, 248, 248, 0.78);
+}
+
+.prompt-transform-panel h3 {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+}
+
+.prompt-transform-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.prompt-transform-panel ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.prompt-transform-panel li + li {
+  margin-top: 6px;
+}
+
+.prompt-phrase-list {
+  display: grid;
+  gap: 8px;
+  padding-left: 0 !important;
+  list-style: none;
+}
+
+.prompt-phrase-list li {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+}
+
 .result-section h3 {
   margin: 0 0 10px;
 }
