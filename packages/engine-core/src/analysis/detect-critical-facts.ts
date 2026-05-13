@@ -23,6 +23,10 @@ const SPEC_AUDIENCE_PATTERNS = [
   /학생/u,
   /이웃/u,
   /팀/u,
+  /대상/u,
+  /입문자/u,
+  /비개발자/u,
+  /비전공자/u,
 ];
 const SPEC_SCOPE_PATTERNS = [
   /앱/u,
@@ -73,7 +77,7 @@ function hasMeaningfulArchitectureBoundary(text: string): boolean {
 }
 
 function hasConcretePlanSubject(text: string): boolean {
-  return /[가-힣a-z0-9][가-힣a-z0-9\s]{2,}\s*(앱|서비스|플랫폼|모임)/u.test(text);
+  return /[가-힣a-z0-9][가-힣a-z0-9\s]{2,}\s*(앱|서비스|플랫폼|모임|노트|도구|툴|제품)/u.test(text);
 }
 
 export function detectCriticalFacts(

@@ -175,6 +175,20 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `pivot_recommended`: `false`
 - Reason: a concrete app subject plus MVP planning scope is enough for a soft checkpoint; it should not fall into clarify-first or feel like a template-gated path.
 
+### Case 11: Plan Card With Prompt Product Subject
+- Input: `나는 AI 입문자를 위한 프롬프트 연습 노트를 만들고 싶어요. 주요 대상은 AI를 처음 써보는 비개발자입니다. 이 아이디어를 기획 정리로 잡아줘.`
+- Selected card: `아이디어 정리`
+- Expected `mode_guess`: `create`
+- Expected `provisional_renderer`: `plan`
+- Expected `missing_critical_facts`: `false`
+- Expected `ambiguity_score`: `0`
+- Expected `structure_score`: `1`
+- Expected `risk_score`: `1`
+- Expected `next_step`: `approval_pending`
+- Expected `approval_level`: `recommended`
+- Expected `pivot_recommended`: `false`
+- Reason: the word prompt is part of the product subject, while the selected card and requested work are product planning.
+
 ## Coverage Notes
 This first set should lock these boundaries:
 - what `direct_render` looks like
@@ -186,6 +200,7 @@ This first set should lock these boundaries:
 - what `structure_score = 2` looks like for beginner requests
 - what architecture follow-up looks like after critical facts are supplied
 - what lightweight free-input MVP planning looks like without unnecessary clarification
+- what plan-card routing looks like when the product subject itself contains the word prompt
 
 ## Expansion Rule
 Add a new golden case only when it locks a new boundary that is not already covered by an existing case.

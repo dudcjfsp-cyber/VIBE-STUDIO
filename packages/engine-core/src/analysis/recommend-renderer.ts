@@ -75,15 +75,15 @@ const PRODUCT_BUILD_VERB_PATTERNS = [
   /create/i,
 ];
 
-const STRONG_PROMPT_TERMS = [
-  "\ud504\ub86c\ud504\ud2b8",
-  "\uacf5\uc9c0\ubb38",
-  "\uc18c\uac1c\uae00",
-  "\ubb38\uad6c",
-  "\uba54\uc2dc\uc9c0",
-  "\uc774\uba54\uc77c",
-  "\uc791\uc131",
-  "\uc368\uc918",
+const STRONG_PROMPT_PATTERNS = [
+  /\ud504\ub86c\ud504\ud2b8(?:\ub97c|\uc744)?\s*(?:\ub9cc\ub4e4|\uc791\uc131|\uc9dc|\uc368|\ucd5c\uc801\ud654)/u,
+  /(?:\ubc14\ub85c\s*\uc4f8|ai\uc5d0\uac8c\s*\uc2dc\ud0ac)\s*\ud504\ub86c\ud504\ud2b8/u,
+  /\uacf5\uc9c0\ubb38(?:\uc744|\ub97c)?\s*(?:\uc791\uc131|\uc368)/u,
+  /\uc18c\uac1c\uae00(?:\uc744|\ub97c)?\s*(?:\uc791\uc131|\uc368)/u,
+  /\ubb38\uad6c(?:\ub97c|\uc744)?\s*(?:\ub9cc\ub4e4|\uc791\uc131|\uc368)/u,
+  /\uba54\uc2dc\uc9c0(?:\ub97c|\uc744)?\s*(?:\ub9cc\ub4e4|\uc791\uc131|\uc368)/u,
+  /\uc774\uba54\uc77c(?:\uc744|\ub97c)?\s*(?:\uc791\uc131|\uc368)/u,
+  /prompt(?:\s+to|\s+for|\s+that|\s+which|\s+rewrite|\s+optimi[sz]e|\s+make|\s+write)/i,
 ];
 
 const STRONG_ARCHITECTURE_TERMS = [
@@ -128,7 +128,10 @@ export function recommendRenderer(
     cardIntent?.renderer && cardIntent.renderer !== "review-report"
       ? cardIntent.renderer
       : "plan";
-  const promptIntentIsExplicit = includesAnyTerm(text, STRONG_PROMPT_TERMS);
+  const promptIntentIsExplicit = includesAnyPattern(
+    text,
+    STRONG_PROMPT_PATTERNS,
+  );
   const architectureIntentIsExplicit = includesAnyTerm(
     text,
     STRONG_ARCHITECTURE_TERMS,
