@@ -3,9 +3,9 @@ import type { StartTemplate } from "../types";
 export const startTemplates: StartTemplate[] = [
   {
     id: "free",
-    title: "자율입력",
-    label: "직접 적기",
-    description: "이미 하고 싶은 말이 있으면 그대로 적어요.",
+    title: "직접 시작",
+    label: "하고 싶은 말 그대로 적기",
+    description: "문장 하나만 있어도 괜찮아요.",
     fields: [],
     buildInput() {
       return "";
@@ -13,9 +13,9 @@ export const startTemplates: StartTemplate[] = [
   },
   {
     id: "prompt",
-    title: "프롬프트",
-    label: "AI에게 시킬 말 만들기",
-    description: "다른 AI에 붙여 넣을 요청문을 정리해요.",
+    title: "AI에게 부탁하기",
+    label: "복사해서 쓸 말 정리하기",
+    description: "다른 AI에 넣을 요청을 더 또렷하게 만들어요.",
     cardHint: "command-optimization",
     fields: [
       {
@@ -39,9 +39,9 @@ export const startTemplates: StartTemplate[] = [
   },
   {
     id: "plan",
-    title: "플랜",
-    label: "아이디어를 기획으로 정리",
-    description: "막연한 아이디어를 문제, 대상, 범위로 나눠요.",
+    title: "아이디어 정리",
+    label: "만들고 싶은 것 정리하기",
+    description: "문제, 대상, 첫 버전 범위를 나눠요.",
     cardHint: "idea-structuring",
     fields: [
       {
@@ -66,8 +66,8 @@ export const startTemplates: StartTemplate[] = [
   },
   {
     id: "architecture",
-    title: "아키텍처",
-    label: "서비스 구조 잡기",
+    title: "서비스 구조",
+    label: "화면과 흐름 나누기",
     description: "화면, 구성요소, 주요 흐름을 먼저 나눠요.",
     cardHint: "system-architecture",
     fields: [
@@ -92,8 +92,8 @@ export const startTemplates: StartTemplate[] = [
   },
   {
     id: "review",
-    title: "검증 및 리뷰",
-    label: "초안의 문제 보기",
+    title: "초안 점검",
+    label: "빠진 점 살펴보기",
     description: "이미 쓴 문장이나 계획에서 빠진 점을 봐요.",
     cardHint: "critical-review",
     fields: [

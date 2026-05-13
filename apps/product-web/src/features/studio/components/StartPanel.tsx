@@ -16,14 +16,14 @@ const starterExamples: Array<{
 }> = [
   {
     cardHint: "command-optimization",
-    description: "결과가 어떻게 바뀌는지 먼저 봅니다.",
+    description: "누르면 바로 결과 화면으로 넘어갑니다.",
     input:
       "AI 입문자를 대상으로 한 5분짜리 유튜브 영상 제목을 10개 뽑고 싶어. 너무 과장된 제목은 피하고 싶어.",
     label: "유튜브 제목 10개 뽑기",
   },
   {
     cardHint: "idea-structuring",
-    description: "막연한 아이디어가 기획으로 정리되는 흐름을 봅니다.",
+    description: "막연한 생각이 어떻게 정리되는지 봅니다.",
     input:
       "AI 입문자를 위한 프롬프트 연습 노트를 만들고 싶어. 주요 대상은 AI를 처음 써보는 비개발자야. 이 아이디어를 기획 정리로 잡아줘.",
     label: "아이디어를 기획으로 정리하기",
@@ -122,13 +122,14 @@ export function StartPanel(props: StartPanelProps) {
     <section className="start-panel">
       <div className="brand-lockup">
         <h1 className="brandmark">VIBE STUDIO</h1>
-        <p className="brand-subcopy">어디서 시작할지만 고르면, 먼저 정리해드릴게요.</p>
+        <p className="brand-subcopy">뭘 적어야 할지 몰라도 괜찮아요. 먼저 눌러보고 감을 잡아보세요.</p>
       </div>
 
       <section className="starter-examples" aria-label="예시로 먼저 보기">
         <div className="starter-examples-copy">
-          <p>먼저 예시로 보기</p>
-          <span>아직 뭘 적어야 할지 모르겠다면 눌러서 결과부터 볼 수 있어요.</span>
+          <span className="starter-step">가장 쉬운 시작</span>
+          <p>예시를 눌러 결과부터 보기</p>
+          <span>아직 쓸 말이 떠오르지 않아도 괜찮아요. 결과가 어떻게 생기는지 먼저 볼 수 있어요.</span>
         </div>
         <div className="starter-example-actions">
           {starterExamples.map((example) => (
@@ -141,14 +142,21 @@ export function StartPanel(props: StartPanelProps) {
             >
               <strong>{example.label}</strong>
               <span>{example.description}</span>
+              <em>눌러서 보기</em>
             </button>
           ))}
         </div>
       </section>
 
-      <div className="template-picker" aria-label="시작 방식 선택">
-        {beginnerTemplates.map((template) => renderTemplateButton(template))}
-      </div>
+      <section className="beginner-choice-section" aria-label="직접 시작하기">
+        <div className="beginner-choice-copy">
+          <p>직접 해보고 싶다면</p>
+          <span>아래에서 지금 상황에 가까운 것을 고르면 됩니다.</span>
+        </div>
+        <div className="template-picker" aria-label="시작 방식 선택">
+          {beginnerTemplates.map((template) => renderTemplateButton(template))}
+        </div>
+      </section>
 
       <details className="advanced-start-disclosure" open={isAdvancedTemplateSelected || undefined}>
         <summary>
