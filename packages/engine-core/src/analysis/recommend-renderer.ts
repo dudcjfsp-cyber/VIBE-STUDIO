@@ -15,6 +15,10 @@ const PROMPT_PATTERNS = [
   /\ubb38\uad6c/u,
   /\uba54\uc2dc\uc9c0/u,
   /\uc774\uba54\uc77c/u,
+  /\uc81c\ubaa9/u,
+  /\ub9ac\uc2a4\ud2b8/u,
+  /\ucd94\ucc9c/u,
+  /\ubf51/u,
   /\uacb0\uacfc/u,
   /\uc791\uc131\ud574/u,
   /\uc9c8\ubb38/u,
@@ -83,6 +87,8 @@ const STRONG_PROMPT_PATTERNS = [
   /\ubb38\uad6c(?:\ub97c|\uc744)?\s*(?:\ub9cc\ub4e4|\uc791\uc131|\uc368)/u,
   /\uba54\uc2dc\uc9c0(?:\ub97c|\uc744)?\s*(?:\ub9cc\ub4e4|\uc791\uc131|\uc368)/u,
   /\uc774\uba54\uc77c(?:\uc744|\ub97c)?\s*(?:\uc791\uc131|\uc368)/u,
+  /\uc81c\ubaa9(?:\uc744|\ub97c)?\s*(?:\ub9cc\ub4e4|\ubf51|\ucd94\ucc9c|\uc791\uc131|\uc368)/u,
+  /(?:\uc81c\ubaa9| \uc544\uc774\ub514\uc5b4| \ud6c4\ubcf4).{0,16}(?:\ubf51|\ucd94\ucc9c)/u,
   /prompt(?:\s+to|\s+for|\s+that|\s+which|\s+rewrite|\s+optimi[sz]e|\s+make|\s+write)/i,
 ];
 

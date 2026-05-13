@@ -189,6 +189,20 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `pivot_recommended`: `false`
 - Reason: the word prompt is part of the product subject, while the selected card and requested work are product planning.
 
+### Case 12: Free Input Title Generation
+- Input: `AI 입문자를 대상으로 한 5분짜리 유튜브 영상 제목을 10개 뽑고 싶어. 너무 과장된 제목은 피하고 싶어.`
+- Selected card: none
+- Expected `mode_guess`: `create`
+- Expected `provisional_renderer`: `prompt`
+- Expected `missing_critical_facts`: `false`
+- Expected `ambiguity_score`: `0`
+- Expected `structure_score`: `0`
+- Expected `risk_score`: `0`
+- Expected `next_step`: `direct_render`
+- Expected `approval_level`: `none`
+- Expected `pivot_recommended`: `false`
+- Reason: free input asking for title candidates is an executable generation request, not product planning.
+
 ## Coverage Notes
 This first set should lock these boundaries:
 - what `direct_render` looks like
@@ -201,6 +215,7 @@ This first set should lock these boundaries:
 - what architecture follow-up looks like after critical facts are supplied
 - what lightweight free-input MVP planning looks like without unnecessary clarification
 - what plan-card routing looks like when the product subject itself contains the word prompt
+- what free input title-generation requests look like without a selected prompt card
 
 ## Expansion Rule
 Add a new golden case only when it locks a new boundary that is not already covered by an existing case.
