@@ -90,22 +90,6 @@ export function StartPanel(props: StartPanelProps) {
         <p className="brand-subcopy">어디서 시작할지만 고르면, 먼저 정리해드릴게요.</p>
       </div>
 
-      <ProviderSessionPanel
-        apiKey={providerApiKey}
-        errorMessage={providerErrorMessage}
-        hasActiveSession={providerHasActiveSession}
-        isLoading={providerIsLoading}
-        model={providerModel}
-        models={providerModels}
-        onApiKeyChange={onProviderApiKeyChange}
-        onClear={onProviderClear}
-        onConnect={onProviderConnect}
-        onModelChange={onProviderModelChange}
-        onProviderChange={onProviderSelect}
-        provider={providerSelection}
-        sessionLabel={providerSessionLabel}
-      />
-
       <div className="template-picker" aria-label="시작 방식 선택">
         {startTemplates.map((template) => (
           <button
@@ -188,6 +172,28 @@ export function StartPanel(props: StartPanelProps) {
           {flowErrorMessage ? <p className="flow-error">{flowErrorMessage}</p> : null}
         </div>
       ) : null}
+
+      <details className="provider-disclosure">
+        <summary>
+          <span>고급 설정</span>
+          {providerHasActiveSession ? <em>연결됨</em> : null}
+        </summary>
+        <ProviderSessionPanel
+          apiKey={providerApiKey}
+          errorMessage={providerErrorMessage}
+          hasActiveSession={providerHasActiveSession}
+          isLoading={providerIsLoading}
+          model={providerModel}
+          models={providerModels}
+          onApiKeyChange={onProviderApiKeyChange}
+          onClear={onProviderClear}
+          onConnect={onProviderConnect}
+          onModelChange={onProviderModelChange}
+          onProviderChange={onProviderSelect}
+          provider={providerSelection}
+          sessionLabel={providerSessionLabel}
+        />
+      </details>
     </section>
   );
 }

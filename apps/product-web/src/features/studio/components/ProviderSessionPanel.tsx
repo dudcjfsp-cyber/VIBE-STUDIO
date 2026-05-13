@@ -43,7 +43,7 @@ export function ProviderSessionPanel(props: ProviderSessionPanelProps) {
     <section className="provider-panel">
       <div className="provider-row">
         <label className="provider-field">
-          <span className="provider-label">런타임</span>
+          <span className="provider-label">실행 방식</span>
           <select
             className="provider-select"
             onChange={(event) => onProviderChange(event.target.value as ProviderId)}
@@ -59,20 +59,20 @@ export function ProviderSessionPanel(props: ProviderSessionPanelProps) {
 
         {isRemoteProvider ? (
           <label className="provider-field provider-key-field">
-            <span className="provider-label">API 키</span>
+            <span className="provider-label">개인 연결 키</span>
             <input
               autoComplete="off"
               className="provider-input"
               onChange={(event) => onApiKeyChange(event.target.value)}
-              placeholder="여기에 키를 붙여넣고 모델을 불러오세요."
+              placeholder="이미 발급받은 키가 있을 때만 붙여넣으세요."
               type="password"
               value={apiKey}
             />
           </label>
         ) : (
           <div className="provider-note">
-            <span className="provider-label">현재 모드</span>
-            <p>키 없이 기본 엔진으로 흐름을 먼저 확인합니다.</p>
+            <span className="provider-label">기본값</span>
+            <p>처음이라면 이 설정을 그대로 두고 시작하면 됩니다.</p>
           </div>
         )}
 

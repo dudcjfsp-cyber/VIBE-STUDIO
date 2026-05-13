@@ -119,9 +119,66 @@ textarea {
   text-align: center;
 }
 
+.provider-disclosure {
+  width: min(980px, 100%);
+  margin: auto auto 0;
+  padding-top: 28px;
+}
+
+.provider-disclosure summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.provider-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.provider-disclosure summary::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.16s ease;
+}
+
+.provider-disclosure[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.provider-disclosure summary:hover,
+.provider-disclosure summary:focus-visible {
+  color: var(--accent-strong);
+}
+
+.provider-disclosure summary:focus-visible {
+  outline: 2px solid rgba(15, 106, 85, 0.22);
+  outline-offset: 4px;
+}
+
+.provider-disclosure summary em {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(29, 107, 87, 0.08);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
 .provider-panel {
   width: min(980px, 100%);
-  margin: 28px auto 0;
+  margin: 10px auto 0;
   padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
