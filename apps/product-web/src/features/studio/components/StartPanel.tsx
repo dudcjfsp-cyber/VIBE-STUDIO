@@ -6,6 +6,8 @@ import { startTemplates } from "../data/startTemplates";
 import type { StartTemplate, StartTemplateId } from "../types";
 import { ProviderSessionPanel } from "./ProviderSessionPanel";
 
+const beginnerTemplateIds: StartTemplateId[] = ["free", "prompt", "plan"];
+
 type StartPanelProps = {
   flowErrorMessage: string | undefined;
   input: string;
@@ -55,6 +57,17 @@ export function StartPanel(props: StartPanelProps) {
     () => startTemplates.find((template) => template.id === selectedTemplateId),
     [selectedTemplateId],
   );
+  const beginnerTemplates = useMemo(
+    () => startTemplates.filter((template) => beginnerTemplateIds.includes(template.id)),
+    [],
+  );
+  const advancedTemplates = useMemo(
+    () => startTemplates.filter((template) => !beginnerTemplateIds.includes(template.id)),
+    [],
+  );
+  const isAdvancedTemplateSelected = selectedTemplate
+    ? !beginnerTemplateIds.includes(selectedTemplate.id)
+    : false;
   const isFreeInput = selectedTemplate?.id === "free";
 
   function selectTemplate(template: StartTemplate) {
@@ -91,19 +104,21 @@ export function StartPanel(props: StartPanelProps) {
       </div>
 
       <div className="template-picker" aria-label="시작 방식 선택">
-        {startTemplates.map((template) => (
-          <button
-            className={`template-card${template.id === selectedTemplateId ? " is-selected" : ""}`}
-            key={template.id}
-            onClick={() => selectTemplate(template)}
-            type="button"
-          >
-            <span>{template.title}</span>
-            <strong>{template.label}</strong>
-            <em>{template.description}</em>
-          </button>
-        ))}
+        {beginnerTemplates.map((template) => renderTemplateButton(template))}
       </div>
+
+      <details className="advanced-start-disclosure" open={isAdvancedTemplateSelected || undefined}>
+        <summary>
+          <span>다른 도움이 필요하다면</span>
+          {isAdvancedTemplateSelected ? <em>{selectedTemplate.title} 선택됨</em> : null}
+        </summary>
+        <div className="advanced-start-copy">
+          <p>이미 쓴 내용의 빠진 점을 보거나, 화면과 흐름이 많은 서비스를 나눠볼 수 있어요.</p>
+        </div>
+        <div className="template-picker template-picker-advanced" aria-label="추가 시작 방식 선택">
+          {advancedTemplates.map((template) => renderTemplateButton(template))}
+        </div>
+      </details>
 
       {selectedTemplate ? (
         <div className={`composer${isFreeInput ? " is-direct" : ""}`}>
@@ -196,4 +211,19 @@ export function StartPanel(props: StartPanelProps) {
       </details>
     </section>
   );
+
+  function renderTemplateButton(template: StartTemplate) {
+    return (
+      <button
+        className={`template-card${template.id === selectedTemplateId ? " is-selected" : ""}`}
+        key={template.id}
+        onClick={() => selectTemplate(template)}
+        type="button"
+      >
+        <span>{template.title}</span>
+        <strong>{template.label}</strong>
+        <em>{template.description}</em>
+      </button>
+    );
+  }
 }
