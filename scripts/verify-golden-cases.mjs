@@ -32,6 +32,37 @@ const EXPECTED_KEYS = [
   "pivot_recommended",
 ];
 
+const OPTIONAL_EXPECTED_CHECKS = {
+  "intent.audience_contains": (result, expected, testCase) => {
+    assert.equal(
+      typeof result.intent_ir.intent.audience,
+      "string",
+      `Case ${testCase.id} ${testCase.name}: intent audience should be a string`,
+    );
+    assert.ok(
+      result.intent_ir.intent.audience.includes(expected),
+      `Case ${testCase.id} ${testCase.name}: expected intent audience to include ${JSON.stringify(
+        expected,
+      )} but got ${JSON.stringify(result.intent_ir.intent.audience)}`,
+    );
+  },
+};
+
+function readPlanSections(result) {
+  const output = result.outputs.find((candidate) => candidate.renderer === "plan")?.output;
+
+  if (
+    output &&
+    typeof output === "object" &&
+    "sections" in output &&
+    Array.isArray(output.sections)
+  ) {
+    return output.sections;
+  }
+
+  throw new Error("Expected a plan output with sections.");
+}
+
 function parseScalarValue(rawValue) {
   const trimmed = rawValue.trim();
 
@@ -186,6 +217,27 @@ for (const testCase of cases) {
       `Case ${testCase.id} ${testCase.name}: expected ${key}=${JSON.stringify(
         testCase.expected[key],
       )} but got ${JSON.stringify(result[key])}`,
+    );
+  }
+
+  for (const [key, check] of Object.entries(OPTIONAL_EXPECTED_CHECKS)) {
+    if (key in testCase.expected) {
+      check(result, testCase.expected[key], testCase);
+    }
+  }
+
+  if ("force_render.plan_section_absent" in testCase.expected) {
+    const renderedResult = await engine.run(buildRequest(testCase), {
+      forceRender: true,
+    });
+    const sections = readPlanSections(renderedResult);
+    const absentTitle = testCase.expected["force_render.plan_section_absent"];
+
+    assert.ok(
+      !sections.some((section) => section.title === absentTitle),
+      `Case ${testCase.id} ${testCase.name}: expected force-rendered plan section ${JSON.stringify(
+        absentTitle,
+      )} to be absent, but found it.`,
     );
   }
 

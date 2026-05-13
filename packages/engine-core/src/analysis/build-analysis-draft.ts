@@ -52,6 +52,40 @@ function deriveTone(text: string): string {
   return "";
 }
 
+function deriveAudience(text: string): string {
+  const patterns = [
+    /주요\s*대상(?:은|는)?\s*(.+?)(?:입니다|이에요|예요|이야|야|라고|으로|로|\.|\n|$)/gu,
+    /대상\s*사용자(?:는|은)?\s*(.+?)(?:입니다|이에요|예요|이야|야|라고|으로|로|\.|\n|$)/gu,
+    /핵심\s*사용자(?:는|은)?\s*(.+?)(?:입니다|이에요|예요|이야|야|라고|으로|로|\.|\n|$)/gu,
+    /가장\s*먼저\s*쓸\s*사람(?:은|는)?\s*(.+?)(?:입니다|이에요|예요|이야|야|라고|으로|로|\.|\n|$)/gu,
+    /대상(?:은|는)?\s*(.+?)(?:입니다|이에요|예요|이야|야|라고|으로|로|\.|\n|$)/gu,
+  ];
+  let latestMatch:
+    | {
+        index: number;
+        value: string;
+      }
+    | undefined;
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const candidate = match[1]?.trim();
+
+      if (
+        candidate &&
+        (latestMatch === undefined || match.index > latestMatch.index)
+      ) {
+        latestMatch = {
+          index: match.index,
+          value: candidate,
+        };
+      }
+    }
+  }
+
+  return latestMatch?.value ?? "";
+}
+
 export function buildAnalysisDraft(args: {
   request: EngineRequest;
   gateSignals: GateSignals;
@@ -70,7 +104,7 @@ export function buildAnalysisDraft(args: {
     summary: summarizeIntent(gateSignals.provisional_renderer, sourceText),
     intent: {
       goal: goalText,
-      audience: "",
+      audience: deriveAudience(sourceText),
       context: inlineArtifact ?? sourceText,
       desired_output: describeDesiredOutput(gateSignals.provisional_renderer),
       tone: deriveTone(sourceText),

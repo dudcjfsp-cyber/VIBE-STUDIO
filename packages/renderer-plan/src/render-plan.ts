@@ -2,9 +2,15 @@ import type { RendererHandoff } from "@vive-studio/engine-contracts";
 
 import type { PlanOutput, PlanSection } from "./plan-output.js";
 
+function normalizeSectionText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
   const { intent_ir: intentIr } = handoff;
   const sections: PlanSection[] = [];
+  const goalText = intentIr.intent.goal.trim();
+  const contextText = intentIr.intent.context.trim();
 
   sections.push({
     title: "아이디어 요약",
@@ -13,7 +19,7 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
 
   sections.push({
     title: "해결하려는 문제",
-    bullets: [intentIr.intent.goal.trim()],
+    bullets: [goalText],
   });
 
   sections.push({
@@ -23,10 +29,13 @@ function buildCoreSections(handoff: RendererHandoff): PlanSection[] {
     ],
   });
 
-  if (intentIr.intent.context.trim()) {
+  if (
+    contextText &&
+    normalizeSectionText(contextText) !== normalizeSectionText(goalText)
+  ) {
     sections.push({
       title: "맥락",
-      bullets: [intentIr.intent.context.trim()],
+      bullets: [contextText],
     });
   }
 

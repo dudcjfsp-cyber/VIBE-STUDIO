@@ -187,6 +187,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `next_step`: `approval_pending`
 - Expected `approval_level`: `recommended`
 - Expected `pivot_recommended`: `false`
+- Expected `intent.audience_contains`: `AI를 처음 써보는 비개발자`
 - Reason: the word prompt is part of the product subject, while the selected card and requested work are product planning.
 
 ### Case 12: Free Input Title Generation
@@ -202,6 +203,22 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `false`
 - Reason: free input asking for title candidates is an executable generation request, not product planning.
+
+### Case 13: Plan Audience Hint Overrides Earlier Audience
+- Input: `AI 입문자를 위한 프롬프트 연습 노트를 만들고 싶어. 주요 대상은 AI를 처음 써보는 비개발자야. 이 아이디어를 기획 정리로 잡아줘. 가장 먼저 쓸 사람은 혼자 시작하는 초보 사용자라고 보고 기획을 잡아줘.`
+- Selected card: `아이디어 정리`
+- Expected `mode_guess`: `create`
+- Expected `provisional_renderer`: `plan`
+- Expected `missing_critical_facts`: `false`
+- Expected `ambiguity_score`: `0`
+- Expected `structure_score`: `1`
+- Expected `risk_score`: `1`
+- Expected `next_step`: `approval_pending`
+- Expected `approval_level`: `recommended`
+- Expected `pivot_recommended`: `false`
+- Expected `intent.audience_contains`: `혼자 시작하는 초보 사용자`
+- Expected `force_render.plan_section_absent`: `맥락`
+- Reason: when an input hint is appended later, the latest explicit audience statement should update the plan audience instead of keeping the earlier placeholder or earlier audience.
 
 ## Coverage Notes
 This first set should lock these boundaries:
