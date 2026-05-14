@@ -6,6 +6,7 @@ import { renderArchitecture } from "./render-architecture.js";
 import { validateArchitectureOutput } from "./validate-architecture-output.js";
 
 export type {
+  ArchitectureActor,
   ArchitectureComponent,
   ArchitectureFlow,
   ArchitectureOutput,

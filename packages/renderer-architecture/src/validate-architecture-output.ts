@@ -30,6 +30,38 @@ export function validateArchitectureOutput(
     });
   }
 
+  if (output.actors.length === 0) {
+    issues.push({
+      code: "architecture_output.actors_missing",
+      severity: "medium",
+      message: "Architecture output should name the main actors.",
+      path: "actors",
+      scope: "output",
+    });
+  }
+
+  output.actors.forEach((actor, index) => {
+    if (!actor.name.trim()) {
+      issues.push({
+        code: "architecture_output.actor_name_missing",
+        severity: "medium",
+        message: "Each architecture actor should have a name.",
+        path: `actors.${index}.name`,
+        scope: "output",
+      });
+    }
+
+    if (!actor.role.trim()) {
+      issues.push({
+        code: "architecture_output.actor_role_missing",
+        severity: "medium",
+        message: "Each architecture actor should describe its role.",
+        path: `actors.${index}.role`,
+        scope: "output",
+      });
+    }
+  });
+
   if (output.components.length < 3) {
     issues.push({
       code: "architecture_output.components_too_small",
@@ -93,6 +125,26 @@ export function validateArchitectureOutput(
       });
     }
   });
+
+  if (output.mvp_exclusions.length === 0) {
+    issues.push({
+      code: "architecture_output.mvp_exclusions_missing",
+      severity: "medium",
+      message: "Architecture output should state what is excluded from the MVP.",
+      path: "mvp_exclusions",
+      scope: "output",
+    });
+  }
+
+  if (output.later_decisions.length === 0) {
+    issues.push({
+      code: "architecture_output.later_decisions_missing",
+      severity: "medium",
+      message: "Architecture output should leave later decisions explicit.",
+      path: "later_decisions",
+      scope: "output",
+    });
+  }
 
   return {
     status:

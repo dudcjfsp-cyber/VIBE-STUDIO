@@ -1,10 +1,25 @@
 import type { RendererHandoff } from "@vive-studio/engine-contracts";
 
 import type {
+  ArchitectureActor,
   ArchitectureComponent,
   ArchitectureFlow,
   ArchitectureOutput,
 } from "./architecture-output.js";
+
+function pushActor(
+  actors: ArchitectureActor[],
+  seen: Set<string>,
+  name: string,
+  role: string,
+): void {
+  if (seen.has(name)) {
+    return;
+  }
+
+  seen.add(name);
+  actors.push({ name, role });
+}
 
 function pushComponent(
   components: ArchitectureComponent[],
@@ -18,6 +33,59 @@ function pushComponent(
 
   seen.add(name);
   components.push({ name, responsibility });
+}
+
+function buildActors(handoff: RendererHandoff): ArchitectureActor[] {
+  const text = `${handoff.source.text} ${handoff.intent_ir.intent.context}`.toLowerCase();
+  const actors: ArchitectureActor[] = [];
+  const seen = new Set<string>();
+
+  if (/사용자|고객|customer|user/i.test(text)) {
+    pushActor(
+      actors,
+      seen,
+      "사용자",
+      "서비스에서 핵심 요청을 만들고 결과 상태를 확인합니다.",
+    );
+  }
+
+  if (/사장|점주|가게|매장|merchant|store/i.test(text)) {
+    pushActor(
+      actors,
+      seen,
+      "운영자",
+      "현장 운영 상태를 확인하고 승인, 처리, 예외 대응을 맡습니다.",
+    );
+  }
+
+  if (/관리자|admin/i.test(text)) {
+    pushActor(
+      actors,
+      seen,
+      "관리자",
+      "전체 서비스 운영 상태와 예외 상황을 점검합니다.",
+    );
+  }
+
+  if (/결제|payment/i.test(text)) {
+    pushActor(
+      actors,
+      seen,
+      "결제 서비스",
+      "결제 승인과 거래 상태를 외부 시스템 관점에서 제공합니다.",
+    );
+  }
+
+  if (actors.length === 0) {
+    pushActor(
+      actors,
+      seen,
+      "주요 사용자",
+      "서비스를 실제로 쓰는 사람입니다. 더 구체적인 대상은 다음 대화에서 정해야 합니다.",
+    );
+  }
+
+  return actors;
 }
 
 function buildComponents(handoff: RendererHandoff): ArchitectureComponent[] {
@@ -145,20 +213,74 @@ function buildBoundary(handoff: RendererHandoff): string {
   );
 }
 
+function buildMvpExclusions(handoff: RendererHandoff): string[] {
+  const exclusions = [
+    "처음 구조에서는 고급 권한 체계, 자동 정산, 복잡한 관리자 리포트처럼 핵심 흐름 밖의 기능은 제외합니다.",
+  ];
+
+  if (/결제|payment/i.test(handoff.source.text)) {
+    exclusions.push("실제 PG사별 예외 처리와 정산 세부 정책은 MVP 구조 밖으로 둡니다.");
+  }
+
+  if (/알림|notification/i.test(handoff.source.text)) {
+    exclusions.push("모든 알림 채널을 동시에 붙이기보다, 처음에는 가장 중요한 채널 하나만 가정합니다.");
+  }
+
+  return exclusions;
+}
+
+function buildLaterDecisions(handoff: RendererHandoff): string[] {
+  const decisions = handoff.intent_ir.analysis.missing_information.map(
+    formatMissingInformationAsDecision,
+  );
+
+  if (!handoff.intent_ir.intent.audience.trim()) {
+    decisions.push("첫 사용자와 운영 주체를 더 구체적으로 정해야 합니다.");
+  }
+
+  decisions.push("데이터 저장 기준, 권한 수준, 외부 연동 범위는 구현 대화 전에 한 번 더 정해야 합니다.");
+
+  return dedupe(decisions);
+}
+
+function formatMissingInformationAsDecision(value: string): string {
+  switch (value) {
+    case "architecture.boundary":
+      return "시스템 안에 포함할 기능과 밖으로 둘 기능을 정해야 합니다.";
+    case "architecture.focus":
+      return "구조에서 먼저 볼 초점이 화면, 데이터, 흐름 중 무엇인지 정해야 합니다.";
+    case "plan.problem_or_scope":
+      return "처음 버전에서 풀 문제와 제외할 범위를 정해야 합니다.";
+    case "prompt.goal":
+      return "이 구조를 다음 AI 작업에 넘길 목표를 정해야 합니다.";
+    default:
+      return value;
+  }
+}
+
+function dedupe(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
 export function renderArchitecture(
   handoff: RendererHandoff,
 ): ArchitectureOutput {
+  const actors = buildActors(handoff);
   const components = buildComponents(handoff);
 
   return {
     title: "구조 설계 초안",
     system_boundary: buildBoundary(handoff),
+    actors,
     components,
     interaction_flows: buildFlows(components, handoff),
+    mvp_exclusions: buildMvpExclusions(handoff),
+    later_decisions: buildLaterDecisions(handoff),
     notes: [
       `Mode: ${handoff.intent_ir.mode}`,
       `Confidence: ${handoff.intent_ir.signals.confidence}`,
       `Summary: ${handoff.intent_ir.summary}`,
+      "Architecture focus: 전문 설계도가 아니라 MVP 대화를 시작하기 위한 경계, 행위자, 구성요소, 흐름, 제외 범위, 이후 결정을 분리했습니다.",
     ],
   };
 }

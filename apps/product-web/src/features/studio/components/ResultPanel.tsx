@@ -496,6 +496,18 @@ export function ResultPanel({
               <p>{(output.output as ArchitectureOutput).system_boundary}</p>
             </section>
 
+            <section className="result-section">
+              <h3>주요 행위자</h3>
+              <ul>
+                {(output.output as ArchitectureOutput).actors.map((actor) => (
+                  <li key={actor.name}>
+                    <strong>{actor.name}</strong>
+                    <span>{actor.role}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
             <ArchitectureDiagram architecture={output.output as ArchitectureOutput} />
 
             <section className="result-section">
@@ -519,6 +531,24 @@ export function ResultPanel({
                 </ol>
               </section>
             ))}
+
+            <section className="result-section">
+              <h3>MVP에서 제외할 것</h3>
+              <ul>
+                {(output.output as ArchitectureOutput).mvp_exclusions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="result-section">
+              <h3>나중에 결정할 것</h3>
+              <ul>
+                {(output.output as ArchitectureOutput).later_decisions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
 
             {architectureLearningPanel ? (
               <LearningPanel
@@ -1792,6 +1822,8 @@ function formatVisibleNote(note: string): string | undefined {
       return `다음에 다시 쓸 때: ${formatSummary(value)}`;
     case "Planning focus":
       return `계획 정리 방식: ${formatSummary(value)}`;
+    case "Architecture focus":
+      return `구조 설계 방식: ${formatSummary(value)}`;
     case "Risk note":
       return `주의할 점: ${formatSummary(value)}`;
     case "Artifact kind":
