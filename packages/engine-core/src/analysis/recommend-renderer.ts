@@ -10,6 +10,15 @@ import { countMatches, lowerText } from "./text-utils.js";
 const PROMPT_PATTERNS = [
   /\ud504\ub86c\ud504\ud2b8/u,
   /prompt/i,
+  /title/i,
+  /headline/i,
+  /copy/i,
+  /message/i,
+  /email/i,
+  /list/i,
+  /write/i,
+  /draft/i,
+  /generate/i,
   /\uacf5\uc9c0\ubb38/u,
   /\uc18c\uac1c\uae00/u,
   /\ubb38\uad6c/u,
@@ -90,6 +99,9 @@ const STRONG_PROMPT_PATTERNS = [
   /\uc81c\ubaa9(?:\uc744|\ub97c)?\s*(?:\ub9cc\ub4e4|\ubf51|\ucd94\ucc9c|\uc791\uc131|\uc368)/u,
   /(?:\uc81c\ubaa9| \uc544\uc774\ub514\uc5b4| \ud6c4\ubcf4).{0,16}(?:\ubf51|\ucd94\ucc9c)/u,
   /prompt(?:\s+to|\s+for|\s+that|\s+which|\s+rewrite|\s+optimi[sz]e|\s+make|\s+write)/i,
+  /(?:create|generate|write|draft|suggest|recommend).{0,32}(?:title|titles|headline|headlines)/i,
+  /(?:title|titles|headline|headlines).{0,32}(?:create|generate|write|draft|suggest|recommend)/i,
+  /(?:write|draft|generate|create).{0,32}(?:email|message|copy|list)/i,
 ];
 
 const STRONG_ARCHITECTURE_TERMS = [
