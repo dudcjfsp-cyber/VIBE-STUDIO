@@ -25,8 +25,14 @@ assert.equal(result.outputs[0]?.validation.status, "ready");
 const reviewOutput = result.outputs[0]?.output;
 
 assert.ok(reviewOutput);
-assert.equal(reviewOutput.title, "Review Report");
+assert.equal(reviewOutput.title, "검토 리포트");
 assert.equal(reviewOutput.verdict, "needs-revision");
+assert.ok(reviewOutput.strengths.length >= 1);
+assert.ok(reviewOutput.weak_points.length >= 1);
+assert.ok(reviewOutput.missing_assumptions.length >= 1);
+assert.ok(reviewOutput.risky_assumptions.length >= 1);
+assert.ok(reviewOutput.improvement_priorities.length >= 1);
+assert.equal(reviewOutput.action_recommendation.next_step, "clarify_first");
 assert.ok(reviewOutput.findings.length >= 2);
 assert.ok(
   reviewOutput.findings.some((finding) => finding.severity === "high"),
@@ -61,8 +67,11 @@ assert.ok(
   reviewOutput.notes.some((note) => note.startsWith("Artifact kind: ")),
 );
 assert.ok(
+  reviewOutput.notes.some((note) => note.startsWith("Review action: ")),
+);
+assert.ok(
   reviewOutput.findings.some(
-    (finding) => finding.title === "Review target is too thin",
+    (finding) => finding.title === "검토 대상이 너무 짧습니다",
   ),
 );
 
@@ -84,6 +93,15 @@ const fullerOutput = fullerResult.outputs[0]?.output;
 
 assert.ok(fullerOutput);
 assert.equal(fullerOutput.verdict, "usable-with-fixes");
+assert.ok(fullerOutput.strengths.length >= 1);
+assert.ok(fullerOutput.weak_points.length >= 1);
+assert.ok(fullerOutput.missing_assumptions.length >= 1);
+assert.ok(fullerOutput.risky_assumptions.length >= 1);
+assert.ok(fullerOutput.improvement_priorities.length >= 1);
+assert.ok(
+  fullerOutput.action_recommendation.next_step === "revise_now" ||
+    fullerOutput.action_recommendation.next_step === "clarify_first",
+);
 assert.ok(fullerOutput.findings.length >= 1);
 assert.ok(
   fullerOutput.findings.every((finding) => finding.severity !== "high"),
@@ -128,6 +146,12 @@ const polishedOutput = polishedResult.outputs[0]?.output;
 
 assert.ok(polishedOutput);
 assert.equal(polishedOutput.verdict, "usable-with-fixes");
+assert.ok(polishedOutput.strengths.length >= 1);
+assert.ok(polishedOutput.weak_points.length >= 1);
+assert.ok(polishedOutput.missing_assumptions.length >= 1);
+assert.ok(polishedOutput.risky_assumptions.length >= 1);
+assert.ok(polishedOutput.improvement_priorities.length >= 1);
+assert.equal(polishedOutput.action_recommendation.next_step, "revise_now");
 assert.ok(polishedOutput.findings.length >= 1);
 assert.ok(
   polishedOutput.findings.every((finding) => finding.severity === "low"),
@@ -157,6 +181,8 @@ console.log(
       output_count: result.outputs.length,
       output_validation: result.outputs[0]?.validation.status,
       finding_count: reviewOutput.findings.length,
+      priority_count: reviewOutput.improvement_priorities.length,
+      action_next_step: reviewOutput.action_recommendation.next_step,
       verdict: reviewOutput.verdict,
     },
     fuller_review_render: {
@@ -165,6 +191,8 @@ console.log(
       output_count: fullerResult.outputs.length,
       output_validation: fullerResult.outputs[0]?.validation.status,
       finding_count: fullerOutput.findings.length,
+      priority_count: fullerOutput.improvement_priorities.length,
+      action_next_step: fullerOutput.action_recommendation.next_step,
       verdict: fullerOutput.verdict,
     },
     polished_review_render: {
@@ -173,6 +201,8 @@ console.log(
       output_count: polishedResult.outputs.length,
       output_validation: polishedResult.outputs[0]?.validation.status,
       finding_count: polishedOutput.findings.length,
+      priority_count: polishedOutput.improvement_priorities.length,
+      action_next_step: polishedOutput.action_recommendation.next_step,
       verdict: polishedOutput.verdict,
     },
   }),
