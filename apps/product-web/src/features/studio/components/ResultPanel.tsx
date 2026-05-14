@@ -83,6 +83,9 @@ export function ResultPanel({
   const [codingToolCopyLabel, setCodingToolCopyLabel] = useState(
     "AI 코딩툴에 넣을 내용 복사",
   );
+  const [codexHandoffCopyLabel, setCodexHandoffCopyLabel] = useState(
+    "Codex 작업 지시 복사",
+  );
   const [copyReviewPromptVisible, setCopyReviewPromptVisible] = useState(false);
   const [hasSeenCopyReviewPrompt, setHasSeenCopyReviewPrompt] = useState(
     () => window.sessionStorage.getItem(CODING_TOOL_COPY_REVIEW_STORAGE_KEY) === "true",
@@ -109,6 +112,7 @@ export function ResultPanel({
   useEffect(() => {
     setCopyLabel("복사");
     setCodingToolCopyLabel("AI 코딩툴에 넣을 내용 복사");
+    setCodexHandoffCopyLabel("Codex 작업 지시 복사");
     setFollowUp(undefined);
     setFollowUpError(undefined);
     setReviewRefinementAnswers([]);
@@ -201,6 +205,38 @@ export function ResultPanel({
       setCodingToolCopyLabel("복사 실패");
       window.setTimeout(
         () => setCodingToolCopyLabel("AI 코딩툴에 넣을 내용 복사"),
+        1600,
+      );
+    }
+  }
+
+  async function handleCopyCodexHandoff() {
+    if (output.renderer !== "plan") {
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(
+        buildCodexHandoffText(
+          result,
+          output.output as PlanOutput,
+          appliedInputHint,
+        ),
+      );
+      trackProductEvent("coding_tool_payload_copy_clicked", "result", {
+        export_format: "codex_markdown",
+        renderer: "plan",
+        run_id: runId,
+      });
+      setCodexHandoffCopyLabel("복사됨");
+      window.setTimeout(
+        () => setCodexHandoffCopyLabel("Codex 작업 지시 복사"),
+        1600,
+      );
+    } catch {
+      setCodexHandoffCopyLabel("복사 실패");
+      window.setTimeout(
+        () => setCodexHandoffCopyLabel("Codex 작업 지시 복사"),
         1600,
       );
     }
@@ -479,10 +515,20 @@ export function ResultPanel({
                 >
                   {isBusy ? "정리 중..." : codingToolCopyLabel}
                 </button>
+                <button
+                  className="ghost-action copy-action"
+                  disabled={isBusy}
+                  onClick={() => {
+                    void handleCopyCodexHandoff();
+                  }}
+                  type="button"
+                >
+                  {isBusy ? "정리 중..." : codexHandoffCopyLabel}
+                </button>
               </div>
               <p>
                 위 기획을 먼저 읽고 나서, 실제 구현 대화를 시작할 때만 목표,
-                범위, 제외할 것, 확인 기준을 정해진 JSON 구조로 묶어 복사합니다.
+                범위, 제외할 것, 확인 기준을 JSON이나 Codex 작업 지시 형태로 복사합니다.
                 힌트로 다시 정리하면 이 내용도 최신 결과 기준으로 바뀝니다.
               </p>
             </section>
@@ -1175,6 +1221,105 @@ function buildCodingToolPayloadText(
   };
 
   return JSON.stringify(payload, null, 2);
+}
+
+function buildCodexHandoffText(
+  result: EngineResult,
+  plan: PlanOutput,
+  appliedInputHint:
+    | {
+        text: string;
+        title: string;
+      }
+    | undefined,
+): string {
+  const sections = mapPlanSections(plan);
+  const goal = readFirstSectionText(sections, ["아이디어 요약"], result.source.text);
+  const targetUser = readSectionStateText(sections, ["핵심 사용자"]);
+  const problem = readSectionStateText(sections, ["해결하려는 문제"]);
+  const scopeItems = readSectionItems(sections, ["처음 버전 범위", "초기 방향"]);
+  const decisionItems = readSectionItems(sections, ["필요한 결정", "열린 질문"]);
+  const acceptanceCriteria = buildAcceptanceCriteria(sections);
+  const flows = inferCodingFlows(sections);
+
+  return [
+    "# Codex 작업 지시",
+    "",
+    "## 목표",
+    `- ${goal}`,
+    "",
+    "## 현재 이해한 문제와 대상",
+    `- 문제: ${problem}`,
+    `- 대상 사용자: ${targetUser}`,
+    "",
+    "## 이번 작업 범위",
+    ...formatMarkdownList(
+      scopeItems.length > 0
+        ? scopeItems
+        : ["먼저 로컬에서 확인 가능한 작은 MVP 범위로 구현합니다."],
+    ),
+    "",
+    "## 주요 화면 또는 흐름",
+    ...formatMarkdownList(flows),
+    "",
+    "## 제외할 것",
+    ...formatMarkdownList([
+      "요청에 없는 로그인, 결제, 배포, 관리자 기능, 복잡한 백엔드 저장소를 임의로 추가하지 않습니다.",
+      "불확실한 요구사항은 구현으로 확정하지 말고 TODO나 질문으로 남깁니다.",
+      "사용자가 짧게 승인해도 범위를 넓히지 말고 안전한 최소 버전으로 진행합니다.",
+    ]),
+    "",
+    "## 아직 결정할 것",
+    ...formatMarkdownList(
+      decisionItems.length > 0
+        ? decisionItems
+        : ["구체적인 성공 기준이나 세부 정책은 구현 전에 사용자에게 확인합니다."],
+    ),
+    "",
+    "## 완료 기준",
+    ...formatMarkdownList(acceptanceCriteria),
+    "",
+    "## 작업 방식",
+    ...formatMarkdownList([
+      "먼저 기존 코드 구조를 읽고, 가장 작은 변경 단위로 구현합니다.",
+      "작업 후 실행 방법과 사용자가 직접 확인할 수 있는 수동 테스트 절차를 알려줍니다.",
+      "관련 없는 리팩터링, 인증, 저장/히스토리, 외부 provider 연결은 추가하지 않습니다.",
+    ]),
+    "",
+    "## 원본 입력",
+    "```text",
+    result.source.text.trim(),
+    "```",
+    appliedInputHint
+      ? [
+          "",
+          "## 적용된 추가 힌트",
+          `- ${appliedInputHint.title}: ${appliedInputHint.text}`,
+        ].join("\n")
+      : "",
+  ]
+    .filter((line) => line !== undefined)
+    .join("\n")
+    .trim();
+}
+
+function formatMarkdownList(items: string[]): string[] {
+  return items.length > 0
+    ? items.map((item) => `- ${item}`)
+    : ["- 아직 정해지지 않았습니다."];
+}
+
+function readSectionStateText(
+  sections: Record<string, string[]>,
+  titles: string[],
+): string {
+  const state = readSectionState(sections, titles);
+
+  if (state.items.length === 0) {
+    return "아직 정해지지 않았습니다.";
+  }
+
+  return state.items.join(" / ");
 }
 
 function mapPlanSections(plan: PlanOutput): Record<string, string[]> {
