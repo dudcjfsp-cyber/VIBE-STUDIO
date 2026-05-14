@@ -30,6 +30,50 @@ export function validateReviewReportOutput(
     });
   }
 
+  validateNonEmptyList(issues, output.strengths, "strengths", "good points");
+  validateNonEmptyList(issues, output.weak_points, "weak_points", "weak points");
+  validateNonEmptyList(
+    issues,
+    output.missing_assumptions,
+    "missing_assumptions",
+    "missing assumptions",
+  );
+  validateNonEmptyList(
+    issues,
+    output.risky_assumptions,
+    "risky_assumptions",
+    "risky assumptions",
+  );
+  validateNonEmptyList(
+    issues,
+    output.improvement_priorities,
+    "improvement_priorities",
+    "improvement priorities",
+  );
+
+  if (
+    output.action_recommendation.next_step !== "revise_now" &&
+    output.action_recommendation.next_step !== "clarify_first"
+  ) {
+    issues.push({
+      code: "review_report_output.action_next_step_invalid",
+      severity: "medium",
+      message: "Review report action recommendation must choose revise_now or clarify_first.",
+      path: "action_recommendation.next_step",
+      scope: "output",
+    });
+  }
+
+  if (!output.action_recommendation.reason.trim()) {
+    issues.push({
+      code: "review_report_output.action_reason_missing",
+      severity: "medium",
+      message: "Review report action recommendation should explain why.",
+      path: "action_recommendation.reason",
+      scope: "output",
+    });
+  }
+
   output.findings.forEach((finding, index) => {
     if (!finding.title.trim()) {
       issues.push({
@@ -72,4 +116,21 @@ export function validateReviewReportOutput(
     issues,
     suggested_questions: [],
   };
+}
+
+function validateNonEmptyList(
+  issues: ValidationIssue[],
+  values: string[],
+  path: string,
+  label: string,
+): void {
+  if (values.length === 0 || values.some((value) => !value.trim())) {
+    issues.push({
+      code: `review_report_output.${path}_missing`,
+      severity: "medium",
+      message: `Review report should include ${label}.`,
+      path,
+      scope: "output",
+    });
+  }
 }

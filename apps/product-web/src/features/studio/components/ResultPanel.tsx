@@ -540,6 +540,7 @@ export function ResultPanel({
               <h3>판단</h3>
               <p>{formatReviewVerdict((output.output as ReviewReportOutput).verdict)}</p>
             </section>
+            <ReviewReportStructuredSections report={output.output as ReviewReportOutput} />
             {(output.output as ReviewReportOutput).findings.map((finding) => (
               <section className="result-section" key={`${finding.severity}-${finding.title}`}>
                 <h3>{`[${formatReviewSeverity(finding.severity)}] ${finding.title}`}</h3>
@@ -1808,6 +1809,8 @@ function formatVisibleNote(note: string): string | undefined {
       return `다음 우선 작업: ${formatNextBestMove(value)}`;
     case "Review focus":
       return `검토 초점: ${formatReviewFocus(value)}`;
+    case "Review action":
+      return `다음 행동 판단: ${formatReviewAction(value)}`;
     case "Artifact excerpt":
       return `검토 원문 일부: ${value}`;
     case "Artifact size":
@@ -1815,6 +1818,45 @@ function formatVisibleNote(note: string): string | undefined {
     default:
       return normalized;
   }
+}
+
+function ReviewReportStructuredSections({
+  report,
+}: {
+  report: ReviewReportOutput;
+}) {
+  return (
+    <>
+      <ReviewListSection title="좋은 점" items={report.strengths} />
+      <ReviewListSection title="약한 점" items={report.weak_points} />
+      <ReviewListSection title="빠진 전제" items={report.missing_assumptions} />
+      <ReviewListSection title="위험한 추측" items={report.risky_assumptions} />
+      <ReviewListSection title="개선 우선순위" items={report.improvement_priorities} />
+      <section className="result-section">
+        <h3>{formatReviewActionHeading(report.action_recommendation.next_step)}</h3>
+        <p>{report.action_recommendation.reason}</p>
+      </section>
+    </>
+  );
+}
+
+function ReviewListSection({
+  items,
+  title,
+}: {
+  items: string[];
+  title: string;
+}) {
+  return (
+    <section className="result-section">
+      <h3>{title}</h3>
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 function formatMode(value: string): string {
@@ -1912,6 +1954,30 @@ function formatReviewVerdict(
   }
 }
 
+function formatReviewActionHeading(
+  value: ReviewReportOutput["action_recommendation"]["next_step"],
+): string {
+  switch (value) {
+    case "clarify_first":
+      return "먼저 질문이 필요합니다";
+    case "revise_now":
+      return "바로 고쳐도 좋습니다";
+    default:
+      return "다음 행동";
+  }
+}
+
+function formatReviewAction(value: string): string {
+  switch (value.replace(/\.$/, "")) {
+    case "clarify_first":
+      return "바로 고치기 전에 먼저 확인하는 편이 좋습니다.";
+    case "revise_now":
+      return "현재 발견 항목을 기준으로 바로 다듬어도 좋습니다.";
+    default:
+      return value;
+  }
+}
+
 function formatReviewSeverity(value: string): string {
   switch (value) {
     case "high":
@@ -1953,6 +2019,12 @@ function formatListLikeText(value: string): string {
 function formatNextBestMove(value: string): string {
   if (/keep the current direction/i.test(value)) {
     return "현재 방향을 유지하고 마지막으로 더 다듬습니다.";
+  }
+
+  const addressFirstMatch = value.match(/^address\s+"?(.+?)"?\s+first\.?$/i);
+
+  if (addressFirstMatch?.[1]) {
+    return `먼저 보완: ${addressFirstMatch[1]}`;
   }
 
   return value.replace(/^address\s+/i, "먼저 보완: ").replace(/\.$/, "");
