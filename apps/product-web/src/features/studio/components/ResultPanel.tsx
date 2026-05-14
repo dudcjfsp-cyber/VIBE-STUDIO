@@ -1784,6 +1784,14 @@ function formatVisibleNote(note: string): string | undefined {
       return `추천 결과 유형: ${formatOutputKind(value)}`;
     case "Technique":
       return `프롬프트 구성 방식: ${formatPromptTechnique(value)}`;
+    case "Prompt stability":
+      return `구조가 안정적인 이유: ${formatSummary(value)}`;
+    case "Context handoff":
+      return `맥락을 넘기는 방식: ${formatSummary(value)}`;
+    case "Next reuse hint":
+      return `다음에 다시 쓸 때: ${formatSummary(value)}`;
+    case "Planning focus":
+      return `계획 정리 방식: ${formatSummary(value)}`;
     case "Risk note":
       return `주의할 점: ${formatSummary(value)}`;
     case "Artifact kind":

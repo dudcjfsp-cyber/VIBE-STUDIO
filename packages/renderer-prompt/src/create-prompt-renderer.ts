@@ -96,6 +96,8 @@ function buildSystemPrompt(): string {
     "Write in the user's source language unless the request clearly calls for another language.",
     "Choose a prompting technique that fits the request: zero-shot by default, few-shot only when examples or style anchoring would materially help, and explicit structure/output-format instructions whenever they improve reliability.",
     "Prefer crisp sectioned prompts with role, task, context, constraints, and output format when useful.",
+    "Use notes to explain why the prompt structure is stable, how missing context is handled, and how the user can reuse the prompt next time.",
+    "When useful, include notes with these labels: Prompt stability, Context handoff, Next reuse hint.",
     "Keep the prompt grounded in the provided intent, context, and constraints.",
     "Do not mention internal engine fields or analysis terminology.",
   ].join("\n");

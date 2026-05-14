@@ -22,6 +22,7 @@ export function buildPromptHelpLearningPanel(
   const fewShotApplied = isFewShotPrompt(output, sourceText);
   const zeroShotApplied = !fewShotApplied;
   const formatLockApplied = hasFormatLock(output.prompt);
+  const contextHandoffApplied = hasContextHandoff(output);
   const roleIssue = hasRoleConflict(sourceText);
   const scopeIssue = hasScopeDrift(result, sourceText);
   const duplicateIssue = hasDuplicateInstruction(sourceText);
@@ -51,6 +52,14 @@ export function buildPromptHelpLearningPanel(
         ? "이번 입력은 예시나 패턴을 함께 보여주는 편이 결과 톤과 형식을 더 일정하게 맞추는 데 도움이 됐습니다."
         : "이번 입력은 예시 없이도 충분히 정리 가능해, 예시를 더하면 오히려 범위를 불필요하게 좁힐 수 있었습니다.",
       whenToUse: "원하는 결과 스타일, 밀도, 말투를 예시로 보여주는 편이 더 안정적일 때 씁니다.",
+    },
+    {
+      applied: contextHandoffApplied,
+      label: "부족한 맥락을 질문으로 남기기",
+      reason: contextHandoffApplied
+        ? "이번 프롬프트는 부족한 정보를 억지로 채우지 않고 확인 질문으로 분리하도록 만들어 추측을 줄였습니다."
+        : "이번 입력은 필요한 맥락이 비교적 충분해, 추가 질문보다 바로 결과를 만드는 흐름이 더 자연스러웠습니다.",
+      whenToUse: "대상, 사용 상황, 성공 기준이 덜 정해져 있을 때 씁니다.",
     },
   ];
 
@@ -112,6 +121,14 @@ function hasFormatLock(prompt: string): boolean {
       /json\s*(format|형식)|markdown\s*(format|형식)/iu,
     ].some((pattern) => pattern.test(normalized)) ||
     /^\s*[-*]\s+\S+/mu.test(prompt)
+  );
+}
+
+function hasContextHandoff(output: PromptOutput): boolean {
+  return (
+    output.prompt.includes("부족한 정보") ||
+    output.prompt.includes("확인해야 할 정보") ||
+    output.notes.some((note) => note.startsWith("Context handoff:"))
   );
 }
 
