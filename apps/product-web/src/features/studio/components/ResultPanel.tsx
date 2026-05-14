@@ -26,6 +26,7 @@ import { formatVisibleErrorMessage } from "../../../lib/ux/formatVisibleErrorMes
 import {
   buildDecisionCardCopy,
   buildInputImprovementHints,
+  formatRendererLabel,
 } from "../../../lib/ux/formatSignalCopy";
 import { buildPlanLearningPanel } from "../../../lib/ux/planLearning";
 import { buildPromptHelpLearningPanel } from "../../../lib/ux/promptHelpLearning";
@@ -56,6 +57,7 @@ export function ResultPanel({
   const inputHintsPanelRef = useRef<HTMLElement | null>(null);
   const decisionCard = buildDecisionCardCopy(result);
   const inputImprovementHints = buildInputImprovementHints(result);
+  const intentContext = buildIntentContextSummary(result);
   const appliedInputHint = readAppliedInputHint(result);
   const promptLearningPanel =
     output?.renderer === "prompt"
@@ -353,6 +355,25 @@ export function ResultPanel({
       <h2>{readOutputTitle(output)}</h2>
       <p className="panel-copy">{renderSummary(output.renderer)}</p>
 
+      <section className="intent-context-panel" aria-label="요청 이해와 작업 방향">
+        <div className="intent-context-header">
+          <p className="panel-kicker">먼저 이렇게 이해했어요</p>
+          <p>
+            바로 결과만 만든 것이 아니라, 지금 입력이 어떤 작업에 가까운지 먼저
+            정리했습니다.
+          </p>
+        </div>
+
+        <div className="intent-context-grid">
+          {intentContext.items.map((item) => (
+            <article className="intent-context-item" key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {appliedInputHint ? (
         <section className="applied-hint-panel" aria-label="힌트 적용 후 바뀐 점">
           <div className="applied-hint-header">
@@ -419,30 +440,6 @@ export function ResultPanel({
 
         {output.renderer === "plan" ? (
           <>
-            <section className="coding-tool-panel" aria-label="AI 코딩툴 복사용 내용">
-              <div className="coding-tool-header">
-                <div>
-                  <p className="panel-kicker">다음 단계</p>
-                  <h3>AI 코딩툴에 넣을 내용</h3>
-                </div>
-                <button
-                  className="ghost-action copy-action"
-                  disabled={isBusy}
-                  onClick={() => {
-                    void handleCopyCodingToolPayload();
-                  }}
-                  type="button"
-                >
-                  {isBusy ? "정리 중..." : codingToolCopyLabel}
-                </button>
-              </div>
-              <p>
-                현재 기획 결과를 기준으로 목표, 범위, 제외할 것, 확인 기준을
-                정해진 JSON 구조로 묶어 복사합니다. 힌트로 다시 정리하면 이
-                내용도 최신 결과 기준으로 바뀝니다.
-              </p>
-            </section>
-
             {(output.output as PlanOutput).sections.map((section) => (
                 <section className="result-section" key={section.title}>
                   <h3>{section.title}</h3>
@@ -465,6 +462,30 @@ export function ResultPanel({
             {beforeBuildKnowledgePanel ? (
               <BeforeBuildKnowledgePanel panel={beforeBuildKnowledgePanel} />
             ) : null}
+
+            <section className="coding-tool-panel" aria-label="AI 코딩툴 복사용 내용">
+              <div className="coding-tool-header">
+                <div>
+                  <p className="panel-kicker">필요할 때만 넘기기</p>
+                  <h3>AI 코딩툴에 넣을 내용</h3>
+                </div>
+                <button
+                  className="ghost-action copy-action"
+                  disabled={isBusy}
+                  onClick={() => {
+                    void handleCopyCodingToolPayload();
+                  }}
+                  type="button"
+                >
+                  {isBusy ? "정리 중..." : codingToolCopyLabel}
+                </button>
+              </div>
+              <p>
+                위 기획을 먼저 읽고 나서, 실제 구현 대화를 시작할 때만 목표,
+                범위, 제외할 것, 확인 기준을 정해진 JSON 구조로 묶어 복사합니다.
+                힌트로 다시 정리하면 이 내용도 최신 결과 기준으로 바뀝니다.
+              </p>
+            </section>
           </>
         ) : null}
 
@@ -1603,6 +1624,112 @@ function splitArchitectureResponsibility(value: string): string[] {
     .filter(Boolean);
 
   return parts.length > 1 ? parts : [normalized];
+}
+
+function buildIntentContextSummary(result: EngineResult): {
+  items: Array<{
+    body: string;
+    title: string;
+  }>;
+} {
+  const missingContext = readContextList([
+    ...result.intent_ir.analysis.missing_information,
+    ...result.intent_ir.analysis.clarification_questions.map(
+      (question) => question.question,
+    ),
+  ]);
+  const riskyAssumptions = readContextList([
+    ...result.intent_ir.analysis.risks,
+    ...result.intent_ir.analysis.assumptions,
+  ]);
+
+  return {
+    items: [
+      {
+        title: "내가 이해한 요청",
+        body: formatIntentSummary(result.intent_ir.summary, result.source.text),
+      },
+      {
+        title: "추천 작업 형태",
+        body: `${formatRendererLabel(result.provisional_renderer)}로 먼저 정리하는 편이 좋아 보입니다.`,
+      },
+      {
+        title: "왜 이 방향인지",
+        body: readWorkTypeReason(result),
+      },
+      {
+        title: "빠진 정보",
+        body:
+          missingContext.length > 0
+            ? missingContext.join(" / ")
+            : "지금 입력만으로도 첫 결과를 만들 수 있을 만큼 핵심 방향은 보입니다.",
+      },
+      {
+        title: "조심해야 할 추측",
+        body:
+          riskyAssumptions.length > 0
+            ? riskyAssumptions.join(" / ")
+            : "큰 추측 없이 정리했지만, 세부 조건은 결과를 보며 조정하면 좋습니다.",
+      },
+      {
+        title: "다음에 더 잘 요청하려면",
+        body: readNextBetterRequestHint(result),
+      },
+    ],
+  };
+}
+
+function formatIntentSummary(summary: string, sourceText: string): string {
+  const normalized = summary.trim();
+
+  if (normalized) {
+    return formatSummary(normalized);
+  }
+
+  const preview = sourceText.trim().replace(/\s+/g, " ").slice(0, 90);
+
+  return preview
+    ? `${preview}${sourceText.trim().length > preview.length ? "..." : ""}`
+    : "입력한 내용을 바탕으로 의도와 작업 방향을 먼저 정리했습니다.";
+}
+
+function readContextList(values: string[]): string[] {
+  return values
+    .map((value) => formatSummary(value).trim().replace(/\.$/, ""))
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+function readWorkTypeReason(result: EngineResult): string {
+  if (result.mode_guess === "review") {
+    return "새로 쓰기보다 기존 초안의 약점과 보완점을 먼저 보는 요청으로 읽혔습니다.";
+  }
+
+  switch (result.provisional_renderer) {
+    case "plan":
+      return "최종 문구보다 문제, 대상, 범위가 먼저 잡혀야 결과가 덜 얕아집니다.";
+    case "architecture":
+      return "기능을 바로 나열하기보다 경계, 구성요소, 흐름을 나누는 일이 먼저입니다.";
+    case "prompt":
+      return "목표와 사용 상황이 비교적 분명해서 다른 AI에 넘길 실행형 입력으로 만들 수 있습니다.";
+    case "review-report":
+    default:
+      return "현재 내용은 결과를 새로 만들기보다 판단 기준에 따라 점검하는 편이 더 맞습니다.";
+  }
+}
+
+function readNextBetterRequestHint(result: EngineResult): string {
+  switch (result.provisional_renderer) {
+    case "plan":
+      return "누가 쓰는지, 어떤 문제를 풀고 싶은지, 첫 버전에서 어디까지 할지 함께 적어보세요.";
+    case "architecture":
+      return "포함할 화면이나 역할, 가장 중요한 사용자 흐름, 이번 단계에서 제외할 것을 함께 적어보세요.";
+    case "review-report":
+      return "검토할 초안 전체, 어디에 쓰일지, 먼저 보고 싶은 기준을 함께 적어보세요.";
+    case "prompt":
+    default:
+      return "사용 상황, 원하는 출력 형식, 대상, 꼭 지킬 조건을 함께 적어보세요.";
+  }
 }
 
 function readOutputTitle(output: EngineResult["outputs"][number]) {

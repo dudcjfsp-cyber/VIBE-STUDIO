@@ -333,10 +333,10 @@ function buildReviewFollowUp(
   );
   const findings = request.result_context.findings;
   const topFindings = findings.slice(0, 3);
-  const defaultRemainingQuestions = findings.slice(3, 5).map((finding) =>
-    korean
-      ? `${finding.title}까지 반영하려면 추가 맥락이 더 필요한지 확인`
-      : `Check whether ${finding.title} needs more source context before another pass`,
+  const defaultRemainingQuestions = buildReviewRemainingQuestions(
+    findings,
+    artifactText,
+    korean,
   );
   const remainingQuestionSource =
     refinement?.base_remaining_questions.length
@@ -357,11 +357,7 @@ function buildReviewFollowUp(
   return {
     action_id: request.selected_action,
     change_summary: [
-      ...topFindings.map((finding) =>
-        korean
-          ? `${finding.title} 지적을 반영해 ${shortenSentence(finding.recommendation)}`
-          : `Addressed ${finding.title} by ${shortenSentence(finding.recommendation)}`,
-      ),
+      ...buildReviewChangeSummary(topFindings, korean),
       ...refinementSummary,
     ],
     remaining_questions: remainingQuestions,
@@ -504,19 +500,53 @@ function buildKoreanReviewRevision(
   refinement?: Stage1ReviewRefinementContext,
 ): string {
   const subject = inferKoreanSubject(artifactText, sourceText);
-  const audiencePrefix = hasKeyword(`${artifactText} ${sourceText}`, ["초보자"])
-    ? "초보자도 바로 적응할 수 있는 "
-    : "";
+  const hasUnknownAudience = hasFindingKeyword(findings, [
+    "대상",
+    "독자",
+    "사용자",
+  ]);
+  const hasMissingContext = hasFindingKeyword(findings, [
+    "사용 맥락",
+    "전달 맥락",
+    "어디에서",
+  ]);
+  const hasOverclaim = hasKeyword(artifactText, [
+    "누구나",
+    "10배",
+    "무조건",
+    "반드시",
+    "완벽",
+    "최고",
+  ]);
+  const audiencePrefix =
+    !hasUnknownAudience && hasKeyword(`${artifactText} ${sourceText}`, ["초보자"])
+      ? "초보자도 바로 적응할 수 있는 "
+      : "";
   const defaultFeatureSentence =
     subject === "생산성 앱"
-      ? "복잡한 할 일을 쉽게 정리하고 우선순위를 빠르게 잡아 시간을 아끼게 도와줍니다."
-      : `${subject}의 핵심 가치와 사용 이점을 더 분명하게 전달합니다.`;
-  const ctaSentence = hasFindingKeyword(findings, ["흥미", "유도", "설득", "행동"])
-    ? "지금 바로 시작해 더 가볍고 선명하게 하루를 관리해보세요."
+      ? "흩어진 할 일과 우선순위를 한곳에서 정리해, 오늘 집중할 일을 더 쉽게 확인하도록 돕습니다."
+      : `${subject}의 핵심 가치와 사용 장면을 더 구체적으로 이해하도록 돕습니다.`;
+  const safetySentence = hasOverclaim
+    ? "과장된 성과를 약속하기보다, 사용자가 일을 더 차분하게 정리하도록 돕는 점을 중심에 두었습니다."
     : "";
+  const contextSentence = hasMissingContext
+    ? "앱 첫 화면, 소개 페이지, 광고 문구 중 어디에 쓰일지 정해지면 표현을 더 정확하게 맞출 수 있습니다."
+    : "";
+  const ctaSentence =
+    !hasMissingContext && hasFindingKeyword(findings, ["흥미", "유도", "설득", "행동"])
+      ? "지금 바로 시작해 더 가볍고 선명하게 하루를 관리해보세요."
+      : "";
   const baseLines = (
     refinement?.base_result_body.trim() ||
-    [`${audiencePrefix}${subject}입니다.`, defaultFeatureSentence, ctaSentence]
+    [
+      hasUnknownAudience
+        ? `${subject}을 더 체계적으로 쓰고 싶은 사용자를 위한 소개 문구입니다.`
+        : `${audiencePrefix}${subject}입니다.`,
+      defaultFeatureSentence,
+      safetySentence,
+      contextSentence,
+      ctaSentence,
+    ]
       .filter(Boolean)
       .join("\n")
   )
@@ -537,7 +567,9 @@ function buildKoreanReviewRevision(
   if (audienceAnswer) {
     baseLines[0] = buildAudienceLine(audienceAnswer, subject, "ko");
   } else if (!baseLines[0]) {
-    baseLines[0] = `${audiencePrefix}${subject}입니다.`;
+    baseLines[0] = hasUnknownAudience
+      ? `${subject}을 더 체계적으로 쓰고 싶은 사용자를 위한 소개 문구입니다.`
+      : `${audiencePrefix}${subject}입니다.`;
   }
 
   if (valueAnswer) {
@@ -566,21 +598,49 @@ function buildEnglishReviewRevision(
   refinement?: Stage1ReviewRefinementContext,
 ): string {
   const subject = inferEnglishSubject(artifactText, sourceText);
+  const hasUnknownAudience = hasFindingKeyword(findings, [
+    "audience",
+    "target",
+    "user",
+  ]);
+  const hasMissingContext = hasFindingKeyword(findings, [
+    "context",
+    "where",
+    "usage",
+  ]);
+  const hasOverclaim = /\beveryone\b|\b10x\b|\bguarantee\b|\balways\b|\bperfect\b|\bbest\b/i.test(
+    artifactText,
+  );
   const defaultFirstSentence = /\bbeginner|first-time\b/i.test(
     `${artifactText} ${sourceText}`,
   )
     ? `A beginner-friendly ${subject}.`
-    : `A clearer ${subject}.`;
+    : hasUnknownAudience
+      ? `A clearer message for people who want to use this ${subject} more deliberately.`
+      : `A clearer ${subject}.`;
   const defaultFeatureSentence =
     subject === "productivity app"
       ? "It helps you organize tasks quickly, set priorities with less friction, and save time as you work."
       : `It makes the core value and practical benefit of this ${subject} easier to understand.`;
-  const ctaSentence = hasFindingKeyword(findings, ["engage", "persuade", "interest", "action"])
-    ? "Start now and build a more focused, productive routine."
+  const safetySentence = hasOverclaim
+    ? "Instead of promising an unrealistic outcome, it focuses on helping users work with more clarity and control."
     : "";
+  const contextSentence = hasMissingContext
+    ? "Once the placement is clear, such as an app homepage, ad, or product page, the wording can be tightened further."
+    : "";
+  const ctaSentence =
+    !hasMissingContext && hasFindingKeyword(findings, ["engage", "persuade", "interest", "action"])
+      ? "Start now and build a more focused, productive routine."
+      : "";
   const baseLines = (
     refinement?.base_result_body.trim() ||
-    [defaultFirstSentence, defaultFeatureSentence, ctaSentence]
+    [
+      defaultFirstSentence,
+      defaultFeatureSentence,
+      safetySentence,
+      contextSentence,
+      ctaSentence,
+    ]
       .filter(Boolean)
       .join("\n")
   )
@@ -616,7 +676,7 @@ function buildEnglishReviewRevision(
 function inferKoreanSubject(artifactText: string, sourceText: string): string {
   const combined = `${artifactText} ${sourceText}`;
 
-  if (combined.includes("생산성 앱")) {
+  if (combined.includes("생산성 앱") || combined.includes("생산성")) {
     return "생산성 앱";
   }
 
@@ -633,6 +693,113 @@ function inferKoreanSubject(artifactText: string, sourceText: string): string {
   }
 
   return "초안";
+}
+
+function buildReviewRemainingQuestions(
+  findings: Stage1ReviewFinding[],
+  artifactText: string,
+  korean: boolean,
+): string[] {
+  const text = findings
+    .map((finding) => `${finding.title} ${finding.detail} ${finding.recommendation}`)
+    .join(" ");
+  const questions: string[] = [];
+
+  if (korean) {
+    if (hasKeyword(text, ["대상", "독자", "사용자"])) {
+      questions.push("이 문구를 가장 먼저 읽을 핵심 사용자는 누구인가요?");
+    }
+
+    if (hasKeyword(text, ["사용 맥락", "전달 맥락", "어디에서", "공개 공지", "소개"])) {
+      questions.push("이 문구는 앱 첫 화면, 소개 페이지, 광고, 내부 자료 중 어디에 쓰이나요?");
+    }
+
+    if (hasKeyword(text, ["품질 기준", "톤", "길이", "구조", "제약"])) {
+      questions.push("톤, 길이, 꼭 피해야 할 표현이 있다면 무엇인가요?");
+    }
+
+    if (
+      questions.length === 0 &&
+      hasKeyword(artifactText, ["누구나", "10배", "무조건", "반드시", "완벽"])
+    ) {
+      questions.push("과장으로 보이지 않게 유지하면서 꼭 남겨야 할 핵심 가치는 무엇인가요?");
+    }
+  } else {
+    const lowerText = text.toLowerCase();
+
+    if (lowerText.includes("audience") || lowerText.includes("target")) {
+      questions.push("Who is the primary audience for this wording?");
+    }
+
+    if (lowerText.includes("context") || lowerText.includes("where")) {
+      questions.push("Where will this wording appear: homepage, ad, product page, or internal note?");
+    }
+
+    if (
+      lowerText.includes("tone") ||
+      lowerText.includes("length") ||
+      lowerText.includes("constraint")
+    ) {
+      questions.push("What tone, length, or wording constraints should be preserved?");
+    }
+
+    if (
+      questions.length === 0 &&
+      /\beveryone\b|\b10x\b|\bguarantee\b|\balways\b|\bperfect\b/i.test(artifactText)
+    ) {
+      questions.push("What core value should remain while avoiding overclaim?");
+    }
+  }
+
+  return [...new Set(questions)].slice(0, 3);
+}
+
+function buildReviewChangeSummary(
+  findings: Stage1ReviewFinding[],
+  korean: boolean,
+): string[] {
+  const text = findings
+    .map((finding) => `${finding.title} ${finding.detail} ${finding.recommendation}`)
+    .join(" ");
+  const summaries: string[] = [];
+
+  if (korean) {
+    if (hasKeyword(text, ["대상", "독자", "사용자"])) {
+      summaries.push("대상이 불분명한 점을 고려해, 임의의 구체 대상을 단정하지 않는 안전한 표현으로 바꿨습니다.");
+    }
+
+    if (hasKeyword(text, ["사용 맥락", "전달 맥락", "어디에서", "소개"])) {
+      summaries.push("사용 위치가 아직 정해지지 않은 점은 수정안 안에서 임시 조건으로 남겼습니다.");
+    }
+
+    if (hasKeyword(text, ["품질 기준", "톤", "길이", "구조", "제약"])) {
+      summaries.push("과장되거나 단정적인 표현을 줄이고, 핵심 가치가 더 차분하게 보이도록 다듬었습니다.");
+    }
+
+    return summaries.length > 0
+      ? summaries.slice(0, 3)
+      : findings.slice(0, 3).map((finding) =>
+          `${finding.title} 지적을 반영해 수정안의 표현을 더 구체적으로 다듬었습니다.`,
+        );
+  }
+
+  if (/audience|target|user/i.test(text)) {
+    summaries.push("Made the revision safer by avoiding an unsupported assumption about the target audience.");
+  }
+
+  if (/context|where|usage/i.test(text)) {
+    summaries.push("Left the unclear placement as a remaining condition instead of pretending it was settled.");
+  }
+
+  if (/tone|length|constraint|overclaim|quality/i.test(text)) {
+    summaries.push("Reduced overclaim and made the core value more concrete.");
+  }
+
+  return summaries.length > 0
+    ? summaries.slice(0, 3)
+    : findings.slice(0, 3).map((finding) =>
+        `Refined the draft to address ${finding.title}.`,
+      );
 }
 
 function inferEnglishSubject(artifactText: string, sourceText: string): string {

@@ -23,11 +23,13 @@ Each case defines:
 - expected `next_step`
 - expected `approval_level`
 - expected `pivot_recommended`
+- learning expectation
 - short reason
 
 Rule:
 - golden case는 workflow baseline을 고정한다
 - renderer-specific output wording, finding density, section phrasing은 다른 문서와 renderer verify가 소유한다
+- learning expectation은 자동 workflow 판정 필드가 아니라, product-web 수동 점검에서 사용자가 무엇을 이해해야 하는지 확인하는 기준이다
 
 ## Product Core Cases
 These cases represent the default target user: an AI beginner who is unsure what to ask for, what to call the output, or which card to choose.
@@ -44,6 +46,7 @@ These cases represent the default target user: an AI beginner who is unsure what
 - Expected `next_step`: `direct_render`
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 이 요청이 이미 실행형 프롬프트로 만들 만큼 목표가 분명하다는 점을 이해해야 한다.
 - Reason: goal, output shape, and renderer fit are already clear enough for direct rendering.
 
 ### Case 2: Beginner Idea Structuring
@@ -58,6 +61,7 @@ These cases represent the default target user: an AI beginner who is unsure what
 - Expected `next_step`: `approval_pending`
 - Expected `approval_level`: `recommended`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 막연한 앱 아이디어가 바로 문구 생성보다 문제, 대상, 범위 정리로 먼저 좋아진다는 점을 이해해야 한다.
 - Reason: the direction is clear enough to proceed, but a soft checkpoint helps sharpen scope and problem framing.
 
 ### Case 3: Beginner Architecture Request
@@ -72,6 +76,7 @@ These cases represent the default target user: an AI beginner who is unsure what
 - Expected `next_step`: `clarify_first`
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 기능 목록보다 시스템 경계와 설계 초점이 먼저 필요하다는 점을 이해해야 한다.
 - Reason: architecture intent is clear, but system boundary and design focus are still missing.
 
 ### Case 4: Prompt Review With Artifact Present
@@ -86,6 +91,7 @@ These cases represent the default target user: an AI beginner who is unsure what
 - Expected `next_step`: `direct_render`
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 기존 프롬프트를 새로 써달라는 요청과 먼저 약점을 보는 검토 요청이 다르다는 점을 이해해야 한다.
 - Reason: this is clearly evaluation of an existing artifact, and the artifact is available.
 
 ### Case 5: Review Request Without Artifact
@@ -100,6 +106,7 @@ These cases represent the default target user: an AI beginner who is unsure what
 - Expected `next_step`: `clarify_first`
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 검토하려면 실제 초안이 필요하고, 초안이 없으면 판단 기준보다 검토 대상이 먼저 비어 있다는 점을 이해해야 한다.
 - Reason: review intent is clear, but the artifact under review is missing.
 
 ### Case 6: Wrong Card, Actually Review
@@ -114,6 +121,7 @@ These cases represent the default target user: an AI beginner who is unsure what
 - Expected `next_step`: `direct_render`
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `true`
+- Learning expectation: 사용자는 선택한 카드보다 실제 요청의 작업 성격이 우선이며, 전환은 조용히 일어나지 않고 설명되어야 한다는 점을 이해해야 한다.
 - Reason: the user entered through a creation-oriented card, but the actual task is evaluation of an existing draft.
 
 ## Gate Regression Cases
@@ -131,6 +139,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `next_step`: `approval_pending`
 - Expected `approval_level`: `required`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 외부 고객에게 나가는 결과는 내용이 명확해도 한 번 더 확인하는 편이 안전하다는 점을 이해해야 한다.
 - Reason: the request is clear, but the output is public-facing and high impact.
 
 ### Case 8: Wrong Card, Actually Architecture
@@ -145,6 +154,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `next_step`: `clarify_first`
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `true`
+- Learning expectation: 사용자는 프롬프트 카드로 들어왔더라도 실제로는 시스템 구조를 먼저 나누는 일이 필요할 수 있다는 점을 이해해야 한다.
 - Reason: the user chose a prompt-oriented entry path, but the actual task is system-level structure planning.
 
 ### Case 9: Architecture Follow-Up After Scope Lock
@@ -159,6 +169,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `next_step`: `approval_pending`
 - Expected `approval_level`: `required`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 경계와 흐름 초점이 채워지면 architecture가 질문 대기에서 명시적 확인 후 구조화로 이동한다는 점을 이해해야 한다.
 - Reason: once the system boundary and design focus are present, architecture should move from clarify-first to explicit approval rather than stay blocked.
 
 ### Case 10: Lightweight MVP Plan Free Input
@@ -173,6 +184,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `next_step`: `approval_pending`
 - Expected `approval_level`: `recommended`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 가벼운 MVP 아이디어도 먼저 결과를 보며 문제, 대상, 범위를 보완할 수 있다는 점을 이해해야 한다.
 - Reason: a concrete app subject plus MVP planning scope is enough for a soft checkpoint; it should not fall into clarify-first or feel like a template-gated path.
 
 ### Case 11: Plan Card With Prompt Product Subject
@@ -188,6 +200,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `approval_level`: `recommended`
 - Expected `pivot_recommended`: `false`
 - Expected `intent.audience_contains`: `AI를 처음 써보는 비개발자`
+- Learning expectation: 사용자는 입력 안의 `프롬프트`라는 단어가 항상 prompt renderer를 뜻하지 않고, 제품 주제일 수 있다는 점을 이해해야 한다.
 - Reason: the word prompt is part of the product subject, while the selected card and requested work are product planning.
 
 ### Case 12: Free Input Title Generation
@@ -202,6 +215,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `next_step`: `direct_render`
 - Expected `approval_level`: `none`
 - Expected `pivot_recommended`: `false`
+- Learning expectation: 사용자는 제목 후보 생성처럼 바로 실행 가능한 요청은 plan으로 과하게 구조화하지 않아도 된다는 점을 이해해야 한다.
 - Reason: free input asking for title candidates is an executable generation request, not product planning.
 
 ### Case 13: Plan Audience Hint Overrides Earlier Audience
@@ -218,6 +232,7 @@ These cases are still written in beginner-friendly language, but they mainly pro
 - Expected `pivot_recommended`: `false`
 - Expected `intent.audience_contains`: `혼자 시작하는 초보 사용자`
 - Expected `force_render.plan_section_absent`: `맥락`
+- Learning expectation: 사용자는 뒤에 덧붙인 더 구체적인 대상 설명이 결과의 중심 사용자를 갱신한다는 점을 이해해야 한다.
 - Reason: when an input hint is appended later, the latest explicit audience statement should update the plan audience instead of keeping the earlier placeholder or earlier audience.
 
 ## Coverage Notes
