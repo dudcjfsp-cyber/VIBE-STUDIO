@@ -19,15 +19,17 @@ assert.match(source, /risky_assumptions:/);
 assert.match(source, /needs_user_decision:/);
 assert.match(source, /function buildExcludedScope/);
 assert.match(source, /function buildCodingGuardrails/);
-assert.doesNotMatch(source, /Codex 작업 지시 복사/);
+assert.match(source, /Codex 작업 지시 복사/);
+assert.match(source, /function buildCodexHandoffText/);
+assert.match(source, /export_format:\s+"codex_markdown"/);
 
 console.log(
   JSON.stringify({
     handoff_schema: "vibe_studio.ai_work_handoff.v2",
     checks: [
-      "uses one existing AI coding-tool copy surface",
+      "keeps the AI coding-tool JSON copy surface",
+      "keeps the Codex markdown handoff copy surface",
       "keeps context, implementation boundary, learning context, and user decisions",
-      "does not reintroduce a separate Codex copy button",
     ],
   }),
 );
