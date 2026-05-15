@@ -25,6 +25,8 @@ const resultPanelSource = await readFile(
 
 assert.match(startPanelSource, /const beginnerTemplateIds:[\s\S]*\["free", "prompt", "plan"\]/);
 assert.match(startPanelSource, /advanced-start-disclosure/);
+assert.match(startPanelSource, /provider-disclosure/);
+assert.match(startPanelSource, /<span>고급 설정<\/span>/);
 assert.match(startPanelSource, /ProviderSessionPanel/);
 assert.match(startPanelSource, /부족한 부분은 결과 안에서 조심스럽게 짚어드립니다/);
 assert.doesNotMatch(startPanelSource, /approval-card|clarify-card|question-card/);

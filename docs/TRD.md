@@ -212,7 +212,7 @@ Rule:
 제품 프론트는 provider credential을 영구 저장하지 않는다.
 
 현재 제품 프론트는:
-- provider 선택, API key 입력, 모델 선택을 브라우저에서 받는다
+- provider 선택, API key 입력, 모델 선택을 `고급 설정` 안의 선택적 runtime path로 받는다
 - API key와 선택 모델을 session storage에만 저장한다
 - session storage 기록은 30분 뒤 만료되어 자동 삭제된다
 - product runtime은 credential을 메모리/디스크에 저장하지 않고 요청 단위로만 사용한다
@@ -221,6 +221,7 @@ Rule:
 - 제품 프론트는 local storage 같은 장기 저장소에 API key를 남기지 않는다
 - product runtime은 사용자 API key를 서버 설정으로 승격하지 않는다
 - 모델 목록 조회와 renderer 실행은 같은 provider/key 범위 안에서 이뤄져야 한다
+- API key 입력은 입문자 기본 흐름의 조건이 아니며, 기본 화면에서 요구사항처럼 보이면 안 된다
 
 ### Product-web verification boundary
 현재 브라우저 기준 제품 프론트와 수동 검증 기준면은 `apps/product-web`다.

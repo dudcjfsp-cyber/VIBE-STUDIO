@@ -17,6 +17,7 @@ Purpose: 현재 `apps/product-web`의 제품 프론트 baseline과 남은 프론
 - create / review 구분은 첫 입력 이후 engine이 판단한다
 - `clarify_first`와 `approval_pending` 신호가 있어도 입문자 기본 화면은 먼저 결과를 보여준다
 - 결과 화면은 renderer output보다 먼저 사용자의 의도와 맥락을 어떻게 이해했는지 보여주는 공통 context layer를 둔다
+- API key 입력과 provider 연결은 입문자 기본 흐름이 아니라 `고급 설정` 뒤에 숨긴 선택적 runtime 설정이다
 - 수동 검증의 기본 기준면은 `product-web`로 둔다
 
 ## 2. 왜 이 방향인가
@@ -31,6 +32,7 @@ Purpose: 현재 `apps/product-web`의 제품 프론트 baseline과 남은 프론
 - 선택 카드는 결과 방향을 강제하는 장치가 아니라 사용자의 막막함을 줄이는 시작 방식으로 둔다
 - 시스템은 먼저 이해한 바를 비춰줘야 한다
 - 초보자가 기술 용어를 몰라도 흐름을 따라갈 수 있어야 한다
+- API key를 붙여야 쓸 수 있다는 인상은 입문자에게 큰 장벽이므로 기본 화면에서 전면에 두지 않는다
 
 ## 3. 제품 프론트의 역할
 `apps/product-web`은 아래를 담당한다.
@@ -55,6 +57,7 @@ Purpose: 현재 `apps/product-web`의 제품 프론트 baseline과 남은 프론
 - 실제 model/provider 호출은 `apps/product-server`가 요청 단위로 중계한다
 - server runtime은 전달받은 key를 저장하지 않는다
 - 브라우저는 server runtime API를 통해 결과와 모델 목록을 요청한다
+- provider key 입력은 고급 설정 안의 fallback/optional path이며, 제품의 기본 시작 조건이나 핵심 약속으로 보이게 하지 않는다
 
 ## 5. 첫 화면 원칙
 ### 핵심 원칙
@@ -63,6 +66,7 @@ Purpose: 현재 `apps/product-web`의 제품 프론트 baseline과 남은 프론
 - 기술 용어보다 자연어 입력을 먼저 유도해야 한다
 - 첫 화면에서 renderer 이름을 전면에 내세우지 않는다
 - 질문 카드, 승인 카드, 예시 버튼 묶음은 기본 첫 화면에서 노출하지 않는다
+- API key, 모델 선택, provider 연결은 기본 첫 화면에서 노출하지 않는다
 - 사용자는 긴 자유입력을 쓰지 않아도 프롬프트, 플랜, 아키텍처, 검증 및 리뷰 템플릿 중 하나로 먼저 시작할 수 있어야 한다
 - 자유입력은 제거하지 않고 `자율입력` 카드로 둔다
 
