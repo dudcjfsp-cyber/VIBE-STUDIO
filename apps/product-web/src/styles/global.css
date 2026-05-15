@@ -1181,6 +1181,53 @@ textarea {
   background: rgba(248, 255, 252, 0.86);
 }
 
+.intent-context-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid rgba(65, 91, 168, 0.16);
+  border-radius: 8px;
+  background: rgba(247, 249, 255, 0.84);
+}
+
+.intent-context-header {
+  display: grid;
+  gap: 6px;
+}
+
+.intent-context-header p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.intent-context-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.intent-context-item {
+  min-height: 128px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.intent-context-item h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.intent-context-item p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
 .decision-card-header {
   display: grid;
   gap: 6px;
@@ -2150,6 +2197,10 @@ textarea {
   }
 
   .decision-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .intent-context-grid {
     grid-template-columns: 1fr;
   }
 

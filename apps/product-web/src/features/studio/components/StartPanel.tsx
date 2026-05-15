@@ -16,14 +16,14 @@ const starterExamples: Array<{
 }> = [
   {
     cardHint: "command-optimization",
-    description: "누르면 바로 결과 화면으로 넘어갑니다.",
+    description: "요청이 바로 실행형 작업으로 정리되는 흐름을 봅니다.",
     input:
       "AI 입문자를 대상으로 한 5분짜리 유튜브 영상 제목을 10개 뽑고 싶어. 너무 과장된 제목은 피하고 싶어.",
     label: "유튜브 제목 10개 뽑기",
   },
   {
     cardHint: "idea-structuring",
-    description: "막연한 생각이 어떻게 정리되는지 봅니다.",
+    description: "막연한 생각이 어떤 작업 형태로 정리되는지 봅니다.",
     input:
       "AI 입문자를 위한 프롬프트 연습 노트를 만들고 싶어. 주요 대상은 AI를 처음 써보는 비개발자야. 이 아이디어를 기획 정리로 잡아줘.",
     label: "아이디어를 기획으로 정리하기",
@@ -122,14 +122,20 @@ export function StartPanel(props: StartPanelProps) {
     <section className="start-panel">
       <div className="brand-lockup">
         <h1 className="brandmark">VIBE STUDIO</h1>
-        <p className="brand-subcopy">뭘 적어야 할지 몰라도 괜찮아요. 먼저 눌러보고 감을 잡아보세요.</p>
+        <p className="brand-subcopy">
+          AI에게 바로 시키기 전에, 내가 무엇을 원하는지와 어떤 작업으로 넘기면
+          좋은지 먼저 선명하게 정리해보세요.
+        </p>
       </div>
 
-      <section className="starter-examples" aria-label="예시로 먼저 보기">
+      <section className="starter-examples" aria-label="의도 구조 예시로 먼저 보기">
         <div className="starter-examples-copy">
-          <span className="starter-step">가장 쉬운 시작</span>
-          <p>예시를 눌러 결과부터 보기</p>
-          <span>아직 쓸 말이 떠오르지 않아도 괜찮아요. 결과가 어떻게 생기는지 먼저 볼 수 있어요.</span>
+          <span className="starter-step">의도 구조 미리 보기</span>
+          <p>내 요청이 어떤 작업인지 먼저 보기</p>
+          <span>
+            아직 쓸 말이 떠오르지 않아도 괜찮아요. Vibe Studio가 요청을 어떻게
+            이해하고 분류하는지 먼저 볼 수 있어요.
+          </span>
         </div>
         <div className="starter-example-actions">
           {starterExamples.map((example) => (

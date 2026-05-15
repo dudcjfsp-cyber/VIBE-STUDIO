@@ -38,6 +38,15 @@ assert.ok(planOutput);
 assert.ok(planOutput.title.trim().length > 0);
 assert.ok(planOutput.sections.length >= 3);
 
+const planSectionTitles = planOutput.sections.map((section) => section.title);
+
+assert.ok(planSectionTitles.includes("처음 버전 범위"));
+assert.ok(planSectionTitles.includes("필요한 결정"));
+assert.ok(planSectionTitles.includes("다음 대화 질문"));
+assert.ok(
+  planOutput.notes.some((note) => note.startsWith("Planning focus:")),
+);
+
 console.log(
   JSON.stringify({
     approval_pending_without_confirmation: {
@@ -51,6 +60,9 @@ console.log(
       output_count: approvedResult.outputs.length,
       output_validation: approvedResult.outputs[0]?.validation.status,
       section_count: planOutput.sections.length,
+      learning_sections: planSectionTitles.filter((title) =>
+        ["처음 버전 범위", "필요한 결정", "다음 대화 질문"].includes(title),
+      ),
     },
   }),
 );

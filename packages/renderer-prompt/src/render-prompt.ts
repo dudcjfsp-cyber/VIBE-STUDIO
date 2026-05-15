@@ -84,6 +84,9 @@ export function renderPrompt(handoff: RendererHandoff): PromptOutput {
     `Mode: ${handoff.intent_ir.mode}`,
     `Summary: ${handoff.intent_ir.summary}`,
     `Technique: ${chooseTechniqueLabel(handoff.source.text)}`,
+    "Prompt stability: 역할, 목표, 참고 맥락, 작업, 출력 형식을 분리해 하위 AI가 숨은 의도를 추측할 여지를 줄였습니다.",
+    "Context handoff: 부족한 정보는 결과 안에서 질문으로 분리하게 해, 없는 사실을 꾸며내지 않도록 했습니다.",
+    "Next reuse hint: 다음에 다시 쓸 때는 목표, 참고 맥락, 출력 형식부터 바꾸면 가장 안전합니다.",
     "Fallback: ready-to-paste prompt template",
   ];
 

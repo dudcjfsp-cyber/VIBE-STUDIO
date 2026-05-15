@@ -107,6 +107,10 @@ function buildSystemPrompt(): string {
     "Do not use casual or plain Korean endings such as ~다, ~한다, ~했다, or terse noun-only fragments for user-facing sentences.",
     "Write in the user's source language unless the request clearly calls for another language.",
     "Make the plan concrete, but do not invent domain facts that are not supported by the input.",
+    "The plan should help the user understand the thinking order before execution.",
+    "Prefer sections that separate problem definition, target user, goal, first-version scope, necessary decisions, missing information, and next conversation questions.",
+    "Keep architecture-heavy or implementation-heavy detail out unless the input clearly asks for it.",
+    "Use notes to explain the planning focus in beginner-friendly language.",
     "Do not mention internal engine fields or validation language.",
   ].join("\n");
 }
@@ -156,6 +160,8 @@ function buildUserPrompt(handoff: RendererHandoff): string {
 
   lines.push(
     "Output expectation: Return a practical planning structure that could guide the next conversation or first implementation pass.",
+    "Include sections for problem, target user, initial direction, first-version scope, necessary decisions, and next conversation questions when they are relevant.",
+    "If information is missing, show it as a decision or question rather than inventing a fact.",
   );
 
   return lines.join("\n");

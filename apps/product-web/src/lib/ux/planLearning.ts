@@ -40,6 +40,7 @@ export function buildPlanLearningPanel(
   const hasSuccessOrQuestions =
     hasAny(combinedText, ["성공", "기준", "목표", "질문", "확인", "success"]) ||
     result.intent_ir.analysis.clarification_questions.length > 0;
+  const hasDecisions = hasAny(combinedText, ["필요한 결정", "정해야", "선택해야", "decision"]);
 
   const points: PlanLearningPoint[] = [
     {
@@ -68,6 +69,15 @@ export function buildPlanLearningPanel(
         : "이번 입력은 성공 여부를 판단할 기준이 아직 약해, 다음에는 무엇이 되면 성공인지 함께 적으면 좋습니다.",
       whenToUse:
         "계획이 그럴듯해 보여도 무엇을 확인해야 할지 애매할 때 씁니다.",
+    },
+    {
+      applied: hasDecisions,
+      label: "필요한 결정 따로 보기",
+      reason: hasDecisions
+        ? "이번 계획은 아직 정해야 할 선택지를 따로 꺼내, 바로 실행하기 전에 무엇을 합의해야 하는지 보이게 했습니다."
+        : "이번 입력은 결정할 항목이 충분히 드러나지 않아, 다음에는 선택해야 할 기준을 따로 적으면 좋습니다.",
+      whenToUse:
+        "계획은 있어 보이지만 무엇부터 결정해야 할지 흐릴 때 씁니다.",
     },
   ];
 
