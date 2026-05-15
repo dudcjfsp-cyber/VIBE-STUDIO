@@ -83,7 +83,14 @@ assert.match(resultPanelSource, /<FollowUpBody followUp=\{followUp\} \/>/);
 assert.match(resultPanelSource, /원본 결과와 섞이지 않도록 후속 결과는 한 번에 1개만 만듭니다/);
 assert.match(resultPanelSource, /한 번 더 살펴보기/);
 assert.match(resultPanelSource, /정리 기준과 확인할 점/);
-assert.doesNotMatch(resultPanelSource, /API 연결이 없어도/);
+const resultDraftIntroSource = resultPanelSource.slice(
+  resultDraftIntroIndex,
+  resultBodyIndex,
+);
+assert.doesNotMatch(
+  resultDraftIntroSource,
+  /API\s*(?:키|key)?|provider|model|모델\s*(?:설정|연결)|외부\s*AI\s*연결/iu,
+);
 assert.doesNotMatch(resultPanelSource, /Stage 1에서는/);
 
 const planSectionsIndex = resultPanelSource.indexOf(
