@@ -1,13 +1,13 @@
 # Agent Adoption Plan
 
-Updated: 2026-04-19
+Updated: 2026-05-15
 Purpose: Vibe Studio에 에이전트화를 도입할 때 어떤 경계에서 시작하고, 무엇을 아직 에이전트화하지 않을지 정리하는 focused note
 
 ## Rule
 - 이 문서는 source-of-truth 제품 문서가 아니라 에이전트 도입 planning note다
 - 이 문서는 `docs/product-intent.md`, `docs/workflow-charter.md`, `docs/PRD.md`, `docs/TRD.md`를 덮어쓰지 않는다
 - 충돌이 있으면 상위 문서를 우선한다
-- 현재 문서는 "지금 당장 구현할 것"보다 "어떤 방향으로 붙일지"를 정리한다
+- 현재 문서는 Stage 1 post-result action을 유지하되, Stage 2 이상 확장을 현재 제품 방향에서 철회한 이유를 기록한다
 
 ## 1. 배경
 현재 Vibe Studio는 provider API를 통해 LLM을 호출하고, engine core가 mode, renderer, approval, clarify 흐름을 계산한 뒤 renderer가 1차 결과를 생성하는 구조를 갖고 있다.
@@ -56,28 +56,38 @@ Rule:
 - 사용자가 왜 질문을 받는지 이해할 수 있어야 한다
 - 사용자 승인 없이 조용히 방향이 바뀌면 안 된다
 
-## 4. 에이전트화 우선 후보
+## 4. 에이전트화 후보의 현재 상태
 에이전트는 결과 이후의 후속 작업에서 가장 먼저 가치가 난다.
+다만 현재 제품 방향에서는 후보를 넓히지 않고 Stage 1에서 이미 구현된 세 흐름만 유지한다.
 
 ### 4.1 Prompt 후속 작업
+현재 활성 범위가 아니다.
+
 - 더 짧게 만들기
 - 더 엄격하게 만들기
 - few-shot 버전으로 바꾸기
 - 특정 상황용으로 다시 다듬기
 
 ### 4.2 Plan 후속 작업
+현재 활성 범위는 `더 구체화하기` 한 가지다.
+
 - MVP 범위로 압축하기
 - 핵심 사용자와 문제를 더 선명하게 하기
 - 실행 순서 추가하기
 - 빠진 항목을 보완하기
 
 ### 4.3 Architecture 후속 작업
+현재 활성 범위는 기존 architecture 결과의 flow-detail 세부화까지다.
+아래 확장은 현재 제품 방향에서 철회한다.
+
 - API 초안으로 확장하기
 - 데이터 모델 수준으로 확장하기
 - 권한/운영 관점으로 다시 정리하기
 - 리스크 중심으로 재정리하기
 
 ### 4.4 Review Report 후속 작업
+현재 활성 범위는 `지적 반영해서 다시 쓰기` 한 가지다.
+
 - 지적사항을 반영한 수정안 만들기
 - 심각도 높은 문제부터 다시 정리하기
 - 더 안전한 표현으로 재작성하기
@@ -121,14 +131,14 @@ Rule:
 - 다른 형태로 바꾸기
 
 renderer별 예시:
-- prompt: `실전형으로`, `few-shot으로`, `더 간결하게`
-- plan: `MVP 범위로 압축`, `핵심 항목 보강`
-- architecture: `API 초안 추가`, `데이터 구조 추가`
-- review-report: `수정안 만들기`, `우선순위 순으로 재정리`
+- plan: `더 구체화하기`
+- architecture: `세부 설계로 확장하기`
+- review-report: `지적 반영해서 다시 쓰기`
 
 Rule:
 - 에이전트 액션은 기존 결과 아래에 맥락적으로 붙인다
 - 현재 결과를 사용자 승인 없이 다른 renderer로 자동 전환하지 않는다
+- prompt 후속 작업, API/data/operation 확장, renderer 간 handoff는 현재 활성 후보가 아니다
 
 ## 8. Approval와의 관계
 approval는 유지한다.
@@ -143,25 +153,34 @@ approval는 유지한다.
 
 ## 9. 단계별 로드맵
 ### Phase 1. 결과 후속 액션
+현재 유지 범위다.
+
 - 결과 하단에 에이전트 액션 노출
 - 단일 결과를 받아 단일 후속 결과 생성
 
 ### Phase 2. 수정 루프
+현재 제품 방향에서 철회한다.
+
 - 사용자가 후속 지시를 입력
 - 에이전트가 기존 결과를 받아 재작성
 
 ### Phase 3. Renderer 간 handoff
+현재 제품 방향에서 철회한다.
+
 - `plan -> architecture`
 - `review-report -> revised draft`
 - `architecture -> implementation checklist`
 
 ### Phase 4. 장기 과제
+현재 제품 방향에서 철회한다.
+
 - 다단계 작업 체인
 - 작업 맥락 유지
 - 후속 액션 자동 추천
 
 Rule:
-- Phase 1~2까지만 근시일 후보로 보고, 3 이후는 후속 과제로 둔다
+- Phase 1만 현재 유지한다
+- Phase 2 이상은 다음 작업 후보로 보지 않는다
 
 ## 10. 피해야 할 방향
 아래는 피하는 것이 좋다.
@@ -192,19 +211,18 @@ Rule:
 - 표현 개선
 
 ## 12. 남은 결정사항
-아직 정해야 하는 항목:
-- agent 결과를 기존 결과 위에 덮어쓸지, 후속 결과로 쌓을지
-- agent가 원문만 볼지, 1차 결과도 함께 볼지
-- 후속 결과에도 approval를 다시 둘지
-- 사용자에게 "지금은 agent 작업 단계"임을 어떻게 설명할지
-
-현재 권장안:
+현재 결정된 항목:
+- agent 결과는 기존 결과 위에 덮어쓰지 않고 후속 결과로 분리한다
 - agent는 원문과 기존 결과를 함께 본다
-- 결과는 덮어쓰기보다 후속 결과로 분리한다
-- 1차 renderer approval는 유지하고, 후속 agent는 더 가볍게 운용한다
+- 후속 결과에는 별도 approval gate를 두지 않는다
+- 사용자에게는 내부 단계명이 아니라 "결과 다음 행동"으로 설명한다
+
+아직 남은 항목:
+- `review-report` 기반 수정안 표현을 app-level presentation으로 둘지, renderer shape로 올릴지
+- post-result case를 golden case 체계에 별도 편입할지
 
 ## 13. 현재 결론
-지금 시점에서 가장 자연스러운 첫 에이전트 도입점은 아래다.
+현재 유지하는 에이전트 도입점은 아래 세 가지뿐이다.
 
 - `review-report` 결과 아래 `지적 반영해서 다시 쓰기`
 - `plan` 결과 아래 `더 구체화하기`
@@ -216,4 +234,5 @@ Rule:
 - renderer 유지
 - agent는 후속 작업에만 한정
 
-이 방향이 Vibe Studio 정체성을 가장 덜 흔들면서도 실질 효용을 만들기 쉽다.
+Stage 2 이상의 수정 루프, renderer handoff, 장기 chain은 현재 철회한다.
+이 방향이 AI 입문자에게 API 연결과 agent 운용을 요구하지 않으면서도, 결과 다음 행동을 학습하게 만드는 현재 제품 정체성에 가장 잘 맞는다.

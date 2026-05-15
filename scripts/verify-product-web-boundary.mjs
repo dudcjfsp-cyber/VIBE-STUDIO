@@ -55,6 +55,8 @@ assert.match(resultPanelSource, /내용 보고 복사하기/);
 assert.match(resultPanelSource, /source_result_ref/);
 assert.match(resultPanelSource, /원본 \{followUp\.source_result_ref\.renderer\}/);
 assert.match(resultPanelSource, /<FollowUpBody followUp=\{followUp\} \/>/);
+assert.match(resultPanelSource, /원본 결과와 섞이지 않도록 후속 결과는 한 번에 1개만 만듭니다/);
+assert.doesNotMatch(resultPanelSource, /Stage 1에서는/);
 
 const planSectionsIndex = resultPanelSource.indexOf(
   '(output.output as PlanOutput).sections.map',
@@ -81,6 +83,7 @@ console.log(
       "keeps result context layer before renderer-specific interpretation",
       "keeps coding-tool handoff after the plan result",
       "keeps follow-up results separate from the source result",
+      "keeps internal stage labels out of the visible follow-up limit copy",
     ],
   }),
 );

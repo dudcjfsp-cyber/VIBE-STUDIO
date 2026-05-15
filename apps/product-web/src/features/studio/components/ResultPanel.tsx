@@ -684,7 +684,7 @@ export function ResultPanel({
         <section className="follow-up-actions">
           <div className="follow-up-actions-header">
             <p className="panel-kicker">결과 다음 행동</p>
-            <p className="follow-up-limit">Stage 1에서는 후속 결과를 1개만 만듭니다.</p>
+            <p className="follow-up-limit">원본 결과와 섞이지 않도록 후속 결과는 한 번에 1개만 만듭니다.</p>
           </div>
 
           <div className="follow-up-action-list">

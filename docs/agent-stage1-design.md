@@ -364,12 +364,25 @@ Stage 1에서는 action visibility를 단순하게 유지한다.
 6. strong mismatch case에서도 agent가 renderer switch를 대신 처리하지 않는다
 
 ## 11. 남아 있는 열린 질문
-Stage 1은 구현되었지만, 아래 항목은 후속 단계 설계 시 다시 검토할 수 있다.
+Stage 1은 구현되었지만, 아래 항목은 현재 경계 안에서만 다시 검토할 수 있다.
 
 1. `review-report` 기반 수정안 표현을 Stage 1 app-level presentation으로 유지할지, 별도 renderer shape로 올릴지
 2. post-result case를 golden case 체계에 별도 편입할지
-3. Stage 2 이상에서 freeform follow-up instruction을 어떤 경계로 열지
-4. renderer 간 handoff를 언제부터 일반화할지
+
+## 11.1 철회된 확장
+현재 제품 방향에서는 Stage 2 구현 계획을 추진하지 않는다.
+
+철회 대상:
+- freeform follow-up instruction 입력
+- 결과 이후 반복 수정 루프
+- renderer 간 handoff 일반화
+- agent 자동 추천, 장기 chain, 앞단 판단 위임
+
+이유:
+- Vibe Studio의 기준 사용자는 AI 입문자이며, API/provider 연결이나 agent 운용을 요구하는 순간 진입 장벽이 커진다
+- Vibe Studio는 숙련자를 오래 붙잡는 파워툴이 아니라 구조화된 사고를 익히는 학습 발판이다
+- 현재 Stage 1의 세 가지 post-result action만으로도 "결과 다음 행동" 학습 목적을 충분히 설명할 수 있다
+- 더 큰 agent 흐름은 제품을 범용 생성기나 자동화 도구처럼 보이게 만들 위험이 있다
 
 ## 12. 현재 결론
 Stage 1은 현재 아래 원칙으로 고정한다.
@@ -381,3 +394,4 @@ Stage 1은 현재 아래 원칙으로 고정한다.
 - renderer family를 silent switch하지 않는다
 - Stage 1에서는 freeform follow-up instruction을 받지 않는다
 - 결과당 후속 결과는 1개만 허용한다
+- Stage 2 확장 계획은 현재 철회하며, 다음 작업의 기본 전제로 삼지 않는다
