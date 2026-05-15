@@ -31,6 +31,8 @@ export function buildReviewReportLearningPanel(
     hasAny(readReviewText(output), ["coverage", "범위", "focus", "검토", "비어"]) ||
     result.intent_ir.analysis.missing_information.length > 0 ||
     result.intent_ir.analysis.clarification_questions.length > 0;
+  const hasPrioritySignal = output.improvement_priorities.length > 0;
+  const hasActionRecommendation = output.action_recommendation.reason.trim().length > 0;
 
   const points: ReviewReportLearningPoint[] = [
     {
@@ -59,6 +61,24 @@ export function buildReviewReportLearningPanel(
         : "이번 입력은 검토 기준이 비교적 단순해 보이지만, 중요한 문서일수록 범위와 기준을 먼저 고정하는 편이 안전합니다.",
       whenToUse:
         "검토 대상이 문서, 기획, 프롬프트처럼 해석 여지가 있을 때 씁니다.",
+    },
+    {
+      applied: hasPrioritySignal,
+      label: "개선 우선순위 만들기",
+      reason: hasPrioritySignal
+        ? "이번 검토는 지적을 나열하는 데서 멈추지 않고, 무엇부터 고칠지 순서로 정리했습니다."
+        : "이번 검토는 우선순위가 약해, 다음에는 가장 먼저 고칠 항목을 따로 정하면 좋습니다.",
+      whenToUse:
+        "고칠 것이 여러 개라 어디서 시작해야 할지 애매할 때 씁니다.",
+    },
+    {
+      applied: hasActionRecommendation,
+      label: "바로 고칠지 먼저 물을지 정하기",
+      reason: hasActionRecommendation
+        ? "이번 검토는 바로 수정해도 되는지, 먼저 확인 질문이 필요한지까지 나눠 다음 행동을 더 안전하게 만들었습니다."
+        : "이번 결과는 다음 행동 판단이 약해, 바로 수정할지 질문부터 할지 분리하면 좋습니다.",
+      whenToUse:
+        "초안이 부족할 때 무작정 고치면 오히려 엉뚱한 방향으로 갈 수 있을 때 씁니다.",
     },
   ];
 
@@ -95,6 +115,13 @@ function readReviewText(output: ReviewReportOutput): string {
   return [
     output.title,
     output.verdict,
+    ...output.strengths,
+    ...output.weak_points,
+    ...output.missing_assumptions,
+    ...output.risky_assumptions,
+    ...output.improvement_priorities,
+    output.action_recommendation.next_step,
+    output.action_recommendation.reason,
     ...output.notes,
     ...output.findings.flatMap((finding) => [
       finding.severity,

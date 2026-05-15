@@ -482,7 +482,7 @@ export function ResultPanel({
               </div>
               <p>
                 위 기획을 먼저 읽고 나서, 실제 구현 대화를 시작할 때만 목표,
-                범위, 제외할 것, 확인 기준을 정해진 JSON 구조로 묶어 복사합니다.
+                범위, 제외할 것, 확인 기준을 다음 AI가 읽기 쉬운 작업 카드로 묶어 복사합니다.
                 힌트로 다시 정리하면 이 내용도 최신 결과 기준으로 바뀝니다.
               </p>
             </section>
@@ -494,6 +494,18 @@ export function ResultPanel({
             <section className="result-section">
               <h3>시스템 경계</h3>
               <p>{(output.output as ArchitectureOutput).system_boundary}</p>
+            </section>
+
+            <section className="result-section">
+              <h3>주요 행위자</h3>
+              <ul>
+                {(output.output as ArchitectureOutput).actors.map((actor) => (
+                  <li key={actor.name}>
+                    <strong>{actor.name}</strong>
+                    <span>{actor.role}</span>
+                  </li>
+                ))}
+              </ul>
             </section>
 
             <ArchitectureDiagram architecture={output.output as ArchitectureOutput} />
@@ -520,6 +532,24 @@ export function ResultPanel({
               </section>
             ))}
 
+            <section className="result-section">
+              <h3>MVP에서 제외할 것</h3>
+              <ul>
+                {(output.output as ArchitectureOutput).mvp_exclusions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="result-section">
+              <h3>나중에 결정할 것</h3>
+              <ul>
+                {(output.output as ArchitectureOutput).later_decisions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+
             {architectureLearningPanel ? (
               <LearningPanel
                 lead="이 구조 설계가 어떤 순서로 시스템을 나눠 봤는지, 다음에 직접 아이디어를 설계할 때 쓸 수 있는 관점만 짧게 보여드립니다."
@@ -540,6 +570,7 @@ export function ResultPanel({
               <h3>판단</h3>
               <p>{formatReviewVerdict((output.output as ReviewReportOutput).verdict)}</p>
             </section>
+            <ReviewReportStructuredSections report={output.output as ReviewReportOutput} />
             {(output.output as ReviewReportOutput).findings.map((finding) => (
               <section className="result-section" key={`${finding.severity}-${finding.title}`}>
                 <h3>{`[${formatReviewSeverity(finding.severity)}] ${finding.title}`}</h3>
@@ -1132,49 +1163,111 @@ function buildCodingToolPayloadText(
     | undefined,
 ): string {
   const sections = mapPlanSections(plan);
+  const missingContext = readHandoffContextList([
+    ...result.intent_ir.analysis.missing_information,
+    ...result.intent_ir.analysis.clarification_questions.map(
+      (question) => question.question,
+    ),
+  ]);
+  const riskyAssumptions = readHandoffContextList([
+    ...result.intent_ir.analysis.risks,
+    ...result.intent_ir.analysis.assumptions,
+  ]);
   const payload = {
-    schema_version: "vibe_studio.plan_to_coding_tool.v1",
-    goal: readFirstSectionText(sections, ["아이디어 요약"], result.source.text),
-    target_user: readSectionState(sections, ["핵심 사용자"]),
-    problem: readSectionState(sections, ["해결하려는 문제"]),
-    context: readSectionState(sections, ["맥락"]),
-    mvp_scope: readSectionItems(sections, ["초기 방향"]),
-    excluded_scope: [
-      "요청에 없는 로그인, 결제, 배포, 관리자 기능, 복잡한 백엔드 저장소를 임의로 추가하지 않는다.",
-      "실제 금융 거래, 자동매매, 투자 자문처럼 위험하거나 규제 검토가 필요한 기능은 첫 버전에서 제외한다.",
-      "수익률 보장, 투자 추천 확정 표현, 실시간 주문 실행은 포함하지 않는다.",
-    ],
-    screens_or_flows: inferCodingFlows(sections),
-    data_needed: inferDataNeeded(sections),
-    implementation_tasks: buildImplementationTasks(sections),
-    acceptance_criteria: buildAcceptanceCriteria(sections),
-    constraints: [
-      "먼저 로컬에서 동작하는 작은 MVP를 만든다.",
-      "작업을 마치면 로컬 실행 방법과 사용자가 직접 확인할 수 있는 수동 테스트 절차를 제공한다.",
-      "입력, 목록 확인, 수정 가능한 기본 흐름을 우선한다.",
-      "단일 index 또는 app 파일에 모든 로직을 몰아넣지 말고, 화면, 상태, 데이터, 유틸 로직을 최소한의 파일로 분리한다.",
-      "불확실한 요구사항은 임의로 확장하지 말고 TODO 또는 질문으로 남긴다.",
-      "사용자가 'ㅇㅇ', 'ㄱㄱ', '좋아', '그걸로', '진행'처럼 짧게 승인하면 범위를 넓히지 말고 안전한 최소 버전으로 진행한다.",
-      "비어 있거나 미확정인 항목은 먼저 안전한 구현 제안을 보여주고, 이어서 사용자가 생각해둔 내용이 있는지 질문한다.",
-      "전문 용어만 쓰지 말고, 비전공자와 비개발자도 이해하기 쉬운 일상의 비유를 들어 다음 구현 흐름을 설명한다.",
-      "금융, 의료, 법률처럼 위험도가 높은 주제가 포함되면 실제 조언, 자동 실행, 의사결정 대행, 결과 보장 기능은 만들지 않는다.",
-    ],
+    schema_version: "vibe_studio.ai_work_handoff.v2",
+    handoff_type: "ai_coding_tool_context",
+    use_when:
+      "사용자가 Vibe Studio의 기획 결과를 먼저 읽은 뒤, 실제 구현 대화를 다른 AI 코딩툴에서 시작할 때 사용한다.",
+    source_summary: formatSummary(result.intent_ir.summary),
+    recommended_work_type: "small_mvp_implementation",
+    why_this_handoff:
+      "현재 결과는 최종 구현 지시서가 아니라 문제, 대상, 첫 범위, 열린 결정을 정리한 기획 초안이므로 다음 AI에게 범위와 미확정 지점을 함께 넘겨야 한다.",
+    context_to_preserve: {
+      goal: readFirstSectionText(sections, ["아이디어 요약"], result.source.text),
+      target_user: readSectionState(sections, ["핵심 사용자"]),
+      problem: readSectionState(sections, ["해결하려는 문제"]),
+      current_context: readSectionState(sections, ["맥락"]),
+      source_input: result.source.text,
+      applied_hint: appliedInputHint
+        ? {
+            text: appliedInputHint.text,
+            title: appliedInputHint.title,
+          }
+        : null,
+    },
+    implementation_boundary: {
+      mvp_scope: readSectionItems(sections, ["초기 방향"]),
+      excluded_scope: buildExcludedScope(result),
+      screens_or_flows: inferCodingFlows(sections),
+      data_needed: inferDataNeeded(sections),
+      implementation_tasks: buildImplementationTasks(sections),
+      acceptance_criteria: buildAcceptanceCriteria(sections),
+    },
+    learning_context: {
+      missing_context: missingContext,
+      risky_assumptions: riskyAssumptions,
+      next_better_request_hint:
+        "다음에는 핵심 사용자, 첫 화면에서 해야 할 일, 첫 버전 성공 기준, 제외할 기능을 함께 적으면 구현 지시가 더 안정적입니다.",
+    },
+    guardrails: buildCodingGuardrails(result),
     open_questions: readSectionItems(sections, ["열린 질문"]),
     needs_user_decision: buildNeedsUserDecision(sections),
     source_input: result.source.text,
-    applied_hint: appliedInputHint
-      ? {
-          text: appliedInputHint.text,
-          title: appliedInputHint.title,
-        }
-      : null,
     coding_agent_instruction:
-      "이 JSON을 기준으로 MVP를 구현하세요. 범위를 벗어나는 기능은 만들지 말고, 먼저 실행 가능한 작은 프로토타입과 확인 방법을 제공하세요.",
+      "이 JSON을 다음 AI 작업 카드로 보고, implementation_boundary 안에서 작은 MVP를 구현하세요. 비어 있거나 미확정인 항목은 임의로 확정하지 말고 TODO 또는 사용자 질문으로 남기세요.",
     final_instruction:
-      "에이전트는 사용자에게 이 JSON을 바이브 코딩 툴에서 어떻게 활용하면 되는지 비전공자도 이해할 수 있는 일상의 비유를 들어 먼저 짧게 설명하세요. needs_user_decision 항목이 있으면 각 항목마다 1. 안전하게 구현되도록 하는 기본 제안, 2. 혹시 사용자가 생각해둔 내용이 있는지 묻는 질문을 함께 제시하세요. 사용자가 짧게 동의하면 안전한 최소 범위 MVP로 해석하고, 범위를 임의로 넓히지 않은 채 구현을 진행해주기를 바랍니다.",
+      "에이전트는 먼저 이 작업 카드가 무엇을 만들고 무엇을 아직 정하지 않았는지 짧게 설명하세요. needs_user_decision 항목이 있으면 각 항목마다 1. 안전한 기본 제안, 2. 사용자가 생각해둔 내용이 있는지 묻는 질문을 함께 제시하세요. 사용자가 짧게 동의하면 안전한 최소 범위 MVP로 해석하고, 범위를 임의로 넓히지 않은 채 구현을 진행하세요.",
   };
 
   return JSON.stringify(payload, null, 2);
+}
+
+function readHandoffContextList(values: string[]): string[] {
+  const items = values
+    .map((value) => formatSummary(value).trim().replace(/\.$/, ""))
+    .filter(Boolean);
+
+  return items.length > 0
+    ? items.slice(0, 5)
+    : ["현재 입력만으로 첫 구현 대화는 시작할 수 있지만, 세부 조건은 구현 전에 다시 확인하면 좋습니다."];
+}
+
+function buildExcludedScope(result: EngineResult): string[] {
+  const sourceText = result.source.text.toLowerCase();
+  const exclusions = [
+    "요청에 없는 로그인, 결제, 배포, 관리자 기능, 복잡한 백엔드 저장소를 임의로 추가하지 않는다.",
+    "첫 버전은 사용자가 직접 확인할 수 있는 작은 로컬 MVP로 제한한다.",
+    "저장, 계정, 권한, 외부 API 연동은 사용자가 명시하지 않으면 나중 범위로 둔다.",
+  ];
+
+  if (/금융|투자|의료|법률|환불|결제|payment|refund|medical|legal|finance|investment/i.test(sourceText)) {
+    exclusions.push(
+      "금융, 의료, 법률, 결제처럼 위험도가 높은 주제가 포함되면 실제 조언, 자동 실행, 의사결정 대행, 결과 보장 기능은 만들지 않는다.",
+    );
+  }
+
+  return exclusions;
+}
+
+function buildCodingGuardrails(result: EngineResult): string[] {
+  const guardrails = [
+    "먼저 로컬에서 동작하는 작은 MVP를 만든다.",
+    "작업을 마치면 로컬 실행 방법과 사용자가 직접 확인할 수 있는 수동 테스트 절차를 제공한다.",
+    "입력, 목록 확인, 수정 가능한 기본 흐름을 우선한다.",
+    "단일 index 또는 app 파일에 모든 로직을 몰아넣지 말고, 화면, 상태, 데이터, 유틸 로직을 최소한의 파일로 분리한다.",
+    "불확실한 요구사항은 임의로 확장하지 말고 TODO 또는 질문으로 남긴다.",
+    "사용자가 'ㅇㅇ', 'ㄱㄱ', '좋아', '그걸로', '진행'처럼 짧게 승인하면 범위를 넓히지 말고 안전한 최소 버전으로 진행한다.",
+    "비어 있거나 미확정인 항목은 먼저 안전한 구현 제안을 보여주고, 이어서 사용자가 생각해둔 내용이 있는지 질문한다.",
+    "전문 용어만 쓰지 말고, 비전공자와 비개발자도 이해하기 쉬운 표현으로 다음 구현 흐름을 설명한다.",
+  ];
+
+  if (result.approval_level !== "none") {
+    guardrails.push(
+      "Vibe Studio에서 확인 신호가 있었으므로, 구현 전에 범위와 영향이 큰 결정을 한 번 더 짧게 확인한다.",
+    );
+  }
+
+  return guardrails;
 }
 
 function mapPlanSections(plan: PlanOutput): Record<string, string[]> {
@@ -1792,6 +1885,8 @@ function formatVisibleNote(note: string): string | undefined {
       return `다음에 다시 쓸 때: ${formatSummary(value)}`;
     case "Planning focus":
       return `계획 정리 방식: ${formatSummary(value)}`;
+    case "Architecture focus":
+      return `구조 설계 방식: ${formatSummary(value)}`;
     case "Risk note":
       return `주의할 점: ${formatSummary(value)}`;
     case "Artifact kind":
@@ -1808,6 +1903,8 @@ function formatVisibleNote(note: string): string | undefined {
       return `다음 우선 작업: ${formatNextBestMove(value)}`;
     case "Review focus":
       return `검토 초점: ${formatReviewFocus(value)}`;
+    case "Review action":
+      return `다음 행동 판단: ${formatReviewAction(value)}`;
     case "Artifact excerpt":
       return `검토 원문 일부: ${value}`;
     case "Artifact size":
@@ -1815,6 +1912,45 @@ function formatVisibleNote(note: string): string | undefined {
     default:
       return normalized;
   }
+}
+
+function ReviewReportStructuredSections({
+  report,
+}: {
+  report: ReviewReportOutput;
+}) {
+  return (
+    <>
+      <ReviewListSection title="좋은 점" items={report.strengths} />
+      <ReviewListSection title="약한 점" items={report.weak_points} />
+      <ReviewListSection title="빠진 전제" items={report.missing_assumptions} />
+      <ReviewListSection title="위험한 추측" items={report.risky_assumptions} />
+      <ReviewListSection title="개선 우선순위" items={report.improvement_priorities} />
+      <section className="result-section">
+        <h3>{formatReviewActionHeading(report.action_recommendation.next_step)}</h3>
+        <p>{report.action_recommendation.reason}</p>
+      </section>
+    </>
+  );
+}
+
+function ReviewListSection({
+  items,
+  title,
+}: {
+  items: string[];
+  title: string;
+}) {
+  return (
+    <section className="result-section">
+      <h3>{title}</h3>
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 function formatMode(value: string): string {
@@ -1912,6 +2048,30 @@ function formatReviewVerdict(
   }
 }
 
+function formatReviewActionHeading(
+  value: ReviewReportOutput["action_recommendation"]["next_step"],
+): string {
+  switch (value) {
+    case "clarify_first":
+      return "먼저 질문이 필요합니다";
+    case "revise_now":
+      return "바로 고쳐도 좋습니다";
+    default:
+      return "다음 행동";
+  }
+}
+
+function formatReviewAction(value: string): string {
+  switch (value.replace(/\.$/, "")) {
+    case "clarify_first":
+      return "바로 고치기 전에 먼저 확인하는 편이 좋습니다.";
+    case "revise_now":
+      return "현재 발견 항목을 기준으로 바로 다듬어도 좋습니다.";
+    default:
+      return value;
+  }
+}
+
 function formatReviewSeverity(value: string): string {
   switch (value) {
     case "high":
@@ -1953,6 +2113,12 @@ function formatListLikeText(value: string): string {
 function formatNextBestMove(value: string): string {
   if (/keep the current direction/i.test(value)) {
     return "현재 방향을 유지하고 마지막으로 더 다듬습니다.";
+  }
+
+  const addressFirstMatch = value.match(/^address\s+"?(.+?)"?\s+first\.?$/i);
+
+  if (addressFirstMatch?.[1]) {
+    return `먼저 보완: ${addressFirstMatch[1]}`;
   }
 
   return value.replace(/^address\s+/i, "먼저 보완: ").replace(/\.$/, "");

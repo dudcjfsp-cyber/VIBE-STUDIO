@@ -30,7 +30,7 @@ const REVIEW_MEDIUM_RISK_PATTERNS = [
 
 const MULTI_PATH_PATTERNS = [
   /혹은/u,
-  /or/i,
+  /\bor\b/i,
 ];
 
 const DETAILS_MISSING_PATTERNS = [

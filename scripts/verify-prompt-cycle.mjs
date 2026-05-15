@@ -30,6 +30,21 @@ assert.ok(
   directPromptOutput.notes.some((note) => note.startsWith("Context handoff:")),
 );
 
+const englishDirectRenderResult = await engine.run({
+  source: {
+    text: "Create 10 YouTube titles for AI beginners about note taking.",
+  },
+});
+
+assert.equal(englishDirectRenderResult.provisional_renderer, "prompt");
+assert.equal(englishDirectRenderResult.next_step, "direct_render");
+assert.equal(englishDirectRenderResult.outputs.length, 1);
+assert.equal(englishDirectRenderResult.outputs[0]?.renderer, "prompt");
+assert.equal(
+  englishDirectRenderResult.outputs[0]?.validation.status,
+  "ready",
+);
+
 const gatedResult = await engine.run({
   source: {
     text: "결제가 두 번 된 고객들에게 보내는 사과 공지문이 필요해. 오늘 오전 10시부터 11시 사이 결제한 일부 고객이 대상이고, 중복 결제는 전액 환불된다고 써줘.",
@@ -78,6 +93,13 @@ console.log(
           note.startsWith("Context handoff:") ||
           note.startsWith("Next reuse hint:"),
       ).length,
+    },
+    english_direct_render: {
+      provisional_renderer: englishDirectRenderResult.provisional_renderer,
+      next_step: englishDirectRenderResult.next_step,
+      output_count: englishDirectRenderResult.outputs.length,
+      output_validation:
+        englishDirectRenderResult.outputs[0]?.validation.status,
     },
     approval_pending_without_confirmation: {
       next_step: gatedResult.next_step,

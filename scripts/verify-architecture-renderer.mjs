@@ -48,8 +48,14 @@ const architectureOutput = approvedResult.outputs[0]?.output;
 
 assert.ok(architectureOutput);
 assert.ok(architectureOutput.title.trim().length > 0);
+assert.ok(architectureOutput.actors.length >= 1);
 assert.ok(architectureOutput.components.length >= 3);
 assert.ok(architectureOutput.interaction_flows.length >= 1);
+assert.ok(architectureOutput.mvp_exclusions.length >= 1);
+assert.ok(architectureOutput.later_decisions.length >= 1);
+assert.ok(
+  architectureOutput.notes.some((note) => note.startsWith("Architecture focus:")),
+);
 
 console.log(
   JSON.stringify({
@@ -68,8 +74,11 @@ console.log(
       approval_level: approvedResult.approval_level,
       output_count: approvedResult.outputs.length,
       output_validation: approvedResult.outputs[0]?.validation.status,
+      actor_count: architectureOutput.actors.length,
       component_count: architectureOutput.components.length,
       flow_count: architectureOutput.interaction_flows.length,
+      mvp_exclusion_count: architectureOutput.mvp_exclusions.length,
+      later_decision_count: architectureOutput.later_decisions.length,
     },
   }),
 );
