@@ -201,7 +201,7 @@ Note:
 4. recommended/required approval 입력도 pre-result 버튼 없이 결과가 나오는지
 5. review 결과 + revise-from-review
 6. 결과 상단 공통 context layer가 renderer 본문보다 먼저 보이는지
-7. 결과 화면이 `요청 이해 -> 추천 작업 형태 -> 결과 초안 -> 빠진 정보/확인할 점 -> 다음 입력 힌트 -> 한 번 더 살펴보기` 순서로 읽히는지
+7. 결과 화면이 `요청 이해 -> 추천 작업 형태 -> 결과 초안 -> 정리 기준/확인할 점 -> 다음 입력 힌트 -> 한 번 더 살펴보기` 순서로 읽히는지
 8. 화면 어디에서도 `Stage 1`, `renderer`, `flow-detail`, `approval` 같은 내부 용어가 사용자 안내처럼 보이지 않는지
 
 ## 6. 지금 문서의 역할

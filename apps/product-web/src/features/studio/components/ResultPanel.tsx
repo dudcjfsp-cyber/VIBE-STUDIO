@@ -452,8 +452,8 @@ export function ResultPanel({
         <p className="panel-kicker">결과 초안</p>
         <h3>지금 입력으로 먼저 볼 수 있는 정리본</h3>
         <p>
-          API 연결이 없어도 현재 입력을 바탕으로 가능한 초안을 먼저 보여드립니다.
-          비어 있는 부분은 아래의 확인할 점과 다음 입력 힌트에서 이어서 볼 수 있습니다.
+          현재 입력만으로 먼저 볼 수 있는 초안을 보여드립니다. 비어 있는 부분은
+          아래 확인할 점과 다음 입력 힌트에서 이어서 볼 수 있습니다.
         </p>
       </section>
 
@@ -645,8 +645,8 @@ export function ResultPanel({
         ) : null}
       </div>
 
-      <section className="result-note-panel" aria-label="빠진 정보와 확인할 점">
-        <p className="panel-kicker">빠진 정보와 확인할 점</p>
+      <section className="result-note-panel" aria-label="정리 기준과 확인할 점">
+        <p className="panel-kicker">정리 기준과 확인할 점</p>
         <ul className="note-list">
           {readOutputNotes(output).map((note, index) => (
             <li key={`${note}-${index}`}>{note}</li>

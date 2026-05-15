@@ -54,19 +54,22 @@ for (const title of [
 const contextPanelIndex = resultPanelSource.indexOf("intent-context-panel");
 const resultDraftIntroIndex = resultPanelSource.indexOf("result-draft-intro");
 const resultBodyIndex = resultPanelSource.indexOf("result-body");
+const resultNotePanelIndex = resultPanelSource.indexOf("result-note-panel");
 const inputHintsPanelIndex = resultPanelSource.indexOf("input-hints-panel");
 const followUpActionsIndex = resultPanelSource.indexOf("follow-up-actions");
 assert.ok(contextPanelIndex >= 0, "Result context layer should exist.");
 assert.ok(resultDraftIntroIndex >= 0, "Result draft intro should exist.");
 assert.ok(resultBodyIndex >= 0, "Renderer result body should exist.");
+assert.ok(resultNotePanelIndex >= 0, "Result note panel should exist.");
 assert.ok(inputHintsPanelIndex >= 0, "Next-input hints should exist.");
 assert.ok(followUpActionsIndex >= 0, "Follow-up actions should exist.");
 assert.ok(
   contextPanelIndex < resultDraftIntroIndex &&
     resultDraftIntroIndex < resultBodyIndex &&
-    resultBodyIndex < inputHintsPanelIndex &&
+    resultBodyIndex < resultNotePanelIndex &&
+    resultNotePanelIndex < inputHintsPanelIndex &&
     inputHintsPanelIndex < followUpActionsIndex,
-  "Product-web result should read as context -> draft -> next-input hints -> optional follow-up action.",
+  "Product-web result should read as context -> draft -> notes -> next-input hints -> optional follow-up action.",
 );
 
 assert.match(resultPanelSource, /copy-review-dialog/);
@@ -79,6 +82,8 @@ assert.match(
 assert.match(resultPanelSource, /<FollowUpBody followUp=\{followUp\} \/>/);
 assert.match(resultPanelSource, /원본 결과와 섞이지 않도록 후속 결과는 한 번에 1개만 만듭니다/);
 assert.match(resultPanelSource, /한 번 더 살펴보기/);
+assert.match(resultPanelSource, /정리 기준과 확인할 점/);
+assert.doesNotMatch(resultPanelSource, /API 연결이 없어도/);
 assert.doesNotMatch(resultPanelSource, /Stage 1에서는/);
 
 const planSectionsIndex = resultPanelSource.indexOf(
@@ -104,7 +109,7 @@ console.log(
     checks: [
       "keeps beginner start templates and advanced options separated",
       "keeps result context layer before renderer-specific interpretation",
-      "keeps result draft before next-input hints and optional follow-up action",
+      "keeps result draft and notes before next-input hints and optional follow-up action",
       "keeps coding-tool handoff after the plan result",
       "keeps follow-up results separate from the source result",
       "keeps internal stage labels out of the visible follow-up limit copy",
