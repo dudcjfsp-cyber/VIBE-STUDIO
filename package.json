@@ -16,6 +16,7 @@
     "verify:architecture-renderer": "npm run build --silent && node ./scripts/verify-architecture-renderer.mjs",
     "verify:review-renderer": "npm run build --silent && node ./scripts/verify-review-renderer.mjs",
     "verify:agent-stage1": "npm run build --silent && node ./scripts/verify-agent-stage1.mjs",
+    "verify:coding-tool-handoff": "node ./scripts/verify-coding-tool-handoff.mjs",
     "verify:deploy": "npm run verify:golden-cases && npm run build:product-web",
     "serve:thinapp": "npm run build --silent && node ./scripts/serve-prompt-web.mjs",
     "serve:product-server": "npm run build --silent && node ./apps/product-server/dist/server.js",
