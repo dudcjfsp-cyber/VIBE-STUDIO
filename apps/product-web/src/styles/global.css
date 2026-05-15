@@ -1228,6 +1228,27 @@ textarea {
   word-break: keep-all;
 }
 
+.result-draft-intro {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid rgba(15, 106, 85, 0.16);
+  border-radius: 8px;
+  background: rgba(248, 255, 252, 0.86);
+}
+
+.result-draft-intro h3 {
+  margin: 4px 0 0;
+  font-size: 1.08rem;
+  line-height: 1.4;
+}
+
+.result-draft-intro p:not(.panel-kicker) {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
 .decision-card-header {
   display: grid;
   gap: 6px;

@@ -395,8 +395,8 @@ export function ResultPanel({
         <div className="intent-context-header">
           <p className="panel-kicker">먼저 이렇게 이해했어요</p>
           <p>
-            바로 결과만 만든 것이 아니라, 지금 입력이 어떤 작업에 가까운지 먼저
-            정리했습니다.
+            지금 입력이 어떤 작업에 가까운지 먼저 비춰보고, 그 다음에 결과 초안과
+            빠진 정보를 함께 확인합니다.
           </p>
         </div>
 
@@ -446,6 +446,15 @@ export function ResultPanel({
             <li key={reason}>{reason}</li>
           ))}
         </ul>
+      </section>
+
+      <section className="result-draft-intro" aria-label="결과 초안 안내">
+        <p className="panel-kicker">결과 초안</p>
+        <h3>지금 입력으로 먼저 볼 수 있는 정리본</h3>
+        <p>
+          API 연결이 없어도 현재 입력을 바탕으로 가능한 초안을 먼저 보여드립니다.
+          비어 있는 부분은 아래의 확인할 점과 다음 입력 힌트에서 이어서 볼 수 있습니다.
+        </p>
       </section>
 
       <div className="result-body">
@@ -636,8 +645,8 @@ export function ResultPanel({
         ) : null}
       </div>
 
-      <section className="result-note-panel" aria-label="결과 상태">
-        <p className="panel-kicker">결과 상태</p>
+      <section className="result-note-panel" aria-label="빠진 정보와 확인할 점">
+        <p className="panel-kicker">빠진 정보와 확인할 점</p>
         <ul className="note-list">
           {readOutputNotes(output).map((note, index) => (
             <li key={`${note}-${index}`}>{note}</li>
@@ -683,7 +692,7 @@ export function ResultPanel({
       {stage1Actions.length > 0 ? (
         <section className="follow-up-actions">
           <div className="follow-up-actions-header">
-            <p className="panel-kicker">결과 다음 행동</p>
+            <p className="panel-kicker">한 번 더 살펴보기</p>
             <p className="follow-up-limit">원본 결과와 섞이지 않도록 후속 결과는 한 번에 1개만 만듭니다.</p>
           </div>
 
@@ -719,7 +728,7 @@ export function ResultPanel({
           <p className="panel-kicker">후속 결과</p>
           <h3>{followUp.result_title}</h3>
           <p className="follow-up-origin">
-            원본 {followUp.source_result_ref.renderer}
+            원본 {formatRendererLabel(followUp.source_result_ref.renderer)}
             {followUp.source_result_ref.title
               ? ` 결과 "${followUp.source_result_ref.title}" 기준`
               : " 결과 기준"}
